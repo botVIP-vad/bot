@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0e0f12" />
+<title>Настройка участников — TopBot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0e0f12; --ink:#ededf0; --ink-dim:#9b9ba6; --ink-faint:#6d6d78;
+    --primary:#7950f2; --primary-2:#9b7cff; --points:#41c0a9; --donation:#f6646c;
+    --line:rgba(255,255,255,.07); --card:rgba(255,255,255,.03);
+    --grad:linear-gradient(135deg,#8b5cf6,#7950f2 45%,#6d28d9);
+    --font:'Inter',system-ui,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--font);min-height:100vh}
+  .bgfx{position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:radial-gradient(55% 45% at 18% 0%,rgba(109,40,217,.25),transparent 60%),
+               radial-gradient(50% 45% at 85% 10%,rgba(65,192,169,.1),transparent 60%)}
+  .topbar{position:sticky;top:0;z-index:20;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    background:rgba(14,15,18,.75);border-bottom:1px solid var(--line);padding:12px 0}
+  .topbar-in{display:flex;align-items:center;gap:12px;max-width:920px;margin:0 auto;padding:0 22px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem}
+  .logo-mark{width:34px;height:34px;border-radius:10px;background:var(--grad);display:grid;place-items:center;box-shadow:0 6px 16px -4px rgba(121,80,242,.6)}
+  .total{margin-left:auto;color:var(--ink-dim);font-size:.9rem;background:rgba(255,255,255,.04);border:1px solid var(--line);padding:6px 14px;border-radius:999px}
+
+  main{max-width:920px;margin:0 auto;padding:30px 22px 60px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px}
+  .kicker{font-size:.72rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--primary-2);margin-bottom:6px}
+  .card h2{font-size:1.4rem;font-weight:800;letter-spacing:-.5px;margin-bottom:4px}
+  .card .sub{color:var(--ink-dim);font-size:.9rem;margin-bottom:20px}
+
+  .form{display:grid;grid-template-columns:1.4fr 0.8fr auto;gap:10px;margin-bottom:16px}
+  @media(max-width:520px){.form{grid-template-columns:1fr 1fr}.form .btn{grid-column:1/-1}}
+  .field label{display:block;font-size:.74rem;color:var(--ink-faint);margin-bottom:4px;font-weight:600}
+  .field input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;
+    color:var(--ink);font-family:var(--font);font-size:1rem;padding:11px 13px;outline:none;transition:.2s}
+  .field input:focus{border-color:var(--primary);background:rgba(121,80,242,.07)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;cursor:pointer;
+    font-family:var(--font);font-weight:700;font-size:.95rem;border-radius:12px;padding:12px 18px;transition:.2s;color:#fff}
+  .addbtn{background:var(--points);color:#04211c;align-self:end}
+  .addbtn:hover{background:#35a893}
+
+  .list{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow:auto;padding-right:4px}
+  .empty{color:var(--ink-faint);text-align:center;font-size:.9rem;padding:30px 0;border:1px dashed var(--line);border-radius:12px}
+  .row{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.03);border:1px solid var(--line);
+    border-radius:12px;padding:10px 13px}
+  .row .idx{width:26px;height:26px;border-radius:8px;background:rgba(121,80,242,.16);color:var(--primary-2);
+    display:grid;place-items:center;font-size:.78rem;font-weight:700;flex-shrink:0}
+  .row .nick{font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row .points{font-weight:800;color:var(--points);flex-shrink:0}
+  .row .del{background:none;border:0;color:var(--ink-faint);cursor:pointer;font-size:1.3rem;line-height:1;padding:2px 6px;border-radius:8px}
+  .row .del:hover{color:var(--donation);background:rgba(246,100,108,.12)}
+
+  .bottom{display:flex;align-items:center;gap:12px;margin-top:18px;flex-wrap:wrap}
+  .clearbtn{background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink)}
+  .clearbtn:hover{background:rgba(246,100,108,.15);border-color:rgba(246,100,108,.4);color:var(--donation)}
+  .launch{margin-top:26px;background:var(--grad);box-shadow:0 12px 30px -10px rgba(121,80,242,.85);width:100%}
+  .launch:hover{transform:translateY(-2px);filter:brightness(1.05)}
+  .hint-note{color:var(--ink-faint);font-size:.82rem;margin-top:8px;text-align:center}
+
+  /* ===== Рулетка (встроенная, тот же адрес) ===== */
+  #wheel{scroll-margin-top:90px}
+  .wheel-section{max-width:920px;margin:0 auto;padding:0 22px 60px}
+  .card.wheel-card{text-align:center}
+  .wheel-box{display:flex;flex-direction:column;align-items:center;gap:18px;margin-top:8px}
+  .wheel-wrap{position:relative;width:min(100%,420px);aspect-ratio:1;margin:0 auto}
+  canvas.wh{width:100%;height:100%;display:block;filter:drop-shadow(0 20px 50px rgba(0,0,0,.5))}
+  .pointer{position:absolute;top:-8px;left:50%;transform:translateX(-50%);z-index:5;
+    width:0;height:0;border-left:18px solid transparent;border-right:18px solid transparent;
+    border-top:30px solid #fff;filter:drop-shadow(0 4px 5px rgba(0,0,0,.5))}
+  .hub{position:absolute;inset:50% 0 0 50%;transform:translate(-50%,-50%);z-index:4;
+    width:84px;height:84px;border-radius:50%;background:var(--grad);display:grid;place-items:center;
+    box-shadow:0 8px 24px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.35);pointer-events:none}
+  .spinbtn{background:var(--grad);box-shadow:0 12px 30px -8px rgba(121,80,242,.85);color:#fff;
+    border:0;cursor:pointer;font-family:var(--font);font-weight:800;font-size:1.1rem;
+    border-radius:14px;padding:15px 42px;transition:.2s;letter-spacing:.3px}
+  .spinbtn:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.06)}
+  .spinbtn:disabled{opacity:.4;cursor:not-allowed}
+  .winner-big{min-height:34px;text-align:center;font-weight:800;font-size:1.4rem;color:var(--primary-2);text-shadow:0 0 18px rgba(121,80,242,.5)}
+  .hint-wheel{color:var(--ink-faint);font-size:.9rem;text-align:center;max-width:34ch}
+  .wheel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+</style>
+</head>
+<body>
+<div class="bgfx"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="logo">
+      <span class="logo-mark">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 4"/></svg>
+      </span>
+      TopBot · Настройка
+    </div>
+    <div class="total" id="totalBadge">Участников: 0</div>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <div class="kicker">Участники</div>
+    <h2>Добавить участника</h2>
+    <p class="sub">Впиши ник и количество баллов. Чем больше баллов — тем больше шанс в рулетке.</p>
+
+    <div class="form">
+      <div class="field">
+        <label for="nick">Ник участника</label>
+        <input id="nick" type="text" placeholder="например, sypher48" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="points">Баллы</label>
+        <input id="points" type="number" min="0" step="1" placeholder="100" autocomplete="off" />
+      </div>
+      <button class="btn addbtn" onclick="addParticipant()">Добавить</button>
+    </div>
+
+    <div class="list" id="list">
+      <div class="empty">Список пуст. Добавь первого участника выше ☝</div>
+    </div>
+
+    <div class="bottom">
+      <button class="btn clearbtn" onclick="clearAll()">🗑 Очистить всё</button>
+    </div>
+
+    <a class="btn launch" href="#wheel">
+      🎡 Открыть рулетку&nbsp;(прокрутить вниз)
+    </a>
+  </section>
+</main>
+
+<section class="wheel-section card wheel-card" id="wheel">
+  <div class="wheel-head">
+    <div class="kicker">Рулетка</div>
+  </div>
+  <h2>Колесо участников</h2>
+  <p class="sub" style="margin-bottom:20px">Чем больше баллов — тем больше сектор и шанс выиграть.</p>
+
+  <div class="wheel-box">
+    <div class="wheel-wrap">
+      <div class="pointer"></div>
+      <canvas id="wheelCanvas" class="wh" width="720" height="720"></canvas>
+      <div class="hub">
+        <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+      </div>
+    </div>
+    <button class="spinbtn" id="spinBtn" disabled>Крутить рулетку</button>
+    <div class="winner-big" id="winner"></div>
+    <div class="hint-wheel" id="whint">Добавь хотя бы 2 участника выше</div>
+  </div>
+</section>
+<script>
+  var KEY = 'topbot_participants';
+  var participants = load();
+
+  function load(){
+    try{ var d = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(d) ? d : []; }
+    catch(e){ return []; }
+  }
+  function save(){ localStorage.setItem(KEY, JSON.stringify(participants)); }
+
+  function addParticipant(){
+    var nick = document.getElementById('nick').value.trim();
+    var pts = parseInt(document.getElementById('points').value, 10);
+    if(!nick){ shake('nick'); return; }
+    if(isNaN(pts) || pts < 0) pts = 0;
+    participants.push({ nick: nick, points: pts });
+    save();
+    render();
+    document.getElementById('nick').value = '';
+    document.getElementById('points').value = '';
+    document.getElementById('nick').focus();
+  }
+  function shake(id){
+    var el = document.getElementById(id);
+    el.style.borderColor = '#f6646c';
+    setTimeout(function(){ el.style.borderColor = ''; }, 700);
+  }
+  function removeAt(i){ participants.splice(i, 1); save(); render(); }
+  function clearAll(){ participants = []; save(); render(); }
+
+  function totalPoints(){ return participants.reduce(function(a,p){ return a + (p.points||0); }, 0); }
+
+  function render(){
+    var list = document.getElementById('list');
+    var badge = document.getElementById('totalBadge');
+    if(!participants.length){
+      list.innerHTML = '<div class="empty">Список пуст. Добавь первого участника выше ☝</div>';
+      badge.textContent = 'Участников: 0';
+    } else {
+      var html = '';
+      participants.forEach(function(p, i){
+        html += '<div class="row">'
+          + '<div class="idx">' + (i+1) + '</div>'
+          + '<div class="nick" title="' + String(p.nick).replace(/"/g,'&quot;') + '">' + p.nick + '</div>'
+          + '<div class="points">' + (p.points||0) + ' б.</div>'
+          + '<button class="del" title="Удалить" onclick="removeAt(' + i + ')">&times;</button>'
+          + '</div>';
+      });
+      list.innerHTML = html;
+      badge.textContent = 'Участников: ' + participants.length + ' · баллов: ' + totalPoints();
+    }
+    if(typeof drawWheel === 'function'){ drawWheel(); updateSpinControls(); }
+  }
+
+/* ===== Встроенная рулетка ===== */
+  var spinState = { spinning:false, rotation:0 };
+  var WHEEL_COLORS = ['#7950f2','#8b5cf6','#41c0a9','#f6646c','#f5a623','#2f9e44','#1c7ed6','#e64980','#ae3ec9','#f76707','#5c7cfa','#38a3a5'];
+  var wcanvas = document.getElementById('wheelCanvas');
+  var wctx = wcanvas.getContext('2d');
+  var spinBtn = document.getElementById('spinBtn');
+  var winnerEl = document.getElementById('winner');
+  var whintEl = document.getElementById('whint');
+
+  function shortWheelName(n){
+    if(typeof n !== 'string') n = String(n||'');
+    return n.length > 9 ? n.slice(0,8) + '…' : n;
+  }
+  function drawWheel(){
+    var S = wcanvas.width, cx = S/2, cy = S/2, r = S/2 - 8;
+    wctx.clearRect(0, 0, S, S);
+    if(participants.length === 0){
+      wctx.beginPath(); wctx.arc(cx, cy, r, 0, Math.PI*2);
+      wctx.fillStyle = 'rgba(255,255,255,.04)'; wctx.fill();
+      wctx.strokeStyle = 'rgba(255,255,255,.12)'; wctx.lineWidth = 3; wctx.stroke();
+      wctx.fillStyle = '#6d6d78';
+      wctx.font = '700 26px Inter'; wctx.textAlign = 'center'; wctx.textBaseline = 'middle';
+      wctx.fillText('Нет участников', cx, cy);
+      return;
+    }
+    wctx.save();
+    wctx.translate(cx, cy);
+    wctx.rotate(spinState.rotation);
+    wctx.translate(-cx, -cy);
+
+    var pts = participants.map(function(p){ return Math.max(p.points||0, 1); });
+    var sum = pts.reduce(function(a,b){ return a + b; }, 0);
+    var start = -Math.PI/2;
+    for(var i = 0; i < participants.length; i++){
+      var frac = pts[i] / sum;
+      var end = start + frac * Math.PI * 2;
+      wctx.beginPath(); wctx.moveTo(cx, cy); wctx.arc(cx, cy, r, start, end); wctx.closePath();
+      wctx.fillStyle = WHEEL_COLORS[i % WHEEL_COLORS.length]; wctx.fill();
+      wctx.strokeStyle = 'rgba(0,0,0,.35)'; wctx.lineWidth = 2; wctx.stroke();
+      var mid = (start + end) / 2, tr = r * 0.62;
+      wctx.save();
+      wctx.translate(cx + Math.cos(mid)*tr, cy + Math.sin(mid)*tr);
+      wctx.rotate(mid + Math.PI/2);
+      wctx.fillStyle = '#fff';
+      wctx.font = '700 ' + Math.min(18, Math.max(11, 320/participants.length)) + 'px Inter';
+      wctx.textAlign = 'center'; wctx.textBaseline = 'middle';
+      wctx.fillText(shortWheelName(participants[i].nick), 0, 0, r * 0.5);
+      wctx.restore();
+      start = end;
+    }
+    wctx.restore();
+    wctx.beginPath(); wctx.arc(cx, cy, r, 0, Math.PI*2);
+    wctx.strokeStyle = 'rgba(255,255,255,.25)'; wctx.lineWidth = 3; wctx.stroke();
+  }
+  function updateSpinControls(){
+    var ok = participants.length >= 2;
+    spinBtn.disabled = !ok || spinState.spinning;
+    spinBtn.textContent = spinState.spinning ? 'Крутим…' : 'Крутить рулетку';
+    whintEl.textContent = ok ? 'Больше баллов — больше шанс.' : 'Добавь хотя бы 2 участника выше';
+  }
+  function spinWheel(){
+    if(spinState.spinning || participants.length < 2) return;
+    spinState.spinning = true;
+    updateSpinControls();
+    winnerEl.textContent = '';
+
+    var pts = participants.map(function(p){ return Math.max(p.points||0, 1); });
+    var total = pts.reduce(function(a,b){ return a + b; }, 0);
+    var roll = Math.random() * total;
+    var idxWin = 0, acc = 0;
+    for(var i = 0; i < pts.length; i++){ acc += pts[i]; if(roll <= acc){ idxWin = i; break; } }
+
+    var beforeFrac = pts.slice(0, idxWin).reduce(function(a,b){ return a + b; }, 0) / total;
+    var segMid = (beforeFrac + (pts[idxWin]/2)/total) * Math.PI * 2;
+    var winAngle = -Math.PI/2 + segMid;
+    var targetLocal = -Math.PI/2 - winAngle;
+    var target = spinState.rotation + Math.PI * 2 * (5 + Math.random()*5);
+    var delta = ((targetLocal - target) % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
+    target += delta;
+
+    var current = spinState.rotation, totalMove = target - current;
+    var t0 = null, DUR = 4500;
+    function frame(ts){
+      if(t0 === null) t0 = ts;
+      var p = Math.min(1, (ts - t0) / DUR);
+      var ease = 1 - Math.pow(1 - p, 3);
+      spinState.rotation = current + totalMove * ease;
+      drawWheel();
+      if(p < 1){ requestAnimationFrame(frame); }
+      else{
+        spinState.spinning = false;
+        var won = participants[idxWin];
+        winnerEl.textContent = '🎉 ' + won.nick + '  (' + (won.points||0) + ' б.)';
+        updateSpinControls();
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  spinBtn.addEventListener('click', spinWheel);
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){
+      var t = e.target;
+      if(t && (t.id === 'nick' || t.id === 'points')){ e.preventDefault(); addParticipant(); }
+    }
+  });
+
+  render();
+</script>
+</body>
+</html>
