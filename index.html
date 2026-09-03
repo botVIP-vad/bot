@@ -71,6 +71,37 @@
   .wheel-fab:hover{transform:translateY(-50%) scale(1.08);box-shadow:0 14px 40px -6px rgba(121,80,242,.8)}
   .wheel-fab:active{transform:translateY(-50%) scale(.96)}
   .wheel-fab img{width:48px;height:48px;object-fit:contain}
+  .wheel-fab.active{box-shadow:0 0 0 3px var(--points),0 8px 30px -6px rgba(121,80,242,.7)}
+
+  /* ===== Settings button ===== */
+  .settings-fab{position:fixed;left:24px;top:calc(50% - 84px);z-index:50;width:56px;height:56px;border-radius:50%;border:0;
+    background:var(--grad);box-shadow:0 6px 20px -4px rgba(121,80,242,.6);cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:.25s;padding:0}
+  .settings-fab:hover{transform:scale(1.1);box-shadow:0 10px 30px -4px rgba(121,80,242,.7)}
+  .settings-fab.active{box-shadow:0 0 0 3px var(--points),0 6px 20px -4px rgba(121,80,242,.7)}
+  .settings-fab img{width:28px;height:28px;object-fit:contain}
+
+  /* ===== Settings overlay ===== */
+  .settings-overlay{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;
+    background:rgba(14,15,18,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:20px}
+  .settings-overlay.active{display:flex;animation:fadeIn .25s ease}
+  .settings-overlay .close{position:absolute;top:20px;right:24px;background:rgba(255,255,255,.08);border:1px solid var(--line);
+    color:var(--ink);width:42px;height:42px;border-radius:50%;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+  .settings-overlay .close:hover{background:var(--donation);color:#fff}
+  .settings-box{width:100%;max-width:520px}
+  .settings-section{margin-bottom:20px}
+  .settings-section h3{font-size:.75rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--primary-2);margin-bottom:10px}
+  .setting-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,.03);
+    border:1px solid var(--line);border-radius:10px;margin-bottom:6px}
+  .setting-row label{font-size:.85rem;color:var(--ink-dim)}
+  .setting-row input[type="text"],.setting-row input[type="number"]{background:rgba(255,255,255,.05);border:1px solid var(--line);
+    border-radius:6px;padding:6px 10px;color:var(--ink);font-size:.85rem;width:120px;outline:none}
+  .setting-row input:focus{border-color:var(--primary)}
+  .setting-toggle{width:44px;height:24px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.1);
+    cursor:pointer;position:relative;transition:.2s}
+  .setting-toggle.active{background:var(--points)}
+  .setting-toggle::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s}
+  .setting-toggle.active::after{left:22px}
 
   /* ===== Рулетка overlay (полный экран поверх) ===== */
   .wheel-overlay{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;
@@ -317,10 +348,57 @@
   </div>
 </div>
 
+<!-- Плавающая кнопка настроек (слева, выше рулетки) -->
+<button class="settings-fab" id="settingsFab" onclick="openSettings()" title="Настройки">
+  <img src="set.png" alt="Настройки" />
+</button>
+
 <!-- Плавающая кнопка рулетки (слева) -->
-<button class="wheel-fab" onclick="openWheel()" title="Открыть рулетку">
+<button class="wheel-fab" id="wheelFab" onclick="openWheel()" title="Открыть рулетку">
   <img src="icon.png" alt="Рулетка" width="48" height="48" />
 </button>
+
+<!-- Settings overlay -->
+<div class="settings-overlay" id="settingsOverlay">
+  <button class="close" onclick="closeSettings()">✕</button>
+  <div class="settings-box card" style="margin:0">
+    <div class="kicker">⚙️ Настройки</div>
+    <h2>Основные настройки</h2>
+    <p class="sub">Настрой параметры рулетки и таймера</p>
+
+    <div class="settings-section">
+      <h3>🎡 Рулетка</h3>
+      <div class="setting-row">
+        <label>Анимация вращения</label>
+        <div class="setting-toggle active" id="toggleAnimation" onclick="toggleSetting(this)"></div>
+      </div>
+      <div class="setting-row">
+        <label>Звук победителя</label>
+        <div class="setting-toggle active" id="toggleSound" onclick="toggleSetting(this)"></div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3>⏱ Таймер</h3>
+      <div class="setting-row">
+        <label>Звук окончания</label>
+        <div class="setting-toggle active" id="toggleTimerSound" onclick="toggleSetting(this)"></div>
+      </div>
+      <div class="setting-row">
+        <label>Предупреждение (сек)</label>
+        <input type="number" id="timerWarning" value="30" min="5" max="120" />
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3>🎨 Оформление</h3>
+      <div class="setting-row">
+        <label>Видео-фон</label>
+        <div class="setting-toggle active" id="toggleVideoBg" onclick="toggleSetting(this); toggleVideoBg()"></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Рулетка overlay (полный экран поверх) -->
 <div class="wheel-overlay" id="wheelOverlay">
@@ -486,6 +564,83 @@
   // Twitch overlay
   function openTwitch(){ document.getElementById('twOverlay').classList.add('active'); }
   function closeTwitch(){ document.getElementById('twOverlay').classList.remove('active'); }
+
+  // Settings overlay
+  function openSettings(){
+    document.getElementById('settingsOverlay').classList.add('active');
+    document.getElementById('settingsFab').classList.add('active');
+  }
+  function closeSettings(){
+    document.getElementById('settingsOverlay').classList.remove('active');
+    document.getElementById('settingsFab').classList.remove('active');
+  }
+
+  // Toggle setting
+  function toggleSetting(el){
+    el.classList.toggle('active');
+    saveSettings();
+  }
+
+  // Toggle video background
+  function toggleVideoBg(){
+    var video = document.getElementById('bgVideo');
+    var toggle = document.getElementById('toggleVideoBg');
+    if(toggle.classList.contains('active')){
+      video.style.display = 'block';
+    } else {
+      video.style.display = 'none';
+    }
+  }
+
+  // Save settings to localStorage
+  function saveSettings(){
+    var settings = {
+      animation: document.getElementById('toggleAnimation').classList.contains('active'),
+      sound: document.getElementById('toggleSound').classList.contains('active'),
+      timerSound: document.getElementById('toggleTimerSound').classList.contains('active'),
+      videoBg: document.getElementById('toggleVideoBg').classList.contains('active'),
+      timerWarning: document.getElementById('timerWarning').value
+    };
+    localStorage.setItem('topbot_settings', JSON.stringify(settings));
+  }
+
+  // Load settings from localStorage
+  function loadSettings(){
+    try{
+      var s = JSON.parse(localStorage.getItem('topbot_settings'));
+      if(s){
+        document.getElementById('toggleAnimation').classList.toggle('active', s.animation !== false);
+        document.getElementById('toggleSound').classList.toggle('active', s.sound !== false);
+        document.getElementById('toggleTimerSound').classList.toggle('active', s.timerSound !== false);
+        document.getElementById('toggleVideoBg').classList.toggle('active', s.videoBg !== false);
+        if(s.timerWarning) document.getElementById('timerWarning').value = s.timerWarning;
+      }
+    }catch(e){}
+  }
+
+  // Wheel overlay - highlight button when open
+  function openWheel(){
+    document.getElementById('wheelOverlay').classList.add('active');
+    document.getElementById('wheelFab').classList.add('active');
+    drawWheel();
+    updateWheelControls();
+  }
+  function closeWheel(){
+    document.getElementById('wheelOverlay').classList.remove('active');
+    document.getElementById('wheelFab').classList.remove('active');
+  }
+
+  // Close overlays on Escape
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){
+      if(document.getElementById('wheelOverlay').classList.contains('active')) closeWheel();
+      if(document.getElementById('twOverlay').classList.contains('active')) closeTwitch();
+      if(document.getElementById('settingsOverlay').classList.contains('active')) closeSettings();
+    }
+  });
+
+  // Load settings on page load
+  loadSettings();
 
   /* ===== TWITCH OAUTH (Implicit Grant Flow) ===== */
   (function(){
