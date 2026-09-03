@@ -188,7 +188,9 @@
   .result-box{background:rgba(20,21,26,.95);border:2px solid #fff;border-radius:24px;padding:40px 56px;
     text-align:center;box-shadow:0 20px 60px -12px rgba(0,0,0,.9);animation:resPop .35s ease}
   @keyframes resPop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
-  .result-chance{font-size:.68rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px}
+  .result-chance{font-size:1.5rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--primary-2);
+    text-shadow:0 0 22px rgba(155,124,255,.8);margin-bottom:14px}
+  .result-chance span{color:#fff;font-size:1.9rem;text-shadow:0 0 26px rgba(155,124,255,.9)}
   .result-nick{font-size:2.6rem;font-weight:800;letter-spacing:-1px;color:#fff;text-shadow:0 0 30px rgba(121,80,242,.7);margin-bottom:6px;word-break:break-word}
   .result-points{font-size:1.3rem;font-weight:800;color:var(--points);margin-bottom:26px}
   .result-confirm{background:var(--points);color:#04211c;border:0;cursor:pointer;font-family:var(--font);
@@ -207,6 +209,26 @@
   .winner-screen .ws-close{background:rgba(255,255,255,.08);border:1px solid var(--line);color:var(--ink);cursor:pointer;
     font-family:var(--font);font-weight:700;font-size:.95rem;border-radius:12px;padding:12px 34px;transition:.2s}
   .winner-screen .ws-close:hover{background:rgba(255,255,255,.16);transform:translateY(-2px)}
+
+  /* Секундомер (справа сверху экрана победителя) */
+  .ws-timer{position:absolute;top:24px;right:28px;text-align:center;background:rgba(14,15,18,.8);
+    border:2px solid #fff;border-radius:16px;padding:14px 22px;box-shadow:0 8px 26px -8px rgba(0,0,0,.8)}
+  .ws-timer .ws-timer-label{font-size:.6rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--ink-dim);margin-bottom:6px}
+  .ws-timer .ws-timer-value{font-size:2.2rem;font-weight:800;color:#fff;letter-spacing:1px;
+    text-shadow:0 0 24px rgba(121,80,242,.8);font-variant-numeric:tabular-nums}
+
+  /* Сообщения победителя (слева) */
+  .ws-messages{position:absolute;left:28px;top:50%;transform:translateY(-50%);width:280px;max-height:60vh;
+    display:flex;flex-direction:column;background:rgba(14,15,18,.8);border:1px solid var(--line);border-radius:16px;
+    padding:14px;box-shadow:0 8px 26px -8px rgba(0,0,0,.8)}
+  .ws-messages .ws-msg-label{font-size:.6rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;
+    color:var(--ink-dim);text-align:center;margin-bottom:10px}
+  .ws-msg-list{overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:6px}
+  .ws-msg-list::-webkit-scrollbar{width:8px}
+  .ws-msg-list::-webkit-scrollbar-track{background:rgba(255,255,255,.04);border-radius:99px}
+  .ws-msg-list::-webkit-scrollbar-thumb{background:var(--primary);border-radius:99px}
+  .ws-msg{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;padding:8px 12px;
+    font-size:.85rem;color:var(--ink);line-height:1.4;word-break:break-word}
 
   .spin-btn{background:var(--grad);box-shadow:0 12px 30px -8px rgba(121,80,242,.85);color:#fff;
     border:0;cursor:pointer;font-family:var(--font);font-weight:800;font-size:1.1rem;border-radius:14px;padding:15px 48px;transition:.2s;letter-spacing:.3px}
@@ -422,6 +444,14 @@
 
 <!-- Экран победителя -->
 <div class="winner-screen" id="winnerScreen">
+  <div class="ws-timer">
+    <div class="ws-timer-label">Время</div>
+    <div class="ws-timer-value" id="wsTimerValue">00:00</div>
+  </div>
+  <div class="ws-messages">
+    <div class="ws-msg-label">Сообщения</div>
+    <div class="ws-msg-list" id="wsMsgList"></div>
+  </div>
   <div class="ws-label">ПОБЕДИТЕЛЬ</div>
   <div class="ws-nick" id="wsNick"></div>
   <div class="ws-points" id="wsPoints"></div>
@@ -674,19 +704,39 @@
     lastResult = p;
     document.getElementById('resChance').textContent = (chance === null || chance === undefined) ? '—' : chance + '%';
     document.getElementById('resNick').textContent = p.nick;
-    document.getElementById('resPoints').textContent = (p.points||0) + ' б.';
+    document.getElementById('resPoints').textContent = (p.points||0) + '';
     document.getElementById('resultPanel').classList.add('active');
+  }
+  var wsTimerInterval = null;
+  var wsTimerStart = 0;
+  function wsTimerTick(){
+    var s = Math.floor((Date.now() - wsTimerStart) / 1000);
+    var m = Math.floor(s / 60), sec = s % 60;
+    document.getElementById('wsTimerValue').textContent =
+      (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
   }
   window.confirmWinner = function(){
     document.getElementById('resultPanel').classList.remove('active');
     if(lastResult){
       document.getElementById('wsNick').textContent = lastResult.nick;
-      document.getElementById('wsPoints').textContent = (lastResult.points||0) + ' б.';
+      document.getElementById('wsPoints').textContent = (lastResult.points||0) + ' ';
+      // Сообщения победителя из заявок (покупок наград)
+      var msgs = purchases.filter(function(p){ return p.nick === lastResult.nick && p.text; });
+      var listEl = document.getElementById('wsMsgList');
+      listEl.innerHTML = msgs.length
+        ? msgs.map(function(p){ return '<div class="ws-msg">' + String(p.text).replace(/</g,'&lt;') + '</div>'; }).join('')
+        : '<div class="ws-msg" style="color:var(--ink-faint)">Нет сообщений</div>';
+      // Запускаем секундомер заново
+      wsTimerStart = Date.now();
+      wsTimerTick();
+      if(wsTimerInterval) clearInterval(wsTimerInterval);
+      wsTimerInterval = setInterval(wsTimerTick, 1000);
       document.getElementById('winnerScreen').classList.add('active');
     }
   };
   window.closeWinnerScreen = function(){
     document.getElementById('winnerScreen').classList.remove('active');
+    if(wsTimerInterval){ clearInterval(wsTimerInterval); wsTimerInterval = null; }
   };
 
   function drawWheel(){
