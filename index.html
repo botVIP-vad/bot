@@ -33,7 +33,8 @@
 
   main{max-width:1180px;margin:0 auto;padding:30px 22px 60px;background:rgba(14,15,18,.7);backdrop-filter:blur(10px);border-radius:20px;border:1px solid var(--line)}
   .main-layout{display:grid;grid-template-columns:minmax(220px,280px) minmax(0,1fr);gap:18px;align-items:start}
-  .recent-panel{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+  .recent-panel{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0;cursor:pointer;transition:.2s}
+  .recent-panel:hover{background:rgba(121,80,242,.1);border-color:rgba(155,124,255,.45);transform:translateY(-2px)}
   .recent-title{color:var(--ink-faint);font-size:.65rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
   .recent-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:.7rem}
   .recent-table th{color:var(--ink-faint);font-size:.55rem;text-align:left;padding:5px 4px;border-bottom:1px solid var(--line);white-space:nowrap}
@@ -114,14 +115,15 @@
   body.stats-open .chat-fab, body.stats-open .tw-fab{z-index:210}
 
   /* ===== Chat overlay ===== */
-  .chat-overlay{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:stretch;justify-content:stretch;
-    background:rgba(14,15,18,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:0}
+  .chat-overlay{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;
+    background:rgba(14,15,18,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:20px}
   .chat-overlay.active{display:flex;animation:twFade .25s ease}
   .chat-overlay .close{position:absolute;top:20px;right:24px;z-index:5;background:rgba(255,255,255,.08);border:1px solid var(--line);
     color:var(--ink);width:42px;height:42px;border-radius:50%;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
   .chat-overlay .close:hover{background:var(--donation);color:#fff}
-  .chat-box{width:100%;height:100%;max-width:none;display:flex;flex-direction:column}
-  #chatFrame{width:100%;height:100%;max-width:none;border:0!important;border-radius:0!important;background:#18181b}
+  .chat-box{width:50vw;height:calc(100vh - 40px);max-width:900px;min-width:420px;display:flex;flex-direction:column}
+  #chatFrame{width:100%;height:100%;max-width:none;border:1px solid var(--line)!important;border-radius:16px!important;background:#18181b}
+  @media(max-width:600px){.chat-box{width:90vw;height:calc(100vh - 40px);min-width:0}}
   .chat-messages{height:60vh;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:16px;
     padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
   .chat-messages::-webkit-scrollbar{width:8px}
@@ -159,7 +161,7 @@
   .stats-overlay{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;
     background:rgba(14,15,18,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:20px}
   .stats-overlay.active{display:flex;animation:twFade .25s ease}
-  .stats-overlay .close{position:absolute;top:20px;right:24px;background:rgba(255,255,255,.08);border:1px solid var(--line);
+  .stats-overlay .close{position:absolute;top:20px;right:24px;z-index:240;pointer-events:auto;background:rgba(255,255,255,.08);border:1px solid var(--line);
     color:var(--ink);width:42px;height:42px;border-radius:50%;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
   .stats-overlay .close:hover{background:var(--donation);color:#fff}
   /* ===== Таблица статистики ===== */
@@ -598,7 +600,7 @@
 
 <main class="main-menu">
   <div class="main-layout">
-    <div class="recent-panel">
+    <div class="recent-panel" onclick="openRecentStats()" title="Открыть полную статистику">
       <div class="recent-title">Последние 5 выпадений</div>
       <div id="recentStatsMain"></div>
     </div>
@@ -795,7 +797,7 @@
 <div class="wheel-overlay" id="wheelOverlay">
   <button class="close" onclick="closeWheel()">✕</button>
   <div class="wheel-content">
-    <div class="recent-panel">
+    <div class="recent-panel" onclick="openRecentStats()" title="Открыть полную статистику">
       <div class="recent-title">Последние 5 выпадений</div>
       <div id="recentStatsWheel"></div>
     </div>
@@ -1075,7 +1077,7 @@
     var target = String(winnerNick || '').toLowerCase();
     if(!target) return;
     try{
-      wsChatSocket = new WebSocket('wss://irc-ws.twitch.tv:443');
+      wsChatSocket = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
       wsChatSocket.onopen = function(){
         // Анонимный вход (justinfan) — не требует токена
         wsChatSocket.send('CAP REQ :twitch.tv/tags');
@@ -1094,7 +1096,7 @@
           if(idx === -1) continue;
           // Ник берём из display-name тега, иначе из префикса
           var nick = '';
-          var tm = line.match(/display-name=([^;\s]+)/);
+          var tm = line.match(/(?:display-name|user-login)=([^;\s]+)/);
           if(tm && tm[1]) nick = tm[1].toLowerCase();
           if(!nick){
             var pm = line.match(/^:([^!]+)!/);
@@ -1112,8 +1114,6 @@
             var nk = document.getElementById('wsNick');
             nk.style.color = '#41c0a9';
             nk.style.textShadow = '0 0 60px rgba(65,192,169,.9),0 4px 20px rgba(0,0,0,.6)';
-            stopWinnerChat();
-            return;
           }
         }
       };
@@ -1198,8 +1198,7 @@
 
   // РЕРОЛ — запрашиваем причину, сохраняем и крутим заново
   window.winnerReroll = function(){
-    var reason = prompt('Причина реролла:');
-    if(reason === null) return; // отмена
+    var reason = 'Без причины';
     if(lastResult){
       try{
         var rr = JSON.parse(localStorage.getItem('wheelbot_rerolls') || '[]');
@@ -1211,14 +1210,22 @@
           time: new Date().toLocaleString()
         });
         localStorage.setItem('wheelbot_rerolls', JSON.stringify(rr));
-      }catch(e){}
+        var history = loadWinnerHistory();
+        history.push({
+          nick: String(lastResult.nick).toLowerCase(),
+          dep: '',
+          withdraw: '',
+          tg: '',
+          site: '',
+          status: 'rerolled',
+          reason: reason,
+          timestamp: new Date().toISOString()
+        });
+        localStorage.setItem(WINNER_HISTORY_KEY, JSON.stringify(history));
+        renderRecentWinners();
+      }catch(e){ console.error('Не удалось записать реролл:', e); }
     }
-    closeWinnerScreen();
-    // При реролле начинаем новую игру: сбрасываем выбывание
-    eliminatedObjs = [];
-    elimBannerEl.classList.remove('visible');
-    // Крутим колесо заново
-    spinWheel();
+    winnerExit();
   };
 
   // ВЫХОД — закрываем экран победителя и рулетку, открываем главное меню
@@ -2428,6 +2435,17 @@
   var siteOptionsStats = ['SkinBro', 'Petuh', 'SkinHouse', 'Upgrader', 'DinoDrop', 'SnakeSkin', 'Jabka', 'CSGORUN', 'Case-Battle', 'Skinity'];
   var statsPage = 1;
 
+  window.openRecentStats = function(){
+    var ov = document.getElementById('statsOverlay');
+    if(typeof closeChat === 'function') closeChat();
+    ov.classList.add('active');
+    document.body.classList.add('stats-open');
+    document.getElementById('statsFab').classList.add('active');
+    statsPage = 1;
+    updateStatsPage();
+    renderStats();
+  };
+
   window.toggleStats = function(){
     var ov = document.getElementById('statsOverlay');
     if(ov.classList.contains('active')) closeStats();
@@ -2480,7 +2498,7 @@
     var listEl = document.getElementById('statsList');
     var query = String(document.getElementById('statsSearch').value || '').trim().toLowerCase();
     var filtered = (history || loadWinnerHistory()).filter(function(item){
-      return String(item.nick || '').toLowerCase().indexOf(query) !== -1;
+      return item.status !== 'rerolled' && String(item.nick || '').toLowerCase().indexOf(query) !== -1;
     });
     var grouped = {};
     filtered.forEach(function(item){
@@ -2544,9 +2562,11 @@
 
   function renderStatsSummary(history){
     var summary = document.getElementById('statsSummary');
+    var rerollCount = history.filter(function(item){ return item.status === 'rerolled'; }).length;
+    var completed = history.filter(function(item){ return item.status !== 'rerolled'; });
     var totalDep = 0, totalWithdraw = 0, depCount = 0, withdrawCount = 0;
     var sites = {};
-    history.forEach(function(item){
+    completed.forEach(function(item){
       var dep = parseFloat(String(item.dep || '').replace(',', '.'));
       var withdraw = parseFloat(String(item.withdraw || '').replace(',', '.'));
       if(!isNaN(dep)){ totalDep += dep; depCount++; }
@@ -2561,6 +2581,7 @@
     var html = '<div class="summary-card"><div class="summary-label">Всего депов</div><div class="summary-value">' + totalDep + '</div></div>'
       + '<div class="summary-card"><div class="summary-label">Всего выводов</div><div class="summary-value points">' + totalWithdraw + '</div></div>'
       + '<div class="summary-card"><div class="summary-label">Успешные выводы</div><div class="summary-value percent">' + percent + '%</div></div>'
+      + '<div class="summary-card"><div class="summary-label">Всего рероллов</div><div class="summary-value">' + rerollCount + '</div></div>'
       + '<div class="site-stats">';
     Object.keys(sites).sort().forEach(function(site){
       var data = sites[site];
@@ -2592,13 +2613,14 @@
       }catch(e){ return '<span class="st-empty">—</span>'; }
     };
     var html = '<table class="stats-table"><thead><tr>'
-      + '<th>НИК</th><th>ТГ</th><th>ДЕП</th><th>ВЫВОД</th><th>САЙТ</th><th>ДАТА</th><th>ВРЕМЯ</th>'
+      + '<th>НИК</th><th>СТАТУС</th><th>ТГ</th><th>ДЕП</th><th>ВЫВОД</th><th>САЙТ</th><th>ДАТА</th><th>ВРЕМЯ</th>'
       + '</tr></thead><tbody>';
     history.slice().reverse().forEach(function(d){
       var key = String(d.nick || '').toLowerCase();
       var when = fmtDate(d.timestamp);
       html += '<tr>'
         + '<td class="st-nick">' + escapeHtml(key) + '</td>'
+        + '<td class="st-tg">' + (d.status === 'rerolled' ? 'РЕРОЛЬНУТ' : 'ВЫПАЛ') + '</td>'
         + '<td class="st-tg">' + esc(d.tg) + '</td>'
         + '<td>' + esc(d.dep) + '</td>'
         + '<td>' + esc(d.withdraw) + '</td>'
