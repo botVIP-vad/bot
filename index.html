@@ -1441,10 +1441,15 @@
           })
           .then(function(r){ return r.ok ? r.json() : r.json().then(function(j){ throw new Error(j.message || ('HTTP ' + r.status)); }); })
           .then(function(d2){
-            pollRewards = (d2.data || []).map(function(r){
+            // Управляемые (созданные этим приложением) награды ставим в начало списка опроса —
+            // выкупы наград из панели Twitch через API недоступны (404)
+            var manageable = rewards.map(function(r){ return { id: r.id, title: r.title, cost: r.cost, enabled: r.enabled, paused: r.paused }; });
+            var all = (d2.data || []).map(function(r){
               return { id: r.id, title: r.title, cost: r.cost, enabled: r.is_enabled, paused: r.is_paused };
             });
-            console.log('[rewards] для опроса выкупов:', pollRewards.length, 'наград');
+            var seenIds = {};
+            pollRewards = manageable.concat(all.filter(function(r){ return !seenIds[r.id] && (seenIds[r.id] = true); }));
+            console.log('[rewards] для опроса выкупов:', pollRewards.length, 'наград (управляемых:', manageable.length + ')');
             updatePurchasesStatus();
           })
           .catch(function(err){
@@ -1636,10 +1641,15 @@
           el.textContent = '✅ Опрос идёт (' + t + '): получено выкупов ' + lastPollSeen + ', ошибок ' + lastPollErrors + '. Новые покупки появятся здесь.';
           el.style.color = 'var(--points)';
         } else {
-          el.textContent = '✅ Опрос идёт (' + t + '): ' + pollRewards.length + ' наград, выкупов не найдено'
-            + (lastPollNotFound ? ' · ⚠️ недоступных наград: ' + lastPollNotFound + ' (создай награду через это приложение — кнопка 🎁)' : '')
-            + (lastPollErrors - lastPollNotFound ? ' (ошибок: ' + (lastPollErrors - lastPollNotFound) + ')' : '');
-          el.style.color = lastPollNotFound ? 'var(--donation)' : 'var(--ink-faint)';
+          if(lastPollNotFound && lastPollNotFound >= pollRewards.length){
+            el.textContent = '⚠️ Twitch не отдаёт выкупы этих наград (созданы НЕ через это приложение). Создай награду кнопкой 🎁 и покупай её — её покупки будут появляться.';
+            el.style.color = 'var(--donation)';
+          } else {
+            el.textContent = '✅ Опрос идёт (' + t + '): ' + pollRewards.length + ' наград, выкупов не найдено'
+              + (lastPollNotFound ? ' · недоступных наград: ' + lastPollNotFound + ' (созданы не этим приложением)' : '')
+              + (lastPollErrors - lastPollNotFound ? ' (ошибок: ' + (lastPollErrors - lastPollNotFound) + ')' : '');
+            el.style.color = 'var(--ink-faint)';
+          }
         }
       } else {
         el.textContent = '✅ Опрос выкупов: ' + pollRewards.length + ' наград';
