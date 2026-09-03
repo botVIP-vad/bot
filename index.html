@@ -1378,8 +1378,10 @@
       console.warn('Twitch OAuth requires http:// or https:// protocol. Current:', window.location.href);
     }
 
-    // Если есть токен но нет данных пользователя — загрузить
-    if(twitchData.accessToken && !twitchData.user){
+    // Если есть токен — ВСЕГДА перечитываем пользователя по токену.
+    // Иначе при смене аккаунта в кеше оставался старый user, и broadcaster_id
+    // не совпадал с токеном → Twitch возвращал 404 на все запросы выкупов.
+    if(twitchData.accessToken){
       fetchTwitchUser(twitchData.accessToken);
     } else {
       updateTwitchUI();
@@ -1451,6 +1453,7 @@
             pollRewards = manageable.concat(all.filter(function(r){ return !seenIds[r.id] && (seenIds[r.id] = true); }));
             console.log('[rewards] для опроса выкупов:', pollRewards.length, 'наград (управляемых:', manageable.length + ')');
             updatePurchasesStatus();
+            connectEventSub(); // подключить EventSub (после входа/перевхода)
           })
           .catch(function(err){
             console.error('[rewards] не удалось загрузить все награды для опроса:', err);
@@ -1789,10 +1792,93 @@
 
     var lastPollTime = null, lastPollSeen = 0, lastPollErrors = 0, lastPollNotFound = 0;
 
-    // Опрос выкупов каждые 5 секунд
+    /* ===== EventSub WebSocket: мгновенное получение покупок ===== */
+    var esWs = null, esReconnectTimer = null, esSeenMessages = {};
+
+    function addPurchaseFromEvent(ev){
+      if(!ev || !ev.id) return;
+      if(processedIds[ev.id]) return;
+      processedIds[ev.id] = true;
+      console.log('[eventsub] ПОКУПКА:', ev.user_name, '—', ev.reward_title, '—', ev.cost, 'баллов —', ev.status);
+      purchases.push({
+        nick: ev.user_name || ev.user_login || '?',
+        text: ev.user_input || '',
+        cost: ev.cost || 0,
+        reward: ev.reward_title || '',
+        redemptionId: ev.id,
+        rewardId: ev.reward_id
+      });
+      savePurchases();
+      renderPurchases();
+    }
+
+    function esSubscribe(sessionId){
+      // Одна подписка покрывает ВСЕ награды канала (условие — только broadcaster_user_id)
+      fetch(TWITCH_API + '/eventsub/subscriptions', {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          type: 'channel.channel_points_custom_reward_redemption.add',
+          version: '1',
+          condition: { broadcaster_user_id: getBroadcasterId() },
+          transport: { method: 'websocket', session_id: sessionId }
+        })
+      })
+      .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d }; }); })
+      .then(function(res){
+        if(res.ok){
+          console.log('[eventsub] подписка на покупки создана');
+        } else {
+          console.error('[eventsub] ошибка подписки:', JSON.stringify(res.d));
+        }
+      })
+      .catch(function(e){ console.error('[eventsub] ошибка подписки:', e); });
+    }
+
+    function connectEventSub(){
+      if(!isAuthorized()) return;
+      if(esWs && (esWs.readyState === WebSocket.OPEN || esWs.readyState === WebSocket.CONNECTING)) return;
+      clearTimeout(esReconnectTimer);
+      console.log('[eventsub] подключение к wss://eventsub.wss.twitch.tv/ws ...');
+      esWs = new WebSocket('wss://eventsub.wss.twitch.tv/ws');
+      esWs.onmessage = function(e){
+        var msg;
+        try{ msg = JSON.parse(e.data); }catch(err){ return; }
+        var type = msg.metadata && msg.metadata.message_type;
+        if(type === 'session_welcome'){
+          var sid = msg.payload && msg.payload.session && msg.payload.session.id;
+          if(sid) esSubscribe(sid);
+        } else if(type === 'notification'){
+          var sub = msg.payload.subscription || {};
+          if(sub.type === 'channel.channel_points_custom_reward_redemption.add'){
+            var mid = msg.metadata.message_id;
+            if(esSeenMessages[mid]) return; // дедупликация
+            esSeenMessages[mid] = true;
+            addPurchaseFromEvent(msg.payload.event);
+            updatePurchasesStatus();
+          }
+        } else if(type === 'session_reconnect'){
+          // Twitch просит переподключиться — переподключение произойдёт через onclose
+        } else if(type === 'revocation'){
+          console.warn('[eventsub] подписка отозвана:', JSON.stringify(msg.payload));
+        }
+      };
+      esWs.onclose = function(){
+        esWs = null;
+        if(isAuthorized()){
+          esReconnectTimer = setTimeout(connectEventSub, 3000); // автопереподключение
+        }
+      };
+      esWs.onerror = function(){ console.warn('[eventsub] ошибка соединения'); };
+    }
+
+    // Опрос выкупов каждые 5 секунд (резерв на случай пропущенных EventSub-событий)
     setInterval(pollRedemptions, 5000);
-    // Если уже авторизованы — загружаем награды сразу, чтобы опрос выкупов работал без открытия оверлея
-    if(isAuthorized()) loadTwitchRewards();
+    // Если уже авторизованы — загружаем награды и подключаем EventSub сразу
+    if(isAuthorized()){
+      loadTwitchRewards();
+      connectEventSub();
+    }
 
     document.addEventListener('keydown', function(e){
       if(e.key === 'Escape' && document.getElementById('rewardsOverlay').classList.contains('active')) closeRewards();
