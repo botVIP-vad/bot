@@ -81,6 +81,36 @@
   .settings-fab.active{box-shadow:0 0 0 3px var(--points),0 6px 20px -4px rgba(121,80,242,.7)}
   .settings-fab img{width:48px;height:48px;object-fit:contain}
 
+  /* ===== Connection status indicator ===== */
+  .tw-status-dot{position:fixed;right:24px;top:80px;z-index:50;width:16px;height:16px;border-radius:50%;
+    border:2px solid rgba(255,255,255,.2);transition:.3s}
+  .tw-status-dot.offline{background:#f6646c;box-shadow:0 0 8px rgba(246,100,108,.6)}
+  .tw-status-dot.online{background:#41c0a9;box-shadow:0 0 8px rgba(65,192,169,.6)}
+
+  /* ===== Rewards button ===== */
+  .rewards-fab{position:fixed;left:24px;top:calc(50% + 110px);z-index:150;width:70px;height:70px;border-radius:30px;border:0;
+    background:var(--grad);box-shadow:0 6px 20px -4px rgba(121,80,242,.6);cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:.25s;padding:0}
+  .rewards-fab:hover{transform:scale(1.1);box-shadow:0 10px 30px -4px rgba(121,80,242,.7)}
+  .rewards-fab.active{box-shadow:0 0 0 3px var(--points),0 6px 20px -4px rgba(121,80,242,.7)}
+  .rewards-fab img{width:48px;height:48px;object-fit:contain}
+
+  /* ===== Rewards overlay ===== */
+  .rewards-overlay{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;
+    background:rgba(14,15,18,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:20px}
+  .rewards-overlay.active{display:flex;animation:twFade .25s ease}
+  .rewards-overlay .close{position:absolute;top:20px;right:24px;background:rgba(255,255,255,.08);border:1px solid var(--line);
+    color:var(--ink);width:42px;height:42px;border-radius:50%;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+  .rewards-overlay .close:hover{background:var(--donation);color:#fff}
+  .rewards-box{width:100%;max-width:480px}
+  .reward-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;background:rgba(255,255,255,.03);border:1px solid var(--line);
+    border-radius:10px;padding:10px 14px}
+  .reward-row input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:8px;
+    color:var(--ink);font-family:var(--font);font-size:.9rem;padding:8px 12px;outline:none}
+  .reward-row input:focus{border-color:var(--primary)}
+  .reward-row .del{background:none;border:0;color:var(--ink-faint);cursor:pointer;font-size:1.2rem;padding:4px 8px;border-radius:6px}
+  .reward-row .del:hover{color:var(--donation);background:rgba(246,100,108,.12)}
+
   /* ===== Main menu (hidden by default) ===== */
   .main-menu{transition:.3s ease}
   .main-menu.hidden{opacity:0;transform:translateX(-30px);pointer-events:none}
@@ -119,11 +149,6 @@
   .tw-login-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
   .tw-logout-btn{background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink);margin-top:10px}
   .tw-logout-btn:hover{background:rgba(246,100,108,.15);border-color:rgba(246,100,108,.4);color:var(--donation)}
-  .tw-help{margin-top:14px;font-size:.8rem;color:var(--ink-faint);line-height:1.6}
-  .tw-help summary{cursor:pointer;color:var(--ink-dim);font-weight:600;margin-bottom:8px;user-select:none}
-  .tw-help ol{padding-left:18px}
-  .tw-help li{margin-bottom:4px}
-  .tw-help code{background:rgba(255,255,255,.08);padding:2px 6px;border-radius:4px;font-size:.78rem;color:#9146ff}
   .tw-token-display{font-size:.72rem;color:var(--ink-faint);word-break:break-all;margin-top:8px;max-height:60px;overflow:auto;background:rgba(0,0,0,.2);padding:6px 10px;border-radius:6px}
   /* ===== Twitch кнопка (правый нижний угол) ===== */
   .tw-fab{position:fixed;right:24px;bottom:24px;z-index:50;width:56px;height:56px;border-radius:50%;border:0;
@@ -259,7 +284,7 @@
   </div>
 </header>
 
-<main>
+<main class="main-menu hidden">
   <section class="card">
     <div class="kicker">Участники</div>
     <h2>Добавить участника</h2>
@@ -288,10 +313,38 @@
   </section>
 </main>
 
+<!-- Twitch connection status indicator -->
+<div class="tw-status-dot offline" id="twStatusDot" title="Twitch: не подключено"></div>
+
 <!-- Twitch FAB (правый нижний угол) -->
 <button class="tw-fab" onclick="openTwitch()" title="Twitch авторизация">
   <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2H3v16h5v4l4-4h5l4-4V2zm-10 9V7m5 4V7"/></svg>
 </button>
+
+<!-- Кнопка наград (слева под колесом) -->
+<button class="rewards-fab" id="rewardsFab" onclick="openRewards()" title="Управление наградами">
+  <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v10H4V12M22 7H2v5h20V7zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
+</button>
+
+<!-- Rewards overlay -->
+<div class="rewards-overlay" id="rewardsOverlay">
+  <button class="close" onclick="closeRewards()">✕</button>
+  <div class="rewards-box card" style="margin:0">
+    <div class="kicker">🎁 Награды</div>
+    <h2>Управление наградами</h2>
+    <p class="sub">Добавляй и редактируй награды канала. Награды используются для синхронизации баллов с Twitch.</p>
+
+    <div id="rewardsList" style="margin:16px 0">
+      <div class="empty">Нет наград. Добавь первую награду ниже ☝</div>
+    </div>
+
+    <div class="reward-row">
+      <input id="rewardName" type="text" placeholder="Название награды" autocomplete="off" />
+      <input id="rewardCost" type="number" placeholder="Стоимость" min="1" style="width:100px" autocomplete="off" />
+      <button class="btn addbtn" onclick="addReward()" style="padding:8px 14px">+</button>
+    </div>
+  </div>
+</div>
 
 <!-- Twitch overlay -->
 <div class="tw-overlay" id="twOverlay">
@@ -313,20 +366,6 @@
 
     <button class="btn tw-login-btn" id="twLoginBtn" onclick="twitchLogin()">Войти через Twitch</button>
     <button class="btn tw-logout-btn" id="twLogoutBtn" onclick="twitchLogout()" style="display:none">🚪 Выйти</button>
-
-    <details class="tw-help">
-      <summary>📖 Инструкция: как получить Client ID</summary>
-      <ol>
-        <li>Перейди на <a href="https://dev.twitch.tv/console" target="_blank" style="color:#9146ff">dev.twitch.tv/console</a></li>
-        <li>Нажми <strong>Register Your Application</strong></li>
-        <li>Имя: любое (например, <code>TopBot-Roulette</code>)</li>
-        <li>OAuth Redirect URLs: <code id="twRedirectUri">—</code></li>
-        <li>Category: <strong>Website Integration</strong></li>
-        <li>Скопируй <strong>Client ID</strong> и вставь в поле выше</li>
-        <li>Нажми «Войти через Twitch» и разреши доступ</li>
-      </ol>
-      <p style="margin-top:8px;color:var(--ink-faint)">⚠️ Для работы OAuth файл должен быть открыт через <code>http://localhost</code> или <code>https://</code></p>
-    </details>
   </div>
 </div>
 
@@ -506,13 +545,15 @@
   function openTwitch(){ document.getElementById('twOverlay').classList.add('active'); }
   function closeTwitch(){ document.getElementById('twOverlay').classList.remove('active'); }
 
-  // Toggle main menu (settings button)
-  var menuVisible = true;
+  // Toggle main menu (settings button) - like a toggle/X button
   function toggleMainMenu(){
+    // Сначала закрываем рулетку (как крестик ✕)
+    closeWheel();
+    // Затем переключаем меню
     var menu = document.querySelector('.main-menu');
     var fab = document.getElementById('settingsFab');
-    menuVisible = !menuVisible;
-    if(menuVisible){
+    var isHidden = menu.classList.contains('hidden');
+    if(isHidden){
       menu.classList.remove('hidden');
       fab.classList.add('active');
     } else {
@@ -622,6 +663,7 @@
       var logoutBtn = document.getElementById('twLogoutBtn');
       var tokenDisplay = document.getElementById('twTokenDisplay');
       var clientIdInput = document.getElementById('twClientId');
+      var statusDot = document.getElementById('twStatusDot');
 
       if(twitchData.user){
         // Авторизованы
@@ -641,6 +683,12 @@
           tokenDisplay.style.display = 'none';
           tokenDisplay.textContent = '';
         }
+        // Обновить индикатор подключения (зелёный)
+        if(statusDot){
+          statusDot.classList.remove('offline');
+          statusDot.classList.add('online');
+          statusDot.title = 'Twitch: подключено ('+twitchData.user.display_name+')';
+        }
       } else {
         // Не авторизованы
         statusBar.classList.remove('online');
@@ -651,6 +699,12 @@
         if(logoutBtn) logoutBtn.style.display = 'none';
         if(tokenDisplay) tokenDisplay.style.display = 'none';
         if(clientIdInput && twitchData.clientId) clientIdInput.value = twitchData.clientId;
+        // Обновить индикатор подключения (красный)
+        if(statusDot){
+          statusDot.classList.remove('online');
+          statusDot.classList.add('offline');
+          statusDot.title = 'Twitch: не подключено';
+        }
       }
     }
 
@@ -683,6 +737,84 @@
     } else {
       updateTwitchUI();
     }
+
+  })();
+
+
+  /* ===== REWARDS MANAGEMENT ===== */
+  (function(){
+    var REWARDS_KEY = 'twitch_rewards';
+    var rewards = loadRewards();
+
+    function loadRewards(){
+      try{ var d = JSON.parse(localStorage.getItem(REWARDS_KEY) || '[]'); return Array.isArray(d) ? d : []; }
+      catch(e){ return []; }
+    }
+    function saveRewards(){ localStorage.setItem(REWARDS_KEY, JSON.stringify(rewards)); }
+
+    window.openRewards = function(){
+      document.getElementById('rewardsOverlay').classList.add('active');
+      document.getElementById('rewardsFab').classList.add('active');
+      renderRewards();
+    };
+
+    window.closeRewards = function(){
+      document.getElementById('rewardsOverlay').classList.remove('active');
+      document.getElementById('rewardsFab').classList.remove('active');
+    };
+
+    window.addReward = function(){
+      var nameEl = document.getElementById('rewardName');
+      var costEl = document.getElementById('rewardCost');
+      var name = nameEl.value.trim();
+      var cost = parseInt(costEl.value, 10);
+      if(!name){ shake('rewardName'); return; }
+      if(isNaN(cost) || cost < 1) cost = 1;
+      rewards.push({ name: name, cost: cost });
+      saveRewards();
+      renderRewards();
+      nameEl.value = '';
+      costEl.value = '';
+      nameEl.focus();
+    };
+
+    window.removeReward = function(i){
+      rewards.splice(i, 1);
+      saveRewards();
+      renderRewards();
+    };
+
+    function renderRewards(){
+      var list = document.getElementById('rewardsList');
+      if(!rewards.length){
+        list.innerHTML = '<div class="empty">Нет наград. Добавь первую награду ниже ☝</div>';
+        return;
+      }
+      var html = '';
+      rewards.forEach(function(r, i){
+        html += '<div class="reward-row">'
+          + '<input type="text" value="'+String(r.name).replace(/"/g,'&quot;')+'" onchange="updateRewardName('+i+', this.value)" />'
+          + '<input type="number" value="'+r.cost+'" min="1" style="width:100px" onchange="updateRewardCost('+i+', this.value)" />'
+          + '<button class="del" title="Удалить" onclick="removeReward('+i+')">&times;</button>'
+          + '</div>';
+      });
+      list.innerHTML = html;
+    }
+
+    window.updateRewardName = function(i, val){
+      if(rewards[i]){ rewards[i].name = val.trim(); saveRewards(); }
+    };
+
+    window.updateRewardCost = function(i, val){
+      if(rewards[i]){ rewards[i].cost = Math.max(1, parseInt(val, 10) || 1); saveRewards(); renderRewards(); }
+    };
+
+    // Close rewards overlay on Escape
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && document.getElementById('rewardsOverlay').classList.contains('active')){
+        closeRewards();
+      }
+    });
 
   })();
 
