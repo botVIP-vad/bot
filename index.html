@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -1802,6 +1801,26 @@
     renderPurchases();
     updatePurchasesStatus();
 
+    // Проверка токена через validate — покажет реальные скоупы (права)
+    window.checkToken = function(){
+      if(!twitchData.accessToken){ console.error('Токена нет'); return; }
+      fetch('https://id.twitch.tv/oauth2/validate', {
+        headers: { 'Authorization': 'OAuth ' + twitchData.accessToken }
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        console.log('=== ПРОВЕРКА ТОКЕНА ===');
+        console.log('Client ID токена:', d.client_id);
+        console.log('Client ID на странице:', twitchData.clientId);
+        console.log('Совпадают:', d.client_id === twitchData.clientId);
+        console.log('Скоупы токена:', d.scopes);
+        console.log('channel:read:redemptions есть:', (d.scopes || []).indexOf('channel:read:redemptions') !== -1);
+        console.log('channel:manage:redemptions есть:', (d.scopes || []).indexOf('channel:manage:redemptions') !== -1);
+        console.log('login:', d.login, '| user_id:', d.user_id);
+      })
+      .catch(function(e){ console.error('Ошибка валидации:', e); });
+    };
+
     // Отладка в консоли: window.debugPurchases()
     window.debugPurchases = function(){
       console.log('=== DEBUG PURCHASES ===');
@@ -1821,10 +1840,12 @@
       pollRewards.slice(0, 5).forEach(function(r){
         fetch(TWITCH_API + '/channel_points/custom_rewards_redemptions?broadcaster_id=' + broadcasterId
           + '&reward_id=' + r.id + '&first=20', { headers: getHeaders() })
-        .then(function(res){ console.log('HTTP', res.status, '—', r.title); return res.json(); })
-        .then(function(d){
-          console.log('  выкупов:', (d.data || []).length, (d.data || []).map(function(x){ return x.user_name + ' / ' + x.status + ' / ' + x.redeemed_at; }));
-          if(d.message) console.log('  сообщение Twitch:', d.message);
+        .then(function(res){
+          console.log('HTTP', res.status, '—', r.title, '| reward_id =', r.id);
+          return res.json().then(function(d){
+            console.log('  ПОЛНЫЙ ОТВЕТ:', JSON.stringify(d));
+            console.log('  выкупов:', (d.data || []).length, (d.data || []).map(function(x){ return x.user_name + ' / ' + x.status + ' / ' + x.redeemed_at; }));
+          });
         })
         .catch(function(e){ console.error('  ошибка:', e); });
       });
