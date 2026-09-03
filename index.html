@@ -358,41 +358,23 @@
   <div class="tw-box card tw-login-card" style="margin:0">
     <div class="kicker">🎮 Twitch</div>
     <h2>Авторизация Twitch</h2>
-    <p class="sub">Войди через Twitch чтобы управлять наградами канала. После нажатия кнопки ты будешь перенаправлен на Twitch для подтверждения.</p>
 
     <div class="tw-status-bar" id="twStatusBar">
       <span id="twStatusIcon">⚪</span>
-      <span id="twStatusText">Не подключено — введи Client ID и нажми «Войти»</span>
+      <span id="twStatusText">Не подключено</span>
     </div>
 
     <div id="twFileWarning" style="display:none;background:rgba(246,100,108,.1);border:1px solid rgba(246,100,108,.3);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:.82rem;color:var(--donation);line-height:1.5">
-      ⚠️ <strong>Файл открыт напрямую (file://)</strong><br/>
-      Twitch OAuth не работает без сервера. Открой через:
-      <ul style="margin:6px 0 0 18px;padding:0">
-        <li>VS Code: установи расширение "Live Server" и нажми "Go Live"</li>
-        <li>Или терминал: <code style="background:rgba(0,0,0,.3);padding:2px 6px;border-radius:4px">npx http-server -p 8080</code></li>
-      </ul>
+      ⚠️ Файл открыт напрямую (file://) — Twitch OAuth не работает без сервера.
     </div>
 
     <div class="field" id="twClientIdField">
-      <label for="twClientId">Client ID приложения Twitch</label>
-      <input id="twClientId" type="text" placeholder="Вставь сюда свой Client ID" autocomplete="off" />
-    </div>
-
-    <div style="background:rgba(145,70,255,.08);border:1px solid rgba(145,70,255,.2);border-radius:10px;padding:12px 14px;margin:14px 0;font-size:.82rem;color:var(--ink-dim);line-height:1.5">
-      <strong>⚠️ Важно:</strong> В настройках приложения на <a href="https://dev.twitch.tv/console" target="_blank" style="color:#9146ff">dev.twitch.tv/console</a> добавь этот URI в OAuth Redirect URLs:<br/>
-      <code id="twRedirectUri" style="display:block;margin-top:6px;background:rgba(0,0,0,.3);padding:8px;border-radius:6px;color:#9146ff;word-break:break-all">—</code>
+      <label for="twClientId">Client ID</label>
+      <input id="twClientId" type="text" placeholder="Client ID" autocomplete="off" />
     </div>
 
     <button class="btn tw-login-btn" id="twLoginBtn" onclick="twitchLogin()">Войти через Twitch</button>
     <button class="btn tw-logout-btn" id="twLogoutBtn" onclick="twitchLogout()" style="display:none">🚪 Выйти</button>
-
-    <p style="margin-top:14px;font-size:.78rem;color:var(--ink-faint);line-height:1.5">
-      💡 <strong>Не работает?</strong> Убедись что:<br/>
-      1. Ты добавил URI из поля выше в OAuth Redirect URLs на dev.twitch.tv/console<br/>
-      2. Ты используешь правильный Client ID<br/>
-      3. Файл открыт через http://localhost или https:// (не file://)
-    </p>
   </div>
 </div>
 
@@ -760,7 +742,7 @@
         // Не авторизованы
         statusBar.classList.remove('online');
         statusIcon.textContent = '⚪';
-        statusText.textContent = 'Не подключено — введи Client ID и нажми «Войти»';
+        statusText.textContent = 'Не подключено';
         if(clientIdField) clientIdField.style.display = '';
         if(loginBtn) loginBtn.style.display = '';
         if(logoutBtn) logoutBtn.style.display = 'none';
