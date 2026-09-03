@@ -453,6 +453,7 @@
     <div class="purchases-list" id="purchasesList">
       <div class="empty" style="padding:14px 0;font-size:.78rem">Пока никто не купил награду</div>
     </div>
+    <div id="purchasesStatus" style="margin-top:8px;font-size:.7rem;color:var(--ink-faint)">⏳ Проверка авторизации...</div>
   </div>
 </div>
 
@@ -1330,6 +1331,9 @@
           statusDot.title = 'Twitch: не подключено';
         }
       }
+      // После входа/выхода — запустить/остановить загрузку наград для опроса выкупов
+      if(window.loadTwitchRewards){ loadTwitchRewards(); }
+      if(window.updatePurchasesStatus){ updatePurchasesStatus(); }
     }
 
     // Функция входа
@@ -1387,6 +1391,7 @@
   /* ===== TWITCH CHANNEL POINTS REWARDS ===== */
   (function(){
     var rewards = [];
+    var pollRewards = []; // все награды канала (в т.ч. созданные не этим приложением) — для опроса выкупов
     var rewardsLoading = false;
 
     function isAuthorized(){
@@ -1425,10 +1430,27 @@
             return { id: r.id, title: r.title, cost: r.cost, enabled: r.is_enabled, paused: r.is_paused, backgroundColor: r.background_color, prompt: r.prompt || '' };
           });
           if(rewards.length === 0){
-            renderRewards('📭 Нет наград. Создай первую награду ниже ☝\n\n⚠️ Если у тебя уже есть награды на Twitch, но они не отображаются — значит они созданы другим приложением (другим Client ID). Через API можно видеть только награды, созданные этим же Client ID.');
+            renderRewards('📭 Нет управляемых наград. Создай первую награду ниже ☝\n\n⚠️ Если у тебя уже есть награды на Twitch, но они не отображаются — значит они созданы другим приложением (другим Client ID). Через API можно видеть только награды, созданные этим же Client ID.');
           } else {
             renderRewards();
           }
+          // Отдельно грузим ВСЕ награды канала (включая созданные в панели Twitch) —
+          // по ним опрашиваются покупки, иначе покупки не появятся в панели
+          fetch(TWITCH_API + '/channel_points/custom_rewards?broadcaster_id=' + broadcasterId, {
+            headers: getHeaders()
+          })
+          .then(function(r){ return r.ok ? r.json() : r.json().then(function(j){ throw new Error(j.message || ('HTTP ' + r.status)); }); })
+          .then(function(d2){
+            pollRewards = (d2.data || []).map(function(r){
+              return { id: r.id, title: r.title, cost: r.cost, enabled: r.is_enabled, paused: r.is_paused };
+            });
+            console.log('[rewards] для опроса выкупов:', pollRewards.length, 'наград');
+            updatePurchasesStatus();
+          })
+          .catch(function(err){
+            console.error('[rewards] не удалось загрузить все награды для опроса:', err);
+            updatePurchasesStatus('Ошибка загрузки наград: ' + (err.message || err));
+          });
         } else {
           rewards = [];
           var msg = d.message || 'Неизвестная ошибка';
@@ -1586,6 +1608,27 @@
       renderPurchases();
     };
 
+    function updatePurchasesStatus(errMsg){
+      var el = document.getElementById('purchasesStatus');
+      if(!el) return;
+      if(errMsg){
+        el.textContent = '⚠️ ' + errMsg;
+        el.style.color = 'var(--donation)';
+        return;
+      }
+      if(!isAuthorized()){
+        el.textContent = '🔒 Войди через Twitch, чтобы получать покупки наград';
+        el.style.color = 'var(--ink-faint)';
+      } else if(!pollRewards.length){
+        el.textContent = '⏳ Загрузка наград для опроса выкупов...';
+        el.style.color = 'var(--ink-faint)';
+      } else {
+        el.textContent = '✅ Опрос выкупов: ' + pollRewards.length + ' наград';
+        el.style.color = 'var(--points)';
+      }
+    }
+    window.updatePurchasesStatus = updatePurchasesStatus;
+
     function renderPurchases(){
       var list = document.getElementById('purchasesList');
       if(!purchases.length){
@@ -1654,15 +1697,15 @@
     }
 
     function pollRedemptions(){
-      if(!isAuthorized() || !rewards.length) return;
+      if(!isAuthorized() || !pollRewards.length) return;
       var broadcasterId = getBroadcasterId();
-      rewards.forEach(function(r){
+      pollRewards.forEach(function(r){
         // Опрашиваем и необработанные (UNFULFILLED), и автоматически выполненные (FULFILLED) выкупы —
         // иначе покупки наград с включённым "пропускать очередь" никогда не появляются в панели
         ['UNFULFILLED', 'FULFILLED'].forEach(function(status){
           fetch(TWITCH_API + '/channel_points/custom_rewards_redemptions?broadcaster_id=' + broadcasterId
             + '&reward_id=' + r.id + '&status=' + status + '&first=20&sort=' + (status === 'FULFILLED' ? 'NEWEST' : 'OLDEST'), { headers: getHeaders() })
-          .then(function(res){ return res.ok ? res.json() : null; })
+          .then(function(res){ return res.ok ? res.json() : res.json().then(function(j){ throw new Error(j.message || ('HTTP ' + res.status)); }); })
           .then(function(d){
             if(!d || !d.data) return;
             var changed = false;
@@ -1684,7 +1727,10 @@
               renderPurchases(); // сразу показываем новые покупки в панели
             }
           })
-          .catch(function(){});
+          .catch(function(err){
+            console.error('[poll] ошибка опроса выкупов (награда "' + r.title + '"):', err);
+            updatePurchasesStatus('Ошибка опроса выкупов: ' + (err.message || err));
+          });
         });
       });
     }
@@ -1699,6 +1745,7 @@
     });
 
     renderPurchases();
+    updatePurchasesStatus();
 
   })();
 
