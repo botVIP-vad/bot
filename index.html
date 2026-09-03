@@ -1581,9 +1581,8 @@
 
     window.clearPurchases = function(){
       purchases = [];
-      processedIds = {};
+      // processedIds НЕ сбрасываем — иначе уже показанные выкупы снова вернутся из истории Twitch
       localStorage.setItem(PURCH_KEY, '[]');
-      localStorage.setItem(processedKey, '{}');
       renderPurchases();
     };
 
@@ -1597,9 +1596,11 @@
       purchases.forEach(function(p, i){
         var text = p.text ? String(p.text).replace(/</g,'&lt;').replace(/"/g,'&quot;') : '';
         var nick = String(p.nick).replace(/</g,'&lt;').replace(/"/g,'&quot;');
+        var title = p.reward ? String(p.reward).replace(/</g,'&lt;').replace(/"/g,'&quot;') : '';
         html += '<div class="purchase-row">'
           + '<span class="p-nick">' + nick + '</span>'
-          + '<span class="p-text" title="' + text + '">' + text + '</span>'
+          + (title ? '<span class="p-text" title="' + title + '">' + title + '</span>' : '')
+          + (text ? '<span class="p-text" title="' + text + '">' + text + '</span>' : '')
           + '<span class="p-cost">' + p.cost + ' </span>'
           + '<button class="p-accept" title="Добавить участника" onclick="confirmPurchase(' + i + ')">ПОДТВЕРДИТЬ</button>'
           + '<button class="p-reject" title="Отклонить и вернуть баллы" onclick="rejectPurchase(' + i + ')">ОТКЛОНИТЬ</button>'
@@ -1643,7 +1644,7 @@
         + '&reward_id=' + p.rewardId + '&id=' + p.redemptionId, {
         method: 'PATCH',
         headers: getHeaders(),
-        body: JSON.stringify({ status: status, fulfillment_ids: [p.redemptionId] })
+        body: JSON.stringify({ status: status })
       }).catch(function(){});
     }
 
@@ -1656,30 +1657,35 @@
       if(!isAuthorized() || !rewards.length) return;
       var broadcasterId = getBroadcasterId();
       rewards.forEach(function(r){
-        fetch(TWITCH_API + '/channel_points/custom_rewards_redemptions?broadcaster_id=' + broadcasterId
-          + '&reward_id=' + r.id + '&status=UNFULFILLED&first=50&sort=OLDEST', { headers: getHeaders() })
-        .then(function(res){ return res.ok ? res.json() : null; })
-        .then(function(d){
-          if(!d || !d.data) return;
-          var changed = false;
-          d.data.forEach(function(rd){
-            if(processedIds[rd.id]) return;
-            processedIds[rd.id] = true;
-            changed = true;
-            purchases.push({
-              nick: rd.user_name || rd.user_login || '?',
-              text: rd.user_input || '',
-              cost: rd.cost || r.cost || 0,
-              redemptionId: rd.id,
-              rewardId: r.id
+        // Опрашиваем и необработанные (UNFULFILLED), и автоматически выполненные (FULFILLED) выкупы —
+        // иначе покупки наград с включённым "пропускать очередь" никогда не появляются в панели
+        ['UNFULFILLED', 'FULFILLED'].forEach(function(status){
+          fetch(TWITCH_API + '/channel_points/custom_rewards_redemptions?broadcaster_id=' + broadcasterId
+            + '&reward_id=' + r.id + '&status=' + status + '&first=20&sort=' + (status === 'FULFILLED' ? 'NEWEST' : 'OLDEST'), { headers: getHeaders() })
+          .then(function(res){ return res.ok ? res.json() : null; })
+          .then(function(d){
+            if(!d || !d.data) return;
+            var changed = false;
+            d.data.forEach(function(rd){
+              if(processedIds[rd.id]) return;
+              processedIds[rd.id] = true;
+              changed = true;
+              purchases.push({
+                nick: rd.user_name || rd.user_login || '?',
+                text: rd.user_input || '',
+                cost: rd.cost || r.cost || 0,
+                reward: r.title || '',
+                redemptionId: rd.id,
+                rewardId: r.id
+              });
             });
-          });
-          if(changed){
-            savePurchases();
-            renderPurchases(); // сразу показываем новые покупки в панели
-          }
-        })
-        .catch(function(){});
+            if(changed){
+              savePurchases();
+              renderPurchases(); // сразу показываем новые покупки в панели
+            }
+          })
+          .catch(function(){});
+        });
       });
     }
 
