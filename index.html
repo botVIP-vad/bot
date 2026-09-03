@@ -100,8 +100,7 @@
   .wheel-canvas-wrap canvas{width:100%;height:100%;display:block;filter:drop-shadow(0 20px 60px rgba(121,80,242,.3))}
   .wheel-arrow{position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:0;height:0;
     border-left:18px solid transparent;border-right:18px solid transparent;border-top:32px solid var(--donation);z-index:5;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5))}
-  .wheel-hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70px;height:70px;border-radius:50%;background:var(--grad);
-    box-shadow:0 0 0 6px rgba(121,80,242,.4),0 8px 30px rgba(0,0,0,.5);z-index:4;display:grid;place-items:center;font-size:1.5rem}
+
   .spin-btn{background:var(--grad);box-shadow:0 12px 30px -8px rgba(121,80,242,.85);color:#fff;
     border:0;cursor:pointer;font-family:var(--font);font-weight:800;font-size:1.1rem;border-radius:14px;padding:15px 48px;transition:.2s;letter-spacing:.3px}
   .spin-btn:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.06)}
@@ -263,7 +262,7 @@
   <section class="card">
     <div class="kicker">Участники</div>
     <h2>Добавить участника</h2>
-    <p class="sub">Впиши ник и количество баллов. Чем больше баллов — тем больше шанс в рулетке.</p>
+    <p class="sub">Впиши ник и количество баллов. Чем больше баллов тем больше шанс в рулетке.</p>
 
     <div class="form">
       <div class="field">
@@ -347,16 +346,15 @@
   <button class="close" onclick="closeWheel()">✕</button>
   <div class="title">
     <h2>Колесо участников</h2>
-    <p>Крути колесо — победитель определяется по баллам</p>
+    <p></p>
   </div>
   <div class="wheel-canvas-wrap">
     <div class="wheel-arrow"></div>
     <canvas id="wheelCanvas" width="600" height="600"></canvas>
-    <div class="wheel-hub">🎡</div>
   </div>
   <button class="spin-btn" id="spinBtn" disabled>Крутить рулетку</button>
   <div class="winner-display" id="winnerDisplay"></div>
-  <div class="wheel-hint" id="wheelHint">Добавь хотя бы 2 участника выше</div>
+  <div class="wheel-hint" id="wheelHint"></div>
 </div>
 
 <script>
@@ -469,7 +467,7 @@
     var ok = participants.length >= 2;
     spinBtn.disabled = !ok || spinState.spinning;
     spinBtn.textContent = spinState.spinning ? 'Крутим…' : 'Крутить рулетку';
-    wheelHint.textContent = ok ? 'Больше баллов — больше шанс.' : 'Добавь хотя бы 2 участника выше';
+    wheelHint.textContent = ok ? 'Больше баллов больше шанс.' : '';
   }
 
   function spinWheel(){
