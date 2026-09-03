@@ -89,7 +89,7 @@
   .wheel-overlay{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;
     background:rgba(14,15,18,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:20px;pointer-events:none}
   .wheel-overlay.active{display:flex;animation:fadeIn .25s ease}
-  .wheel-overlay .close, .wheel-overlay .spin-btn, .wheel-overlay canvas{pointer-events:auto}
+  .wheel-overlay .close, .wheel-overlay .spin-btn, .wheel-overlay canvas, .wheel-overlay .wheel-canvas-wrap{pointer-events:auto}
   @keyframes fadeIn{from{opacity:0}to{opacity:1}}
   .wheel-overlay .close{position:absolute;top:20px;right:24px;background:rgba(255,255,255,.08);border:1px solid var(--line);
     color:var(--ink);width:42px;height:42px;border-radius:50%;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
@@ -507,11 +507,18 @@
   function closeTwitch(){ document.getElementById('twOverlay').classList.remove('active'); }
 
   // Toggle main menu (settings button)
+  var menuVisible = true;
   function toggleMainMenu(){
     var menu = document.querySelector('.main-menu');
     var fab = document.getElementById('settingsFab');
-    menu.classList.toggle('hidden');
-    fab.classList.toggle('active');
+    menuVisible = !menuVisible;
+    if(menuVisible){
+      menu.classList.remove('hidden');
+      fab.classList.add('active');
+    } else {
+      menu.classList.add('hidden');
+      fab.classList.remove('active');
+    }
   }
 
   // Wheel overlay - highlight button when open
