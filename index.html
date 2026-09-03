@@ -571,6 +571,9 @@
     wheelMode = mode;
     document.getElementById('modeNormalBtn').classList.toggle('active', mode === 'normal');
     document.getElementById('modeElimBtn').classList.toggle('active', mode === 'elimination');
+    // Перерисовываем колесо: веса секторов зависят от режима
+    drawWheel();
+    updateArrowNick();
   }
 
   function setSpinDuration(val){
@@ -589,16 +592,26 @@
     return participants.filter(function(p){ return eliminatedNicks.indexOf(p.nick) === -1; });
   }
 
+  // Веса секторов: обычный режим — прямо пропорционально баллам,
+  // выбывание — линейная инверсия (больше ставка → меньше сектор выбывания)
+  function wheelWeights(list){
+    var bids = list.map(function(p){ return Math.max(p.points||0, 1); });
+    if(wheelMode !== 'elimination') return bids;
+    var bmax = Math.max.apply(null, bids), bmin = Math.min.apply(null, bids);
+    if(bmax === bmin) return bids.map(function(){ return 1; });
+    return bids.map(function(b){ return (bmax + bmin) - b; });
+  }
+
   // Ник, на который сейчас указывает стрелка (сверху)
   function arrowNick(){
     var list = activeWheelParticipants();
     if(!list.length) return '';
-    var pts = list.map(function(p){ return Math.max(p.points||0,1); });
-    var total = pts.reduce(function(a,b){ return a+b; }, 0);
+    var w = wheelWeights(list);
+    var total = w.reduce(function(a,b){ return a+b; }, 0);
     var frac = ((-spinState.rotation) % (Math.PI*2) + Math.PI*2) % (Math.PI*2) / (Math.PI*2);
     var acc = 0;
-    for(var i=0;i<pts.length;i++){
-      acc += pts[i]/total;
+    for(var i=0;i<w.length;i++){
+      acc += w[i]/total;
       if(frac <= acc) return list[i].nick;
     }
     return list[list.length-1].nick;
@@ -620,7 +633,7 @@
       return;
     }
     wctx.save(); wctx.translate(cx,cy); wctx.rotate(spinState.rotation); wctx.translate(-cx,-cy);
-    var pts = list.map(function(p){ return Math.max(p.points||0,1); });
+    var pts = wheelWeights(list);
     var sum = pts.reduce(function(a,b){ return a+b; }, 0);
     var start = -Math.PI/2;
     for(var i=0;i<list.length;i++){
@@ -674,14 +687,24 @@
         drawWheel();
         updateArrowNick();
         if(wheelMode === 'elimination'){
-          // Выбывание только с колеса: если активных больше одного — убираем победителя с колеса.
-          // Последний оставшийся не выбывает.
-          if(activeWheelParticipants().length > 1){
+          var remaining = activeWheelParticipants();
+          if(remaining.length > 1){
+            // Колесо указало на выбывающего; веса уже инвертированы (большая ставка = малый сектор)
             eliminatedNicks.push(w.nick);
             elimBannerEl.textContent = 'ВЫБЫЛ: ' + w.nick;
             elimBannerEl.classList.add('visible');
+            elimBannerEl.style.background = 'rgba(246,100,108,.12)';
+            elimBannerEl.style.borderColor = 'rgba(246,100,108,.35)';
+            elimBannerEl.style.color = 'var(--donation)';
             drawWheel();
             updateArrowNick();
+          } else {
+            // Остался один — победитель
+            elimBannerEl.textContent = 'ПОБЕДИТЕЛЬ: ' + remaining[0].nick;
+            elimBannerEl.classList.add('visible');
+            elimBannerEl.style.background = 'rgba(65,192,169,.12)';
+            elimBannerEl.style.borderColor = 'rgba(65,192,169,.35)';
+            elimBannerEl.style.color = 'var(--points)';
           }
         }
         updateWheelControls();
