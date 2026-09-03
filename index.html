@@ -131,6 +131,13 @@
   .wheel-canvas-wrap canvas{width:100%;height:100%;display:block;filter:drop-shadow(0 20px 60px rgba(121,80,242,.3))}
   .wheel-arrow{position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:0;height:0;
     border-left:18px solid transparent;border-right:18px solid transparent;border-top:32px solid var(--donation);z-index:5;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5))}
+  .arrow-nick{margin-top:4px;background:rgba(14,15,18,.85);border:1px solid var(--line);border-radius:999px;
+    padding:7px 18px;font-weight:800;font-size:.95rem;color:#fff;letter-spacing:.3px;
+    box-shadow:0 6px 18px -6px rgba(0,0,0,.7);transition:color .15s;text-align:center;min-height:20px}
+  .elim-banner{display:none;background:rgba(246,100,108,.12);border:1px solid rgba(246,100,108,.35);
+    border-radius:12px;padding:10px 12px;text-align:center;font-weight:800;font-size:.92rem;color:var(--donation);
+    animation:fadeIn .3s ease}
+  .elim-banner.visible{display:block}
 
   /* ===== Wheel content: колесо слева, настройки справа ===== */
   .wheel-content{display:flex;gap:36px;align-items:center;justify-content:center;flex-wrap:wrap}
@@ -464,12 +471,13 @@
         <div class="wheel-arrow"></div>
         <canvas id="wheelCanvas" width="600" height="600"></canvas>
       </div>
+      <div class="arrow-nick" id="arrowNick">&nbsp;</div>
       <button class="spin-btn" id="spinBtn" disabled>Крутить рулетку</button>
-      <div class="winner-display" id="winnerDisplay"></div>
-      <div class="wheel-hint" id="wheelHint"></div>
     </div>
 
     <div class="wheel-side">
+      <div class="elim-banner" id="elimBanner"></div>
+      <div class="side-label">Режим рулетки</div>
       <div class="side-label">Режим рулетки</div>
       <div class="mode-toggle">
         <button class="mode-btn" id="modeNormalBtn" onclick="setWheelMode('normal')">ОБЫЧНЫЙ</button>
@@ -552,8 +560,8 @@
   var wcanvas = document.getElementById('wheelCanvas');
   var wctx = wcanvas.getContext('2d');
   var spinBtn = document.getElementById('spinBtn');
-  var winnerDisplay = document.getElementById('winnerDisplay');
-  var wheelHint = document.getElementById('wheelHint');
+  var arrowNickEl = document.getElementById('arrowNick');
+  var elimBannerEl = document.getElementById('elimBanner');
   var wheelOverlay = document.getElementById('wheelOverlay');
   var spinState = { spinning:false, rotation:0 };
   var wheelMode = 'normal';      // 'normal' | 'elimination'
@@ -580,6 +588,25 @@
 
   function activeWheelParticipants(){
     return participants.filter(function(p){ return eliminatedNicks.indexOf(p.nick) === -1; });
+  }
+
+  // Ник, на который сейчас указывает стрелка (сверху)
+  function arrowNick(){
+    var list = activeWheelParticipants();
+    if(!list.length) return '';
+    var pts = list.map(function(p){ return Math.max(p.points||0,1); });
+    var total = pts.reduce(function(a,b){ return a+b; }, 0);
+    var frac = ((-spinState.rotation) % (Math.PI*2) + Math.PI*2) % (Math.PI*2) / (Math.PI*2);
+    var acc = 0;
+    for(var i=0;i<pts.length;i++){
+      acc += pts[i]/total;
+      if(frac <= acc) return list[i].nick;
+    }
+    return list[list.length-1].nick;
+  }
+  function updateArrowNick(){
+    var n = arrowNick();
+    arrowNickEl.textContent = n || '\u00a0';
   }
 
   function drawWheel(){
@@ -618,13 +645,13 @@
     var ok = activeWheelParticipants().length >= 2;
     spinBtn.disabled = !ok || spinState.spinning;
     spinBtn.textContent = spinState.spinning ? 'Крутим…' : 'Крутить рулетку';
-    wheelHint.textContent = ok ? 'Больше баллов больше шанс.' : '';
   }
 
   function spinWheel(){
     var list = activeWheelParticipants();
     if(spinState.spinning || list.length < 2) return;
-    spinState.spinning = true; updateWheelControls(); winnerDisplay.textContent = '';
+    spinState.spinning = true; updateWheelControls();
+    elimBannerEl.classList.remove('visible');
     var pts = list.map(function(p){ return Math.max(p.points||0,1); });
     var total = pts.reduce(function(a,b){ return a+b; }, 0);
     var roll = Math.random()*total, idxWin=0, acc=0;
@@ -640,21 +667,24 @@
     function frame(ts){
       if(t0===null) t0=ts;
       var p=Math.min(1,(ts-t0)/DUR), ease=1-Math.pow(1-p,3);
-      spinState.rotation=current+totalMove*ease; drawWheel();
+      spinState.rotation=current+totalMove*ease; drawWheel(); updateArrowNick();
       if(p<1){ requestAnimationFrame(frame); }
       else{
         spinState.spinning=false;
         var w=list[idxWin];
-        var modeSuffix = wheelMode === 'elimination' ? ' — выбыл!' : '';
-        winnerDisplay.textContent='🎉 '+w.nick+'  ('+(w.points||0)+' б.)'+modeSuffix;
+        drawWheel();
+        updateArrowNick();
         if(wheelMode === 'elimination'){
           // Выбывание только с колеса: если активных больше одного — убираем победителя с колеса.
           // Последний оставшийся не выбывает.
           if(activeWheelParticipants().length > 1){
             eliminatedNicks.push(w.nick);
+            elimBannerEl.textContent = 'ВЫБЫЛ: ' + w.nick;
+            elimBannerEl.classList.add('visible');
+            drawWheel();
+            updateArrowNick();
           }
         }
-        drawWheel();
         updateWheelControls();
       }
     }
@@ -697,7 +727,9 @@
     // Скрываем меню при открытии рулетки
     document.querySelector('.main-menu').classList.add('hidden');
     document.getElementById('settingsFab').classList.remove('active');
+    elimBannerEl.classList.remove('visible');
     drawWheel();
+    updateArrowNick();
     updateWheelControls();
   }
   function closeWheel(){
