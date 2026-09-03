@@ -1681,7 +1681,8 @@
           + (title ? '<span class="p-text" title="' + title + '">' + title + '</span>' : '')
           + (text ? '<span class="p-text" title="' + text + '">' + text + '</span>' : '')
           + '<span class="p-cost" title="Стоимость награды">🪙 ' + (p.cost || 0) + '</span>'
-          + '<button class="p-accept" title="Добавить участника" onclick="confirmPurchase(' + i + ')">ПОДТВЕРДИТЬ</button>'
+          + '<button class="p-accept" title="Прибавить баллы к существующему участнику (или добавить нового, если ник ещё не в списке)" onclick="sumPurchase(' + i + ')">СУММИРОВАТЬ</button>'
+          + '<button class="p-accept" title="Добавить отдельным участником" onclick="confirmPurchase(' + i + ')">ОТДЕЛЬНО</button>'
           + '<button class="p-reject" title="Отклонить и вернуть баллы" onclick="rejectPurchase(' + i + ')">ОТКЛОНИТЬ</button>'
           + '</div>';
       });
@@ -1703,6 +1704,33 @@
       savePurchases();
       renderPurchases();
       // Пометить выкуп выполненным на Twitch
+      fulfillRedemption(p, 'FULFILLED');
+    };
+
+    // СУММИРОВАТЬ — прибавить баллы к уже существующему участнику с тем же ником
+    // (если ник ещё не в списке — добавляет нового, как "отдельно")
+    window.sumPurchase = function(i){
+      var p = purchases[i];
+      if(!p) return;
+      var nick = p.nick;
+      var num = parseInt(String(p.text).replace(/[^\d]/g, ''), 10);
+      var pts = (!isNaN(num) && num > 0) ? num : (p.cost || 0);
+      var existing = null;
+      var nickLow = String(nick).toLowerCase();
+      for(var j = 0; j < participants.length; j++){
+        if(String(participants[j].nick).toLowerCase() === nickLow){ existing = participants[j]; break; }
+      }
+      if(existing){
+        existing.points = (existing.points || 0) + pts;
+        console.log('[purchases] суммировано:', nick, '+', pts, '→', existing.points);
+      } else {
+        participants.push({ nick: nick, points: pts });
+      }
+      save();
+      render();
+      purchases.splice(i, 1);
+      savePurchases();
+      renderPurchases();
       fulfillRedemption(p, 'FULFILLED');
     };
 
