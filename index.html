@@ -194,6 +194,12 @@
   .purchase-row .p-nick{font-weight:800;font-size:.85rem;color:var(--primary-2);flex-shrink:0}
   .purchase-row .p-text{flex:1;min-width:0;font-size:.8rem;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .purchase-row .p-cost{font-weight:800;font-size:.8rem;color:var(--points);flex-shrink:0}
+  .purchase-row .p-accept{background:var(--points);border:0;color:#04211c;cursor:pointer;font-weight:800;
+    font-family:var(--font);font-size:.68rem;padding:5px 10px;border-radius:8px;flex-shrink:0;transition:.2s}
+  .purchase-row .p-accept:hover{background:#35a893}
+  .purchase-row .p-reject{background:none;border:1px solid var(--line);color:var(--ink-faint);cursor:pointer;
+    font-family:var(--font);font-weight:700;font-size:.68rem;padding:5px 10px;border-radius:8px;flex-shrink:0;transition:.2s}
+  .purchase-row .p-reject:hover{color:var(--donation);border-color:rgba(246,100,108,.4);background:rgba(246,100,108,.12)}
 
   /* Flip-Clock */
   .flip-clock{display:flex;gap:12px}
@@ -318,7 +324,7 @@
     <div class="form">
       <div class="field">
         <label for="nick">Ник участника</label>
-        <input id="nick" type="text" placeholder="например, vaduum25" autocomplete="off" />
+        <input id="nick" type="text" placeholder="например, sypher48" autocomplete="off" />
       </div>
       <div class="field">
         <label for="points">Баллы</label>
@@ -1041,15 +1047,57 @@
         return;
       }
       var html = '';
-      purchases.forEach(function(p){
+      purchases.forEach(function(p, i){
         var text = p.text ? String(p.text).replace(/</g,'&lt;').replace(/"/g,'&quot;') : '';
+        var nick = String(p.nick).replace(/</g,'&lt;').replace(/"/g,'&quot;');
         html += '<div class="purchase-row">'
-          + '<span class="p-nick">' + String(p.nick).replace(/</g,'&lt;') + '</span>'
+          + '<span class="p-nick">' + nick + '</span>'
           + '<span class="p-text" title="' + text + '">' + text + '</span>'
           + '<span class="p-cost">' + p.cost + ' б.</span>'
+          + '<button class="p-accept" title="Добавить участника" onclick="confirmPurchase(' + i + ')">ПОДТВЕРДИТЬ</button>'
+          + '<button class="p-reject" title="Отклонить и вернуть баллы" onclick="rejectPurchase(' + i + ')">ОТКЛОНИТЬ</button>'
           + '</div>';
       });
       list.innerHTML = html;
+    }
+
+    // ПОДТВЕРДИТЬ — добавить участника в список рулетки
+    window.confirmPurchase = function(i){
+      var p = purchases[i];
+      if(!p) return;
+      var nick = p.nick;
+      // Баллы берём из текста заявки (число), если не указано — стоимость награды
+      var num = parseInt(String(p.text).replace(/[^\d]/g, ''), 10);
+      var pts = (!isNaN(num) && num > 0) ? num : (p.cost || 0);
+      participants.push({ nick: nick, points: pts });
+      save();
+      render();
+      purchases.splice(i, 1);
+      savePurchases();
+      renderPurchases();
+      // Пометить выкуп выполненным на Twitch
+      fulfillRedemption(p, 'FULFILLED');
+    };
+
+    // ОТКЛОНИТЬ — вернуть баллы пользователю (статус CANCELED возвращает баллы автоматически)
+    window.rejectPurchase = function(i){
+      var p = purchases[i];
+      if(!p) return;
+      purchases.splice(i, 1);
+      savePurchases();
+      renderPurchases();
+      fulfillRedemption(p, 'CANCELED');
+    };
+
+    function fulfillRedemption(p, status){
+      if(!isAuthorized() || !p.rewardId || !p.redemptionId) return;
+      var broadcasterId = getBroadcasterId();
+      fetch(TWITCH_API + '/channel_points/custom_rewards_redemptions?broadcaster_id=' + broadcasterId
+        + '&reward_id=' + p.rewardId, {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify({ status: status, fulfillment_ids: [p.redemptionId] })
+      }).catch(function(){});
     }
 
     function savePurchases(){
@@ -1074,15 +1122,10 @@
             purchases.push({
               nick: rd.user_name || rd.user_login || '?',
               text: rd.user_input || '',
-              cost: rd.cost || r.cost || 0
+              cost: rd.cost || r.cost || 0,
+              redemptionId: rd.id,
+              rewardId: r.id
             });
-            // Отмечаем выкуп выполненным, чтобы не копилось
-            fetch(TWITCH_API + '/channel_points/custom_rewards_redemptions?broadcaster_id=' + broadcasterId
-              + '&reward_id=' + r.id, {
-              method: 'PATCH',
-              headers: getHeaders(),
-              body: JSON.stringify({ status: 'FULFILLED', fulfillment_ids: [rd.id] })
-            }).catch(function(){});
           });
           if(changed) savePurchases();
         })
