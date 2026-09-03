@@ -112,6 +112,22 @@
   .tw-help li{margin-bottom:4px}
   .tw-help code{background:rgba(255,255,255,.08);padding:2px 6px;border-radius:4px;font-size:.78rem;color:#9146ff}
   .tw-token-display{font-size:.72rem;color:var(--ink-faint);word-break:break-all;margin-top:8px;max-height:60px;overflow:auto;background:rgba(0,0,0,.2);padding:6px 10px;border-radius:6px}
+  /* ===== Twitch кнопка (правый нижний угол) ===== */
+  .tw-fab{position:fixed;right:24px;bottom:24px;z-index:50;width:56px;height:56px;border-radius:50%;border:0;
+    background:linear-gradient(135deg,#9146ff,#772ce8);box-shadow:0 6px 20px -4px rgba(145,70,255,.6);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:.25s;color:#fff;font-size:1.4rem}
+  .tw-fab:hover{transform:scale(1.1);box-shadow:0 10px 30px -4px rgba(145,70,255,.7)}
+
+  /* ===== Twitch overlay ===== */
+  .tw-overlay{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;
+    background:rgba(14,15,18,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:20px}
+  .tw-overlay.active{display:flex;animation:twFade .25s ease}
+  @keyframes twFade{from{opacity:0}to{opacity:1}}
+  .tw-overlay .close{position:absolute;top:20px;right:24px;background:rgba(255,255,255,.08);border:1px solid var(--line);
+    color:var(--ink);width:42px;height:42px;border-radius:50%;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+  .tw-overlay .close:hover{background:var(--donation);color:#fff}
+  .tw-box{width:100%;max-width:480px}
+
 </style>
 </head>
 <body>
@@ -159,35 +175,34 @@
     </div>
 
   </section>
+</main>
 
-  <!-- Twitch Login / Registration -->
-  <section class="card tw-login-card">
+<!-- Twitch FAB (правый нижний угол) -->
+<button class="tw-fab" onclick="openTwitch()" title="Twitch авторизация">
+  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2H3v16h5v4l4-4h5l4-4V2zm-10 9V7m5 4V7"/></svg>
+</button>
+
+<!-- Twitch overlay -->
+<div class="tw-overlay" id="twOverlay">
+  <button class="close" onclick="closeTwitch()">✕</button>
+  <div class="tw-box card tw-login-card" style="margin:0">
     <div class="kicker">🎮 Twitch</div>
     <h2>Авторизация Twitch</h2>
     <p class="sub">Войди через Twitch, чтобы управлять наградами канала и синхронизировать баллы.</p>
 
-    <!-- Статус подключения -->
     <div class="tw-status-bar" id="twStatusBar">
       <span id="twStatusIcon">⚪</span>
       <span id="twStatusText">Не подключено — введи Client ID и нажми «Войти»</span>
     </div>
 
-    <!-- Форма Client ID -->
     <div class="field" id="twClientIdField">
       <label for="twClientId">Client ID приложения Twitch</label>
       <input id="twClientId" type="text" placeholder="Вставь сюда свой Client ID" autocomplete="off" />
     </div>
 
-    <!-- Кнопка входа -->
     <button class="btn tw-login-btn" id="twLoginBtn" onclick="twitchLogin()">Войти через Twitch</button>
-
-    <!-- Кнопка выхода (скрыта по умолчанию) -->
     <button class="btn tw-logout-btn" id="twLogoutBtn" onclick="twitchLogout()" style="display:none">🚪 Выйти</button>
 
-    <!-- Отображение токена (для отладки) -->
-    <div class="tw-token-display" id="twTokenDisplay" style="display:none"></div>
-
-    <!-- Инструкция -->
     <details class="tw-help">
       <summary>📖 Инструкция: как получить Client ID</summary>
       <ol>
@@ -199,10 +214,10 @@
         <li>Скопируй <strong>Client ID</strong> и вставь в поле выше</li>
         <li>Нажми «Войти через Twitch» и разреши доступ</li>
       </ol>
-      <p style="margin-top:8px;color:var(--ink-faint)">⚠️ Для работы OAuth файл должен быть открыт через <code>http://localhost</code> или <code>https://</code>, но не через <code>file://</code></p>
+      <p style="margin-top:8px;color:var(--ink-faint)">⚠️ Для работы OAuth файл должен быть открыт через <code>http://localhost</code> или <code>https://</code></p>
     </details>
-  </section>
-</main>
+  </div>
+</div>
 
 <!-- Плавающая кнопка рулетки (слева) -->
 <button class="wheel-fab" onclick="openWheel()" title="Открыть рулетку">
@@ -367,7 +382,12 @@
   spinBtn.addEventListener('click', spinWheel);
   document.addEventListener('keydown', function(e){
     if(e.key === 'Escape' && wheelOverlay.classList.contains('active')){ closeWheel(); }
+    if(e.key === 'Escape' && document.getElementById('twOverlay').classList.contains('active')){ closeTwitch(); }
   });
+
+  // Twitch overlay
+  function openTwitch(){ document.getElementById('twOverlay').classList.add('active'); }
+  function closeTwitch(){ document.getElementById('twOverlay').classList.remove('active'); }
 
   /* ===== TWITCH OAUTH (Implicit Grant Flow) ===== */
   (function(){
