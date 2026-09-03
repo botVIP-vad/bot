@@ -332,7 +332,7 @@
   <div class="rewards-box card" style="margin:0">
     <div class="kicker">🎁 Twitch Channel Points</div>
     <h2>Управление наградами</h2>
-    <p class="sub">Создавай и редактируй награды Twitch Channel Points. Работает только для партнёров и аффилиатов Twitch.</p>
+    <p class="sub"></p>
 
     <div id="rewardsList" style="margin:16px 0">
       <div class="empty">Нет наград. Добавь первую награду ниже ☝</div>
@@ -352,7 +352,7 @@
   <div class="tw-box card tw-login-card" style="margin:0">
     <div class="kicker">🎮 Twitch</div>
     <h2>Авторизация Twitch</h2>
-    <p class="sub">Войди через Twitch, чтобы управлять наградами канала и синхронизировать баллы.</p>
+    <p class="sub">.</p>
 
     <div class="tw-status-bar" id="twStatusBar">
       <span id="twStatusIcon">⚪</span>
@@ -850,7 +850,7 @@
 
     function renderRewards(){
       var list = document.getElementById('rewardsList');
-      if(!isAuthorized()){ list.innerHTML = '<div class="empty">Авторизуйся через Twitch для управления наградами ☝</div>'; return; }
+      if(!isAuthorized()){ list.innerHTML = '<div class="empty"></div>'; return; }
       if(rewardsLoading){ list.innerHTML = '<div class="empty">Загрузка наград...</div>'; return; }
       if(!rewards.length){ list.innerHTML = '<div class="empty">Нет наград. Создай первую награду ниже ☝</div>'; return; }
       var html = '';
