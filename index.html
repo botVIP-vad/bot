@@ -721,7 +721,13 @@
       document.getElementById('wsNick').textContent = lastResult.nick;
       document.getElementById('wsPoints').textContent = (lastResult.points||0) + ' ';
       // Сообщения победителя из заявок (покупок наград)
-      var msgs = purchases.filter(function(p){ return p.nick === lastResult.nick && p.text; });
+      var msgs = [];
+      try{
+        var savedPurch = JSON.parse(localStorage.getItem('wheelbot_purchases') || '[]');
+        if(Array.isArray(savedPurch)){
+          msgs = savedPurch.filter(function(p){ return p && p.nick === lastResult.nick && p.text; });
+        }
+      }catch(e){}
       var listEl = document.getElementById('wsMsgList');
       listEl.innerHTML = msgs.length
         ? msgs.map(function(p){ return '<div class="ws-msg">' + String(p.text).replace(/</g,'&lt;') + '</div>'; }).join('')
