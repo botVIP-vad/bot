@@ -29,7 +29,7 @@
   .logo-mark{width:34px;height:34px;border-radius:10px;background:var(--grad);display:grid;place-items:center;box-shadow:0 6px 16px -4px rgba(121,80,242,.6)}
   .total{margin-left:auto;color:var(--ink-dim);font-size:.9rem;background:rgba(255,255,255,.04);border:1px solid var(--line);padding:6px 14px;border-radius:999px}
 
-  main{max-width:920px;margin:0 auto;padding:30px 22px 60px}
+  main{max-width:920px;margin:0 auto;padding:30px 22px 60px;background:rgba(14,15,18,.7);backdrop-filter:blur(10px);border-radius:20px;border:1px solid var(--line)}
   .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px}
   .kicker{font-size:.72rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--primary-2);margin-bottom:6px}
   .card h2{font-size:1.4rem;font-weight:800;letter-spacing:-.5px;margin-bottom:4px}
@@ -136,12 +136,55 @@
 </video>
 <div class="bgfx"></div>
 
+<!-- Таймер -->
+<div class="timer-wrap" id="timerWrap">
+  <div class="timer-display">
+    <div class="timer-label">⏱ Таймер</div>
+    <div class="timer-time" id="timerTime">10:00</div>
+    <div class="timer-controls">
+      <button class="timer-btn" onclick="timerToggle()" id="timerPlayBtn" title="Старт/Пауза">▶</button>
+      <button class="timer-btn" onclick="timerReset()" title="Сброс">↺</button>
+      <button class="timer-btn" onclick="timerAdd(60)" title="+1 минута">+1</button>
+      <button class="timer-btn" onclick="timerAdd(-60)" title="-1 минута">−1</button>
+    </div>
+    <div class="timer-presets">
+      <span class="timer-preset" onclick="timerSet(5)">5м</span>
+      <span class="timer-preset" onclick="timerSet(10)">10м</span>
+      <span class="timer-preset" onclick="timerSet(15)">15м</span>
+      <span class="timer-preset" onclick="timerSet(30)">30м</span>
+      <span class="timer-preset" onclick="timerSet(60)">60м</span>
+    </div>
+  </div>
+</div>
+
 <header class="topbar">
   <div class="topbar-in">
     <div class="logo">
       <span class="logo-mark">
         <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 4"/></svg>
       </span>
+  /* ===== Таймер (правый верхний угол) ===== */
+  .timer-wrap{position:fixed;top:80px;right:24px;z-index:40;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+  .timer-display{background:rgba(14,15,18,.85);backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:16px;
+    padding:16px 24px;text-align:center;min-width:160px;box-shadow:0 8px 30px -8px rgba(0,0,0,.5)}
+  .timer-label{font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px}
+  .timer-time{font-size:2.8rem;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-1px;
+    background:linear-gradient(135deg,#7950f2,#41c0a9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    line-height:1.1;transition:.3s}
+  .timer-time.warning{background:linear-gradient(135deg,#f6646c,#f59f00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:timPulse 1s infinite}
+  .timer-time.danger{background:linear-gradient(135deg,#f6646c,#e03131);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:timShake .3s infinite}
+  @keyframes timPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+  @keyframes timShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
+  .timer-controls{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+  .timer-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.05);
+    color:var(--ink);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:.2s}
+  .timer-btn:hover{background:rgba(121,80,242,.2);border-color:var(--primary);color:#fff;transform:translateY(-1px)}
+  .timer-btn.active{background:var(--primary);border-color:var(--primary);color:#fff}
+  .timer-presets{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+  .timer-preset{font-size:.68rem;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.03);
+    color:var(--ink-dim);cursor:pointer;transition:.2s}
+  .timer-preset:hover{background:rgba(121,80,242,.15);border-color:var(--primary);color:#fff}
+
       TopBot · Настройка
     </div>
     <div class="total" id="totalBadge">Участников: 0</div>
@@ -531,6 +574,115 @@
     } else {
       updateTwitchUI();
     }
+
+  })();
+
+  /* ===== ТАЙМЕР ===== */
+  (function(){
+    var timerSeconds = 600; // 10 минут по умолчанию
+    var timerRunning = false;
+    var timerInterval = null;
+    var timerEndTime = 0;
+
+    var timerTimeEl = document.getElementById('timerTime');
+    var timerPlayBtn = document.getElementById('timerPlayBtn');
+
+    function formatTime(s){
+      var m = Math.floor(s / 60);
+      var sec = s % 60;
+      return (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function updateTimer(){
+      var now = Date.now();
+      var remaining = Math.ceil((timerEndTime - now) / 1000);
+
+      if(remaining <= 0){
+        remaining = 0;
+        timerTimeEl.textContent = formatTime(0);
+        timerTimeEl.classList.add('danger');
+        clearInterval(timerInterval);
+        timerRunning = false;
+        timerPlayBtn.textContent = '▶';
+        timerPlayBtn.classList.remove('active');
+        // Звуковой сигнал (браузерный)
+        try{
+          var ctx = new (window.AudioContext || window.webkitAudioContext)();
+          var osc = ctx.createOscillator();
+          var gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = 880;
+          gain.gain.value = 0.3;
+          osc.start();
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1);
+          osc.stop(ctx.currentTime + 1);
+        }catch(e){}
+        alert('⏱ Время вышло!');
+        return;
+      }
+
+      timerTimeEl.textContent = formatTime(remaining);
+
+      // Цвета в зависимости от времени
+      timerTimeEl.classList.remove('warning', 'danger');
+      if(remaining <= 10) timerTimeEl.classList.add('danger');
+      else if(remaining <= 30) timerTimeEl.classList.add('warning');
+    }
+
+    window.timerToggle = function(){
+      if(timerRunning){
+        // Пауза
+        clearInterval(timerInterval);
+        timerRunning = false;
+        timerPlayBtn.textContent = '▶';
+        timerPlayBtn.classList.remove('active');
+      } else {
+        // Старт
+        timerEndTime = Date.now() + timerSeconds * 1000;
+        timerRunning = true;
+        timerPlayBtn.textContent = '⏸';
+        timerPlayBtn.classList.add('active');
+        timerInterval = setInterval(updateTimer, 100);
+        updateTimer();
+      }
+    };
+
+    window.timerReset = function(){
+      clearInterval(timerInterval);
+      timerRunning = false;
+      timerSeconds = 600;
+      timerPlayBtn.textContent = '▶';
+      timerPlayBtn.classList.remove('active');
+      timerTimeEl.classList.remove('warning', 'danger');
+      timerTimeEl.textContent = '10:00';
+    };
+
+    window.timerAdd = function(sec){
+      timerSeconds += sec;
+      if(timerSeconds < 0) timerSeconds = 0;
+      if(!timerRunning){
+        timerTimeEl.textContent = formatTime(timerSeconds);
+        timerTimeEl.classList.remove('warning', 'danger');
+        if(timerSeconds <= 30 && timerSeconds > 10) timerTimeEl.classList.add('warning');
+        else if(timerSeconds <= 10) timerTimeEl.classList.add('danger');
+      } else {
+        timerEndTime += sec * 1000;
+        updateTimer();
+      }
+    };
+
+    window.timerSet = function(min){
+      clearInterval(timerInterval);
+      timerRunning = false;
+      timerSeconds = min * 60;
+      timerPlayBtn.textContent = '▶';
+      timerPlayBtn.classList.remove('active');
+      timerTimeEl.classList.remove('warning', 'danger');
+      timerTimeEl.textContent = formatTime(timerSeconds);
+      if(timerSeconds <= 300 && timerSeconds > 60) timerTimeEl.classList.add('warning');
+      else if(timerSeconds <= 60) timerTimeEl.classList.add('danger');
+    };
 
   })();
 
