@@ -1,983 +1,211 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="theme-color" content="#0e0f12" />
-<title>WheelBot</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
-<style>
-  :root{
-    --bg:#0e0f12; --ink:#ededf0; --ink-dim:#9b9ba6; --ink-faint:#6d6d78;
-    --primary:#7950f2; --primary-2:#9b7cff; --points:#41c0a9; --donation:#f6646c;
-    --line:rgba(255,255,255,.07); --card:rgba(255,255,255,.03);
-    --grad:linear-gradient(135deg,#8b5cf6,#7950f2 45%,#6d28d9);
-    --font:'Inter',system-ui,'Segoe UI',Roboto,sans-serif;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--bg);color:var(--ink);font-family:var(--font);min-height:100vh}
-  #bgVideo{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2;pointer-events:none}
-  .bgfx{position:fixed;inset:0;z-index:-1;pointer-events:none;
-    background:radial-gradient(55% 45% at 18% 0%,rgba(109,40,217,.25),transparent 60%),
-               radial-gradient(50% 45% at 85% 10%,rgba(65,192,169,.1),transparent 60%)}
-  .topbar{position:sticky;top:0;z-index:20;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-    background:rgba(14,15,18,.75);border-bottom:1px solid var(--line);padding:12px 0}
-  .topbar-in{display:flex;align-items:center;gap:12px;max-width:920px;margin:0 auto;padding:0 22px}
-  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem}
-  .logo-mark{width:34px;height:34px;border-radius:10px;background:var(--grad);display:grid;place-items:center;box-shadow:0 6px 16px -4px rgba(121,80,242,.6)}
-  .total{margin-left:auto;color:var(--ink-dim);font-size:.9rem;background:rgba(255,255,255,.04);border:1px solid var(--line);padding:6px 14px;border-radius:999px}
-
-  main{max-width:920px;margin:0 auto;padding:30px 22px 60px;background:rgba(14,15,18,.7);backdrop-filter:blur(10px);border-radius:20px;border:1px solid var(--line)}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px}
-  .kicker{font-size:.72rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--primary-2);margin-bottom:6px}
-  .card h2{font-size:1.4rem;font-weight:800;letter-spacing:-.5px;margin-bottom:4px}
-  .card .sub{color:var(--ink-dim);font-size:.9rem;margin-bottom:20px}
-
-  .form{display:grid;grid-template-columns:1.4fr 0.8fr auto;gap:10px;margin-bottom:16px}
-  @media(max-width:520px){.form{grid-template-columns:1fr 1fr}.form .btn{grid-column:1/-1}}
-  .field label{display:block;font-size:.74rem;color:var(--ink-faint);margin-bottom:4px;font-weight:600}
-  .field input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;
-    color:var(--ink);font-family:var(--font);font-size:1rem;padding:11px 13px;outline:none;transition:.2s}
-  .field input:focus{border-color:var(--primary);background:rgba(121,80,242,.07)}
-  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;cursor:pointer;
-    font-family:var(--font);font-weight:700;font-size:.95rem;border-radius:12px;padding:12px 18px;transition:.2s;color:#fff}
-  .addbtn{background:var(--points);color:#04211c;align-self:end}
-  .addbtn:hover{background:#35a893}
-
-  .list{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow:auto;padding-right:4px}
-  .empty{color:var(--ink-faint);text-align:center;font-size:.9rem;padding:30px 0;border:1px dashed var(--line);border-radius:12px}
-  .row{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.03);border:1px solid var(--line);
-    border-radius:12px;padding:10px 13px}
-  .row .idx{width:26px;height:26px;border-radius:8px;background:rgba(121,80,242,.16);color:var(--primary-2);
-    display:grid;place-items:center;font-size:.78rem;font-weight:700;flex-shrink:0}
-  .row .nick{font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .row .points{font-weight:800;color:var(--points);flex-shrink:0}
-  .row .del{background:none;border:0;color:var(--ink-faint);cursor:pointer;font-size:1.3rem;line-height:1;padding:2px 6px;border-radius:8px}
-  .row .del:hover{color:var(--donation);background:rgba(246,100,108,.12)}
-
-  .bottom{display:flex;align-items:center;gap:12px;margin-top:18px;flex-wrap:wrap}
-  .clearbtn{background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink)}
-  .clearbtn:hover{background:rgba(246,100,108,.15);border-color:rgba(246,100,108,.4);color:var(--donation)}
-  .launch{margin-top:26px;background:var(--grad);box-shadow:0 12px 30px -10px rgba(121,80,242,.85);width:100%}
-  .launch:hover{transform:translateY(-2px);filter:brightness(1.05)}
-  .hint-note{color:var(--ink-faint);font-size:.82rem;margin-top:8px;text-align:center}
-
-  /* ===== Плавающая кнопка рулетки ===== */
-  .wheel-fab{position:fixed;left:24px;top:50%;transform:translateY(-50%);z-index:150;width:70px;height:70px;border-radius:30px;border:0;
-    background:var(--grad);box-shadow:0 8px 30px -6px rgba(121,80,242,.7);cursor:pointer;display:flex;align-items:center;justify-content:center;
-    transition:.25s;padding:0}
-  .wheel-fab:hover{transform:translateY(-50%) scale(1.08);box-shadow:0 14px 40px -6px rgba(121,80,242,.8)}
-  .wheel-fab:active{transform:translateY(-50%) scale(.96)}
-  .wheel-fab img{width:48px;height:48px;object-fit:contain}
-  .wheel-fab.active{box-shadow:0 0 0 3px var(--points),0 8px 30px -6px rgba(121,80,242,.7)}
-
-  /* ===== Settings button ===== */
-  .settings-fab{position:fixed;left:24px;top:calc(50% - 110px);z-index:150;width:70px;height:70px;border-radius:30px;border:0;
-    background:var(--grad);box-shadow:0 6px 20px -4px rgba(121,80,242,.6);cursor:pointer;display:flex;align-items:center;justify-content:center;
-    transition:.25s;padding:0}
-  .settings-fab:hover{transform:scale(1.1);box-shadow:0 10px 30px -4px rgba(121,80,242,.7)}
-  .settings-fab.active{box-shadow:0 0 0 3px var(--points),0 6px 20px -4px rgba(121,80,242,.7)}
-  .settings-fab img{width:48px;height:48px;object-fit:contain}
-
-  /* ===== Connection status indicator ===== */
-  .tw-status-dot{position:fixed;right:24px;top:80px;z-index:50;width:16px;height:16px;border-radius:50%;
-    border:2px solid rgba(255,255,255,.2);transition:.3s}
-  .tw-status-dot.offline{background:#f6646c;box-shadow:0 0 8px rgba(246,100,108,.6)}
-  .tw-status-dot.online{background:#41c0a9;box-shadow:0 0 8px rgba(65,192,169,.6)}
-
-  /* ===== Rewards button ===== */
-  .rewards-fab{position:fixed;left:24px;top:calc(50% + 110px);z-index:150;width:70px;height:70px;border-radius:30px;border:0;
-    background:var(--grad);box-shadow:0 6px 20px -4px rgba(121,80,242,.6);cursor:pointer;display:flex;align-items:center;justify-content:center;
-    transition:.25s;padding:0}
-  .rewards-fab:hover{transform:scale(1.1);box-shadow:0 10px 30px -4px rgba(121,80,242,.7)}
-  .rewards-fab.active{box-shadow:0 0 0 3px var(--points),0 6px 20px -4px rgba(121,80,242,.7)}
-  .rewards-fab img{width:48px;height:48px;object-fit:contain}
-
-  /* ===== Rewards overlay ===== */
-  .rewards-overlay{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;
-    background:rgba(14,15,18,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:20px}
-  .rewards-overlay.active{display:flex;animation:twFade .25s ease}
-  .rewards-overlay .close{position:absolute;top:20px;right:24px;background:rgba(255,255,255,.08);border:1px solid var(--line);
-    color:var(--ink);width:42px;height:42px;border-radius:50%;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
-  .rewards-overlay .close:hover{background:var(--donation);color:#fff}
-  .rewards-box{width:100%;max-width:480px}
-  .reward-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;background:rgba(255,255,255,.03);border:1px solid var(--line);
-    border-radius:10px;padding:10px 14px}
-  .reward-row input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:8px;
-    color:var(--ink);font-family:var(--font);font-size:.9rem;padding:8px 12px;outline:none}
-  .reward-row input:focus{border-color:var(--primary)}
-  .reward-row .del{background:none;border:0;color:var(--ink-faint);cursor:pointer;font-size:1.2rem;padding:4px 8px;border-radius:6px}
-  .reward-row .del:hover{color:var(--donation);background:rgba(246,100,108,.12)}
-
-  /* ===== Main menu (hidden by default) ===== */
-  .main-menu{transition:.3s ease}
-  .main-menu.hidden{opacity:0;transform:translateX(-30px);pointer-events:none}
-
-  /* ===== Рулетка overlay (полный экран поверх) ===== */
-  .wheel-overlay{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;
-    background:rgba(14,15,18,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:20px;pointer-events:none}
-  .wheel-overlay.active{display:flex;animation:fadeIn .25s ease}
-  .wheel-overlay .close, .wheel-overlay .spin-btn, .wheel-overlay canvas, .wheel-overlay .wheel-canvas-wrap{pointer-events:auto}
-  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-  .wheel-overlay .close{position:absolute;top:20px;right:24px;background:rgba(255,255,255,.08);border:1px solid var(--line);
-    color:var(--ink);width:42px;height:42px;border-radius:50%;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
-  .wheel-overlay .close:hover{background:var(--donation);color:#fff}
-  .wheel-overlay .title{text-align:center;margin-bottom:24px}
-  .wheel-overlay .title h2{font-size:1.8rem;font-weight:800;letter-spacing:-1px;margin-bottom:4px}
-  .wheel-overlay .title p{color:var(--ink-dim);font-size:.95rem}
-  .wheel-canvas-wrap{position:relative;width:min(80vh,520px);aspect-ratio:1;margin-bottom:20px}
-  .wheel-canvas-wrap canvas{width:100%;height:100%;display:block;filter:drop-shadow(0 20px 60px rgba(121,80,242,.3))}
-  .wheel-arrow{position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:0;height:0;
-    border-left:18px solid transparent;border-right:18px solid transparent;border-top:32px solid var(--donation);z-index:5;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5))}
-
-  .spin-btn{background:var(--grad);box-shadow:0 12px 30px -8px rgba(121,80,242,.85);color:#fff;
-    border:0;cursor:pointer;font-family:var(--font);font-weight:800;font-size:1.1rem;border-radius:14px;padding:15px 48px;transition:.2s;letter-spacing:.3px}
-  .spin-btn:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.06)}
-  .spin-btn:disabled{opacity:.4;cursor:not-allowed}
-  .winner-display{min-height:36px;text-align:center;font-weight:800;font-size:1.5rem;color:var(--points);margin-bottom:8px;text-shadow:0 0 20px rgba(65,192,169,.4)}
-  .wheel-hint{color:var(--ink-faint);font-size:.85rem;text-align:center}
-
-  /* ===== Twitch Login ===== */
-  .tw-login-card{margin-top:20px;border-color:rgba(145,70,255,.3)}
-  .tw-login-card .kicker{color:#9146ff}
-  .tw-status-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:rgba(145,70,255,.08);border:1px solid rgba(145,70,255,.2);margin-bottom:14px;font-size:.88rem}
-  .tw-status-bar.online{background:rgba(65,192,169,.08);border-color:rgba(65,192,169,.3)}
-  .tw-avatar{width:32px;height:32px;border-radius:50%;border:2px solid #9146ff;object-fit:cover;background:#1a1a2e}
-  .tw-login-btn{background:linear-gradient(135deg,#9146ff,#772ce8);color:#fff;width:100%;margin-top:6px}
-  .tw-login-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
-  .tw-logout-btn{background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink);margin-top:10px}
-  .tw-logout-btn:hover{background:rgba(246,100,108,.15);border-color:rgba(246,100,108,.4);color:var(--donation)}
-  .tw-token-display{font-size:.72rem;color:var(--ink-faint);word-break:break-all;margin-top:8px;max-height:60px;overflow:auto;background:rgba(0,0,0,.2);padding:6px 10px;border-radius:6px}
-  /* ===== Twitch кнопка (правый нижний угол) ===== */
-  .tw-fab{position:fixed;right:24px;bottom:24px;z-index:50;width:56px;height:56px;border-radius:50%;border:0;
-    background:linear-gradient(135deg,#9146ff,#772ce8);box-shadow:0 6px 20px -4px rgba(145,70,255,.6);cursor:pointer;
-    display:flex;align-items:center;justify-content:center;transition:.25s;color:#fff;font-size:1.4rem}
-  .tw-fab:hover{transform:scale(1.1);box-shadow:0 10px 30px -4px rgba(145,70,255,.7)}
-
-  /* ===== Twitch overlay ===== */
-  .tw-overlay{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;
-    background:rgba(14,15,18,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:20px}
-  .tw-overlay.active{display:flex;animation:twFade .25s ease}
-  @keyframes twFade{from{opacity:0}to{opacity:1}}
-  .tw-overlay .close{position:absolute;top:20px;right:24px;background:rgba(255,255,255,.08);border:1px solid var(--line);
-    color:var(--ink);width:42px;height:42px;border-radius:50%;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
-  .tw-overlay .close:hover{background:var(--donation);color:#fff}
-  .tw-box{width:100%;max-width:480px}
-
-  /* ===== Flip-Timer ===== */
-  .timer-wrap{position:fixed;top:80px;right:24px;z-index:40;display:flex;flex-direction:column;align-items:center;gap:12px}
-  .timer-display{background:rgba(14,15,18,.88);backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:18px;
-    padding:20px 24px;box-shadow:0 8px 30px -8px rgba(0,0,0,.6)}
-  .timer-label{font-size:.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:12px;text-align:center}
-  .timer-controls{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:12px}
-  .timer-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.05);
-    color:var(--ink);cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;transition:.2s}
-  .timer-btn:hover{background:rgba(121,80,242,.2);border-color:var(--primary);color:#fff;transform:translateY(-1px)}
-  .timer-btn.active{background:var(--primary);border-color:var(--primary);color:#fff}
-  .timer-presets{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:6px}
-  .timer-preset{font-size:.65rem;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.03);
-    color:var(--ink-dim);cursor:pointer;transition:.2s}
-  .timer-preset:hover{background:rgba(121,80,242,.15);border-color:var(--primary);color:#fff}
-
-  /* Flip-Clock */
-  .flip-clock{display:flex;gap:12px}
-  .flip-container{display:flex;flex-direction:column;align-items:center}
-  .flip-label{color:#707584;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-top:10px}
-  .digit-group{display:flex;gap:4px}
-  .flip-card{position:relative;width:52px;height:72px;font-size:48px;font-weight:800;color:#deebff;border-radius:8px;perspective:400px}
-  .card-face{position:absolute;left:0;width:100%;height:50%;overflow:hidden;background:linear-gradient(180deg,#252a3a 0%,#1a1d2e 100%);
-    backface-visibility:hidden;box-shadow:0 3px 6px rgba(0,0,0,.4)}
-  .card-top,.card-fold-top{top:0;border-top-left-radius:8px;border-top-right-radius:8px;border-bottom:1px solid rgba(0,0,0,.5)}
-  .card-top .text,.card-fold-top .text{position:absolute;left:50%;transform:translateX(-50%);top:0;height:72px;line-height:72px}
-  .card-bottom,.card-fold-bottom{bottom:0;border-bottom-left-radius:8px;border-bottom-right-radius:8px}
-  .card-bottom .text,.card-fold-bottom .text{position:absolute;left:50%;transform:translateX(-50%);bottom:0;height:72px;line-height:72px}
-  .card-top{z-index:1}
-  .card-bottom{z-index:1}
-  .card-fold-top{transform-origin:bottom;z-index:3}
-  .card-fold-bottom{transform-origin:top;transform:rotateX(90deg);z-index:2}
-  .flip .card-fold-top{animation:flipTop .35s ease-in forwards}
-  .flip .card-fold-bottom{animation:flipBottom .35s ease-out .35s forwards}
-  @keyframes flipTop{0%{transform:rotateX(0deg)}100%{transform:rotateX(-90deg)}}
-  @keyframes flipBottom{0%{transform:rotateX(90deg)}100%{transform:rotateX(0deg)}}
-  .flip-clock.warning .card-face{background:linear-gradient(180deg,#3a2020 0%,#2a1515 100%);color:#ffb4b4}
-  .flip-clock.danger .card-face{background:linear-gradient(180deg,#3a1515 0%,#2a0a0a 100%);color:#ff9090;animation:cardPulse .5s infinite}
-  @keyframes cardPulse{0%,100%{box-shadow:0 3px 6px rgba(0,0,0,.4)}50%{box-shadow:0 3px 12px rgba(246,100,108,.4)}}
-  .flip-divider{font-size:40px;font-weight:800;color:var(--ink-dim);align-self:center;margin:0 2px}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twitch Rewards Controller</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #18181b;
+            color: #fff;
+            padding: 30px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .btn-twitch {
+            background-color: #9146ff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-twitch:hover { background-color: #772ce8; }
+        #log {
+            background: #0f0f11;
+            border: 1px solid #3f3f46;
+            padding: 15px;
+            height: 300px;
+            overflow-y: auto;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .reward-alert { color: #a970ff; font-weight: bold; margin-bottom: 8px; }
+        .hidden { display: none; }
+        #status { font-weight: bold; color: #ff4a4a; }
+    </style>
 </head>
 <body>
-<video id="bgVideo" autoplay muted loop playsinline poster="">
-  <source src="fon.mp4" type="video/mp4" />
-</video>
-<div class="bgfx"></div>
 
-<!-- Flip-Timer -->
-<div class="timer-wrap" id="timerWrap">
-  <div class="timer-display">
-    <div class="timer-label">⏱ Таймер</div>
-    <div class="flip-clock" id="flipClock">
-      <!-- Минуты -->
-      <div class="flip-container">
-        <div class="digit-group">
-          <div class="flip-card" id="m1">
-            <div class="card-face card-top"><div class="text">1</div></div>
-            <div class="card-face card-bottom"><div class="text">1</div></div>
-            <div class="card-face card-fold-top"><div class="text">1</div></div>
-            <div class="card-face card-fold-bottom"><div class="text">1</div></div>
-          </div>
-          <div class="flip-card" id="m2">
-            <div class="card-face card-top"><div class="text">0</div></div>
-            <div class="card-face card-bottom"><div class="text">0</div></div>
-            <div class="card-face card-fold-top"><div class="text">0</div></div>
-            <div class="card-face card-fold-bottom"><div class="text">0</div></div>
-          </div>
-        </div>
-        <div class="flip-label">Минуты</div>
-      </div>
-      <div class="flip-divider">:</div>
-      <!-- Секунды -->
-      <div class="flip-container">
-        <div class="digit-group">
-          <div class="flip-card" id="s1">
-            <div class="card-face card-top"><div class="text">0</div></div>
-            <div class="card-face card-bottom"><div class="text">0</div></div>
-            <div class="card-face card-fold-top"><div class="text">0</div></div>
-            <div class="card-face card-fold-bottom"><div class="text">0</div></div>
-          </div>
-          <div class="flip-card" id="s2">
-            <div class="card-face card-top"><div class="text">0</div></div>
-            <div class="card-face card-bottom"><div class="text">0</div></div>
-            <div class="card-face card-fold-top"><div class="text">0</div></div>
-            <div class="card-face card-fold-bottom"><div class="text">0</div></div>
-          </div>
-        </div>
-        <div class="flip-label">Секунды</div>
-      </div>
-    </div>
-    <div class="timer-controls">
-      <button class="timer-btn" onclick="timerToggle()" id="timerPlayBtn" title="Старт/Пауза">▶</button>
-      <button class="timer-btn" onclick="timerReset()" title="Сброс">↺</button>
-      <button class="timer-btn" onclick="timerAdd(60)" title="+1 минута">+1</button>
-      <button class="timer-btn" onclick="timerAdd(-60)" title="-1 минута">−1</button>
-    </div>
-    <div class="timer-presets">
-      <span class="timer-preset" onclick="timerSet(5)">5м</span>
-      <span class="timer-preset" onclick="timerSet(10)">10м</span>
-      <span class="timer-preset" onclick="timerSet(15)">15м</span>
-      <span class="timer-preset" onclick="timerSet(30)">30м</span>
-      <span class="timer-preset" onclick="timerSet(60)">60м</span>
-    </div>
-  </div>
-</div>
-
-<header class="topbar">
-  <div class="topbar-in">
-    <div class="logo">
-      <span class="logo-mark">
-        <img src="icon1.png" alt="WheelBot" width="30" height="30" />
-      </span>
-      WheelBot
-    </div>
-    <div class="total" id="totalBadge">Участников: 0</div>
-  </div>
-</header>
-
-<main class="main-menu hidden">
-  <section class="card">
-    <div class="kicker">Участники</div>
-    <h2>Добавить участника</h2>
-    <p class="sub">Впиши ник и количество баллов. Чем больше баллов тем больше шанс в рулетке.</p>
-
-    <div class="form">
-      <div class="field">
-        <label for="nick">Ник участника</label>
-        <input id="nick" type="text" placeholder="например, sypher48" autocomplete="off" />
-      </div>
-      <div class="field">
-        <label for="points">Баллы</label>
-        <input id="points" type="number" min="0" step="1" placeholder="100" autocomplete="off" />
-      </div>
-      <button class="btn addbtn" onclick="addParticipant()">Добавить</button>
+    <h1>Управление наградами Twitch</h1>
+    
+    <!-- Кнопка авторизации -->
+    <div id="auth-section">
+        <p>Для начала работы необходимо авторизоваться через Twitch:</p>
+        <button class="btn-twitch" onclick="loginWithTwitch()">Войти через Twitch</button>
     </div>
 
-    <div class="list" id="list">
-      <div class="empty">Список пуст. Добавь первого участника выше ☝</div>
+    <!-- Панель управления (скрыта до авторизации) -->
+    <div id="main-section" class="hidden">
+        <p>Привет, <b id="user-name">...</b>!</p>
+        <p>Статус: <span id="status">Инициализация...</span></p>
+        <h3>Лог выкупленных наград:</h3>
+        <div id="log"></div>
     </div>
 
-    <div class="bottom">
-      <button class="btn clearbtn" onclick="clearAll()">🗑 Очистить всё</button>
-    </div>
+    <script>
+        // --- НАСТРОЙКА ---
+        const CLIENT_ID = 'YOUR_CLIENT_ID'; // Вставьте сюда ваш Client ID с Twitch Developer Console
+        const REDIRECT_URI = window.location.origin + window.location.pathname; 
+        const SCOPES = 'channel:read:redemptions';
 
-  </section>
-</main>
+        let accessToken = null;
+        let broadcasterId = null;
+        let ws;
 
-<!-- Twitch connection status indicator -->
-<div class="tw-status-dot offline" id="twStatusDot" title="Twitch: не подключено"></div>
-
-<!-- Twitch FAB (правый нижний угол) -->
-<button class="tw-fab" onclick="openTwitch()" title="Twitch авторизация">
-  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2H3v16h5v4l4-4h5l4-4V2zm-10 9V7m5 4V7"/></svg>
-</button>
-
-<!-- Кнопка наград (слева под колесом) -->
-<button class="rewards-fab" id="rewardsFab" onclick="openRewards()" title="Управление наградами">
-  <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v10H4V12M22 7H2v5h20V7zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
-</button>
-
-<!-- Rewards overlay -->
-<div class="rewards-overlay" id="rewardsOverlay">
-  <button class="close" onclick="closeRewards()">✕</button>
-  <div class="rewards-box card" style="margin:0">
-    <div class="kicker">🎁 Награды</div>
-    <h2>Управление наградами</h2>
-    <p class="sub">Добавляй и редактируй награды канала. Награды используются для синхронизации баллов с Twitch.</p>
-
-    <div id="rewardsList" style="margin:16px 0">
-      <div class="empty">Нет наград. Добавь первую награду ниже ☝</div>
-    </div>
-
-    <div class="reward-row">
-      <input id="rewardName" type="text" placeholder="Название награды" autocomplete="off" />
-      <input id="rewardCost" type="number" placeholder="Стоимость" min="1" style="width:100px" autocomplete="off" />
-      <button class="btn addbtn" onclick="addReward()" style="padding:8px 14px">+</button>
-    </div>
-  </div>
-</div>
-
-<!-- Twitch overlay -->
-<div class="tw-overlay" id="twOverlay">
-  <button class="close" onclick="closeTwitch()">✕</button>
-  <div class="tw-box card tw-login-card" style="margin:0">
-    <div class="kicker">🎮 Twitch</div>
-    <h2>Авторизация Twitch</h2>
-    <p class="sub">Войди через Twitch, чтобы управлять наградами канала и синхронизировать баллы.</p>
-
-    <div class="tw-status-bar" id="twStatusBar">
-      <span id="twStatusIcon">⚪</span>
-      <span id="twStatusText">Не подключено — введи Client ID и нажми «Войти»</span>
-    </div>
-
-    <div class="field" id="twClientIdField">
-      <label for="twClientId">Client ID приложения Twitch</label>
-      <input id="twClientId" type="text" placeholder="Вставь сюда свой Client ID" autocomplete="off" />
-    </div>
-
-    <button class="btn tw-login-btn" id="twLoginBtn" onclick="twitchLogin()">Войти через Twitch</button>
-    <button class="btn tw-logout-btn" id="twLogoutBtn" onclick="twitchLogout()" style="display:none">🚪 Выйти</button>
-  </div>
-</div>
-
-<!-- Плавающая кнопка настроек (слева, выше рулетки) -->
-<button class="settings-fab" id="settingsFab" onclick="toggleMainMenu()" title="Настройки">
-  <img src="set.png" alt="Настройки" />
-</button>
-
-<!-- Плавающая кнопка рулетки (слева) -->
-<button class="wheel-fab" id="wheelFab" onclick="openWheel()" title="Открыть рулетку">
-  <img src="icon.png" alt="Рулетка" width="48" height="48" />
-</button>
-
-
-
-<!-- Рулетка overlay (полный экран поверх) -->
-<div class="wheel-overlay" id="wheelOverlay">
-  <button class="close" onclick="closeWheel()">✕</button>
-  <div class="title">
-    <h2>Колесо участников</h2>
-    <p></p>
-  </div>
-  <div class="wheel-canvas-wrap">
-    <div class="wheel-arrow"></div>
-    <canvas id="wheelCanvas" width="600" height="600"></canvas>
-  </div>
-  <button class="spin-btn" id="spinBtn" disabled>Крутить рулетку</button>
-  <div class="winner-display" id="winnerDisplay"></div>
-  <div class="wheel-hint" id="wheelHint"></div>
-</div>
-
-<script>
-  var KEY = 'topbot_participants';
-  var participants = load();
-
-  function load(){
-    try{ var d = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(d) ? d : []; }
-    catch(e){ return []; }
-  }
-  function save(){ localStorage.setItem(KEY, JSON.stringify(participants)); }
-
-  function addParticipant(){
-    var nick = document.getElementById('nick').value.trim();
-    var pts = parseInt(document.getElementById('points').value, 10);
-    if(!nick){ shake('nick'); return; }
-    if(isNaN(pts) || pts < 0) pts = 0;
-    participants.push({ nick: nick, points: pts });
-    save();
-    render();
-    document.getElementById('nick').value = '';
-    document.getElementById('points').value = '';
-    document.getElementById('nick').focus();
-  }
-  function shake(id){
-    var el = document.getElementById(id);
-    el.style.borderColor = '#f6646c';
-    setTimeout(function(){ el.style.borderColor = ''; }, 700);
-  }
-  function removeAt(i){ participants.splice(i, 1); save(); render(); }
-  function clearAll(){ participants = []; save(); render(); }
-
-  function totalPoints(){ return participants.reduce(function(a,p){ return a + (p.points||0); }, 0); }
-
-  function render(){
-    var list = document.getElementById('list');
-    var badge = document.getElementById('totalBadge');
-    if(!participants.length){
-      list.innerHTML = '<div class="empty">Список пуст. Добавь первого участника выше ☝</div>';
-      badge.textContent = 'Участников: 0';
-    } else {
-      var html = '';
-      participants.forEach(function(p, i){
-        html += '<div class="row">'
-          + '<div class="idx">' + (i+1) + '</div>'
-          + '<div class="nick" title="' + String(p.nick).replace(/"/g,'&quot;') + '">' + p.nick + '</div>'
-          + '<div class="points">' + (p.points||0) + ' б.</div>'
-          + '<button class="del" title="Удалить" onclick="removeAt(' + i + ')">&times;</button>'
-          + '</div>';
-      });
-      list.innerHTML = html;
-      badge.textContent = 'Участников: ' + participants.length + ' · баллов: ' + totalPoints();
-    }
-  }
-
-  document.addEventListener('keydown', function(e){
-    if(e.key === 'Enter'){
-      var t = e.target;
-      if(t && (t.id === 'nick' || t.id === 'points')){ e.preventDefault(); addParticipant(); }
-    }
-  });
-
-  /* ===== Рулетка overlay ===== */
-  var WHEEL_COLORS = ['#7950f2','#41c0a9','#f6646c','#f59f00','#1098ad','#e64980','#7048e8','#0ca678','#f76707','#1c7ed6'];
-  var wcanvas = document.getElementById('wheelCanvas');
-  var wctx = wcanvas.getContext('2d');
-  var spinBtn = document.getElementById('spinBtn');
-  var winnerDisplay = document.getElementById('winnerDisplay');
-  var wheelHint = document.getElementById('wheelHint');
-  var wheelOverlay = document.getElementById('wheelOverlay');
-  var spinState = { spinning:false, rotation:0 };
-
-  function openWheel(){ wheelOverlay.classList.add('active'); drawWheel(); updateWheelControls(); }
-  function closeWheel(){ wheelOverlay.classList.remove('active'); }
-
-  function shortName(nick){ return nick.length > 9 ? nick.slice(0,8)+'…' : nick; }
-
-  function drawWheel(){
-    var size = wcanvas.width, cx = size/2, cy = size/2, r = size/2 - 10;
-    wctx.clearRect(0,0,size,size);
-    if(participants.length < 2){
-      wctx.beginPath(); wctx.arc(cx,cy,r,0,Math.PI*2); wctx.fillStyle='rgba(255,255,255,.04)'; wctx.fill();
-      wctx.strokeStyle='rgba(255,255,255,.2)'; wctx.lineWidth=3; wctx.stroke();
-      wctx.fillStyle='#6d6d78'; wctx.font='700 24px Inter'; wctx.textAlign='center'; wctx.textBaseline='middle';
-      wctx.fillText('Нет участников', cx, cy);
-      return;
-    }
-    wctx.save(); wctx.translate(cx,cy); wctx.rotate(spinState.rotation); wctx.translate(-cx,-cy);
-    var pts = participants.map(function(p){ return Math.max(p.points||0,1); });
-    var sum = pts.reduce(function(a,b){ return a+b; }, 0);
-    var start = -Math.PI/2;
-    for(var i=0;i<participants.length;i++){
-      var end = start + (pts[i]/sum)*Math.PI*2;
-      wctx.beginPath(); wctx.moveTo(cx,cy); wctx.arc(cx,cy,r,start,end); wctx.closePath();
-      wctx.fillStyle=WHEEL_COLORS[i%WHEEL_COLORS.length]; wctx.fill();
-      wctx.strokeStyle='rgba(0,0,0,.35)'; wctx.lineWidth=2; wctx.stroke();
-      var mid=(start+end)/2, tr=r*0.62;
-      wctx.save(); wctx.translate(cx+Math.cos(mid)*tr, cy+Math.sin(mid)*tr); wctx.rotate(mid+Math.PI/2);
-      wctx.fillStyle='#fff'; wctx.font='700 '+Math.min(18,Math.max(12,300/participants.length))+'px Inter';
-      wctx.textAlign='center'; wctx.textBaseline='middle';
-      wctx.fillText(shortName(participants[i].nick), 0, 0, r*0.5);
-      wctx.restore();
-      start=end;
-    }
-    wctx.restore();
-    wctx.beginPath(); wctx.arc(cx,cy,r,0,Math.PI*2); wctx.strokeStyle='rgba(255,255,255,.25)'; wctx.lineWidth=3; wctx.stroke();
-  }
-
-  function updateWheelControls(){
-    var ok = participants.length >= 2;
-    spinBtn.disabled = !ok || spinState.spinning;
-    spinBtn.textContent = spinState.spinning ? 'Крутим…' : 'Крутить рулетку';
-    wheelHint.textContent = ok ? 'Больше баллов больше шанс.' : '';
-  }
-
-  function spinWheel(){
-    if(spinState.spinning || participants.length < 2) return;
-    spinState.spinning = true; updateWheelControls(); winnerDisplay.textContent = '';
-    var pts = participants.map(function(p){ return Math.max(p.points||0,1); });
-    var total = pts.reduce(function(a,b){ return a+b; }, 0);
-    var roll = Math.random()*total, idxWin=0, acc=0;
-    for(var i=0;i<pts.length;i++){ acc+=pts[i]; if(roll<=acc){ idxWin=i; break; } }
-    var beforeFrac = pts.slice(0,idxWin).reduce(function(a,b){return a+b;},0)/total;
-    var segMid = (beforeFrac + (pts[idxWin]/2)/total)*Math.PI*2;
-    var targetLocal = -Math.PI/2 - (-Math.PI/2 + segMid);
-    var target = spinState.rotation + Math.PI*2*(5+Math.random()*5);
-    var delta = ((targetLocal-target)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
-    target += delta;
-    var current=spinState.rotation, totalMove=target-current;
-    var t0=null, DUR=4500;
-    function frame(ts){
-      if(t0===null) t0=ts;
-      var p=Math.min(1,(ts-t0)/DUR), ease=1-Math.pow(1-p,3);
-      spinState.rotation=current+totalMove*ease; drawWheel();
-      if(p<1){ requestAnimationFrame(frame); }
-      else{ spinState.spinning=false; var w=participants[idxWin]; winnerDisplay.textContent='🎉 '+w.nick+'  ('+(w.points||0)+' б.)'; updateWheelControls(); }
-    }
-    requestAnimationFrame(frame);
-  }
-
-  spinBtn.addEventListener('click', spinWheel);
-  document.addEventListener('keydown', function(e){
-    if(e.key === 'Escape' && wheelOverlay.classList.contains('active')){ closeWheel(); }
-    if(e.key === 'Escape' && document.getElementById('twOverlay').classList.contains('active')){ closeTwitch(); }
-  });
-
-  // Twitch overlay
-  function openTwitch(){ document.getElementById('twOverlay').classList.add('active'); }
-  function closeTwitch(){ document.getElementById('twOverlay').classList.remove('active'); }
-
-  // Toggle main menu (settings button) - like a toggle/X button
-  function toggleMainMenu(){
-    // Сначала закрываем рулетку (как крестик ✕)
-    closeWheel();
-    // Затем переключаем меню
-    var menu = document.querySelector('.main-menu');
-    var fab = document.getElementById('settingsFab');
-    var isHidden = menu.classList.contains('hidden');
-    if(isHidden){
-      menu.classList.remove('hidden');
-      fab.classList.add('active');
-    } else {
-      menu.classList.add('hidden');
-      fab.classList.remove('active');
-    }
-  }
-
-  // Wheel overlay - highlight button when open
-  function openWheel(){
-    document.getElementById('wheelOverlay').classList.add('active');
-    document.getElementById('wheelFab').classList.add('active');
-    drawWheel();
-    updateWheelControls();
-  }
-  function closeWheel(){
-    document.getElementById('wheelOverlay').classList.remove('active');
-    document.getElementById('wheelFab').classList.remove('active');
-  }
-
-  // Close overlays on Escape
-  document.addEventListener('keydown', function(e){
-    if(e.key === 'Escape'){
-      if(document.getElementById('wheelOverlay').classList.contains('active')) closeWheel();
-      if(document.getElementById('twOverlay').classList.contains('active')) closeTwitch();
-    }
-  });
-
-  /* ===== TWITCH OAUTH (Implicit Grant Flow) ===== */
-  (function(){
-    var TWITCH_AUTH_URL = 'https://id.twitch.tv/oauth2/authorize';
-    var TWITCH_API = 'https://api.twitch.tv/helix';
-    var TWITCH_SCOPE = 'user:read:email channel:read:redemptions channel:manage:redemptions';
-    var TW_KEY = 'twitch_auth_data';
-
-    function saveTwitchData(){
-      localStorage.setItem(TW_KEY, JSON.stringify({
-        accessToken: twitchData.accessToken,
-        clientId: twitchData.clientId,
-        user: twitchData.user
-      }));
-    }
-    function loadTwitchData(){
-      try{
-        var d = JSON.parse(localStorage.getItem(TW_KEY));
-        if(d && d.accessToken){ twitchData.accessToken = d.accessToken; twitchData.clientId = d.clientId||''; twitchData.user = d.user||null; return true; }
-      }catch(e){}
-      return false;
-    }
-    function clearTwitchData(){
-      localStorage.removeItem(TW_KEY);
-      twitchData.accessToken = ''; twitchData.user = null;
-    }
-
-    var twitchData = { accessToken:'', clientId:'', user:null };
-
-    // Установить redirect URI в подсказку
-    var rtu = document.getElementById('twRedirectUri');
-    if(rtu) rtu.textContent = window.location.origin + window.location.pathname;
-
-    // Проверить URL на наличие токена (после возврата от Twitch)
-    function checkAuthRedirect(){
-      var hash = window.location.hash;
-      if(hash && hash.indexOf('access_token') !== -1){
-        var params = new URLSearchParams(hash.substring(1));
-        var token = params.get('access_token');
-        if(token){
-          // Очищаем хэш из адресной строки
-          history.replaceState(null, null, window.location.pathname + window.location.search);
-          twitchData.accessToken = token;
-          twitchData.clientId = document.getElementById('twClientId').value.trim();
-          saveTwitchData();
-          fetchTwitchUser(token);
+        // Перенаправление пользователя на Twitch для авторизации
+        function loginWithTwitch() {
+            const authUrl = `https://twitch.tv` +
+                            `?client_id=${CLIENT_ID}` +
+                            `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+                            `&response_type=token` +
+                            `&scope=${encodeURIComponent(SCOPES)}`;
+            window.location.href = authUrl;
         }
-      }
-    }
 
-    // Получить данные пользователя с Twitch
-    function fetchTwitchUser(token){
-      var cid = document.getElementById('twClientId').value.trim();
-      fetch(TWITCH_API + '/users', {
-        headers: { 'Client-ID': cid, 'Authorization': 'Bearer ' + token }
-      })
-      .then(function(r){ if(!r.ok) throw new Error('Auth failed'); return r.json(); })
-      .then(function(d){
-        if(d.data && d.data.length){
-          twitchData.user = d.data[0];
-          twitchData.clientId = cid;
-          saveTwitchData();
-          updateTwitchUI();
+        // Проверка URL на наличие токена после возвращения от Twitch
+        async function checkAuth() {
+            const hash = window.location.hash;
+            if (hash) {
+                const params = new URLSearchParams(hash.substring(1));
+                accessToken = params.get('access_token');
+                
+                if (accessToken) {
+                    // Очищаем хэш в адресной строке для красоты
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    
+                    // Показываем основной интерфейс
+                    document.getElementById('auth-section').classList.add('hidden');
+                    document.getElementById('main-section').classList.remove('hidden');
+                    
+                    // Получаем данные о пользователе (его ID и логин)
+                    await getUserData();
+                }
+            }
         }
-      })
-      .catch(function(err){
-        console.error('Twitch auth error:', err);
-        twitchData.user = null;
-        updateTwitchUI();
-      });
-    }
 
-    // Обновить интерфейс Twitch
-    function updateTwitchUI(){
-      var statusBar = document.getElementById('twStatusBar');
-      var statusIcon = document.getElementById('twStatusIcon');
-      var statusText = document.getElementById('twStatusText');
-      var clientIdField = document.getElementById('twClientIdField');
-      var loginBtn = document.getElementById('twLoginBtn');
-      var logoutBtn = document.getElementById('twLogoutBtn');
-      var tokenDisplay = document.getElementById('twTokenDisplay');
-      var clientIdInput = document.getElementById('twClientId');
-      var statusDot = document.getElementById('twStatusDot');
-
-      if(twitchData.user){
-        // Авторизованы
-        statusBar.classList.add('online');
-        if(twitchData.user.profile_image_url){
-          statusIcon.innerHTML = '<img src="'+twitchData.user.profile_image_url+'" class="tw-avatar" />';
-        } else {
-          statusIcon.textContent = '🟢';
+        // Автоматический запрос информации о стримере по токену
+        async function getUserData() {
+            try {
+                const response = await fetch('https://twitch.tv', {
+                    headers: {
+                        'Client-ID': CLIENT_ID,
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+                const data = await response.json();
+                if (data.data && data.data.length > 0) {
+                    const user = data.data[0];
+                    broadcasterId = user.id;
+                    document.getElementById('user-name').innerText = user.display_name;
+                    
+                    // Запускаем WebSocket после получения ID
+                    connectTwitch();
+                }
+            } catch (err) {
+                console.error('Ошибка получения данных пользователя:', err);
+                alert('Не удалось получить данные аккаунта.');
+            }
         }
-        statusText.innerHTML = '<strong>'+twitchData.user.display_name+'</strong> · @'+twitchData.user.login;
-        if(twitchData.user.email) statusText.innerHTML += ' · '+twitchData.user.email;
-        if(clientIdField) clientIdField.style.display = 'none';
-        if(loginBtn) loginBtn.style.display = 'none';
-        if(logoutBtn) logoutBtn.style.display = '';
-        if(clientIdInput) clientIdInput.value = twitchData.clientId;
-        if(tokenDisplay){
-          tokenDisplay.style.display = 'none';
-          tokenDisplay.textContent = '';
+
+        // Подключение к WebSocket EventSub
+        function connectTwitch() {
+            ws = new WebSocket('wss://eventsub.wss.twitch.tv/v1');
+
+            ws.onopen = () => {
+                updateStatus('Подключено к WebSocket. Ожидание сессии...', '#cfbcff');
+            };
+
+            ws.onmessage = async (event) => {
+                const data = JSON.parse(event.data);
+                
+                if (data.metadata.message_type === 'session_welcome') {
+                    const sessionId = data.payload.session.id;
+                    updateStatus('Сессия создана. Подписка на награды...', '#cfbcff');
+                    await subscribeToRewards(sessionId);
+                }
+
+                if (data.metadata.message_type === 'notification' && data.payload.subscription.type === 'channel.channel_points_custom_reward_redemption.add') {
+                    handleReward(data.payload.event);
+                }
+            };
+
+            ws.onclose = () => {
+                updateStatus('Отключено. Переподключение...', '#ff4a4a');
+                setTimeout(connectTwitch, 5000);
+            };
         }
-        // Обновить индикатор подключения (зелёный)
-        if(statusDot){
-          statusDot.classList.remove('offline');
-          statusDot.classList.add('online');
-          statusDot.title = 'Twitch: подключено ('+twitchData.user.display_name+')';
+
+        // Подписка на награды
+        async function subscribeToRewards(sessionId) {
+            try {
+                const response = await fetch('https://twitch.tv', {
+                    method: 'POST',
+                    headers: {
+                        'Client-ID': CLIENT_ID,
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        type: 'channel.channel_points_custom_reward_redemption.add',
+                        version: '1',
+                        condition: { broadcaster_user_id: broadcasterId },
+                        transport: {
+                            method: 'websocket',
+                            session_id: sessionId
+                        }
+                    })
+                });
+
+                if (response.ok) {
+                    updateStatus('Успешно работает! Ожидание активации наград...', '#00ff66');
+                } else {
+                    const errData = await response.json();
+                    updateStatus('Ошибка подписки: ' + errData.message, '#ff4a4a');
+                }
+            } catch (err) {
+                updateStatus('Ошибка сети при подписке', '#ff4a4a');
+            }
         }
-      } else {
-        // Не авторизованы
-        statusBar.classList.remove('online');
-        statusIcon.textContent = '⚪';
-        statusText.textContent = 'Не подключено — введи Client ID и нажми «Войти»';
-        if(clientIdField) clientIdField.style.display = '';
-        if(loginBtn) loginBtn.style.display = '';
-        if(logoutBtn) logoutBtn.style.display = 'none';
-        if(tokenDisplay) tokenDisplay.style.display = 'none';
-        if(clientIdInput && twitchData.clientId) clientIdInput.value = twitchData.clientId;
-        // Обновить индикатор подключения (красный)
-        if(statusDot){
-          statusDot.classList.remove('online');
-          statusDot.classList.add('offline');
-          statusDot.title = 'Twitch: не подключено';
+
+        function updateStatus(text, color) {
+            const statusEl = document.getElementById('status');
+            statusEl.innerText = text;
+            statusEl.style.color = color;
         }
-      }
-    }
 
-    // Функция входа
-    window.twitchLogin = function(){
-      var cid = document.getElementById('twClientId').value.trim();
-      if(!cid){ shake('twClientId'); return; }
-      twitchData.clientId = cid;
-      var redirectUri = window.location.origin + window.location.pathname;
-      var url = TWITCH_AUTH_URL +
-        '?client_id=' + encodeURIComponent(cid) +
-        '&redirect_uri=' + encodeURIComponent(redirectUri) +
-        '&response_type=token' +
-        '&scope=' + encodeURIComponent(TWITCH_SCOPE);
-      window.location.href = url;
-    };
+        // Обработка триггеров
+        function handleReward(event) {
+            const userName = event.user_name;
+            const rewardTitle = event.reward.title;
+            const userInput = event.user_input || '';
 
-    // Функция выхода
-    window.twitchLogout = function(){
-      clearTwitchData();
-      updateTwitchUI();
-    };
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += `<div class="reward-alert">[${new Date().toLocaleTimeString()}] <b>${userName}</b> взял "${rewardTitle}" ${userInput ? `(${userInput})` : ''}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
 
-    // Инициализация
-    loadTwitchData();
-    checkAuthRedirect();
-    // Если есть токен но нет данных пользователя — загрузить
-    if(twitchData.accessToken && !twitchData.user){
-      fetchTwitchUser(twitchData.accessToken);
-    } else {
-      updateTwitchUI();
-    }
+            // --- ВАШИ СЦЕНАРИИ ---
+            if (rewardTitle.toLowerCase() === 'тест') {
+                alert(`Пользователь ${userName} активировал тестовую награду!`);
+            }
+        }
 
-  })();
-
-
-  /* ===== REWARDS MANAGEMENT ===== */
-  (function(){
-    var REWARDS_KEY = 'twitch_rewards';
-    var rewards = loadRewards();
-
-    function loadRewards(){
-      try{ var d = JSON.parse(localStorage.getItem(REWARDS_KEY) || '[]'); return Array.isArray(d) ? d : []; }
-      catch(e){ return []; }
-    }
-    function saveRewards(){ localStorage.setItem(REWARDS_KEY, JSON.stringify(rewards)); }
-
-    window.openRewards = function(){
-      document.getElementById('rewardsOverlay').classList.add('active');
-      document.getElementById('rewardsFab').classList.add('active');
-      renderRewards();
-    };
-
-    window.closeRewards = function(){
-      document.getElementById('rewardsOverlay').classList.remove('active');
-      document.getElementById('rewardsFab').classList.remove('active');
-    };
-
-    window.addReward = function(){
-      var nameEl = document.getElementById('rewardName');
-      var costEl = document.getElementById('rewardCost');
-      var name = nameEl.value.trim();
-      var cost = parseInt(costEl.value, 10);
-      if(!name){ shake('rewardName'); return; }
-      if(isNaN(cost) || cost < 1) cost = 1;
-      rewards.push({ name: name, cost: cost });
-      saveRewards();
-      renderRewards();
-      nameEl.value = '';
-      costEl.value = '';
-      nameEl.focus();
-    };
-
-    window.removeReward = function(i){
-      rewards.splice(i, 1);
-      saveRewards();
-      renderRewards();
-    };
-
-    function renderRewards(){
-      var list = document.getElementById('rewardsList');
-      if(!rewards.length){
-        list.innerHTML = '<div class="empty">Нет наград. Добавь первую награду ниже ☝</div>';
-        return;
-      }
-      var html = '';
-      rewards.forEach(function(r, i){
-        html += '<div class="reward-row">'
-          + '<input type="text" value="'+String(r.name).replace(/"/g,'&quot;')+'" onchange="updateRewardName('+i+', this.value)" />'
-          + '<input type="number" value="'+r.cost+'" min="1" style="width:100px" onchange="updateRewardCost('+i+', this.value)" />'
-          + '<button class="del" title="Удалить" onclick="removeReward('+i+')">&times;</button>'
-          + '</div>';
-      });
-      list.innerHTML = html;
-    }
-
-    window.updateRewardName = function(i, val){
-      if(rewards[i]){ rewards[i].name = val.trim(); saveRewards(); }
-    };
-
-    window.updateRewardCost = function(i, val){
-      if(rewards[i]){ rewards[i].cost = Math.max(1, parseInt(val, 10) || 1); saveRewards(); renderRewards(); }
-    };
-
-    // Close rewards overlay on Escape
-    document.addEventListener('keydown', function(e){
-      if(e.key === 'Escape' && document.getElementById('rewardsOverlay').classList.contains('active')){
-        closeRewards();
-      }
-    });
-
-  })();
-
-
-  /* ===== FLIP-TIMER ===== */
-  (function(){
-    var timerSeconds = 600; // 10 минут по умолчанию
-    var timerRunning = false;
-    var timerInterval = null;
-    var timerEndTime = 0;
-    var remainingOnPause = 600; // Оставшееся время при паузе
-
-    var flipClock = document.getElementById('flipClock');
-    var timerPlayBtn = document.getElementById('timerPlayBtn');
-
-    // Обновить одну карточку с анимацией
-    function updateCard(cardId, newValue){
-      var card = document.getElementById(cardId);
-      if(!card) return;
-
-      var topStatic = card.querySelector('.card-top .text');
-      var bottomStatic = card.querySelector('.card-bottom .text');
-      var topFold = card.querySelector('.card-fold-top .text');
-      var bottomFold = card.querySelector('.card-fold-bottom .text');
-
-      var currentValue = topStatic.innerText;
-      if(currentValue === newValue) return;
-
-      // Сброс анимации
-      card.classList.remove('flip');
-      void card.offsetWidth; // Форсируем перерисовку
-
-      // Устанавливаем стартовые значения
-      topStatic.innerText = newValue;
-      topFold.innerText = currentValue;
-      bottomFold.innerText = newValue;
-      bottomStatic.innerText = currentValue;
-
-      // Запускаем анимацию
-      card.classList.add('flip');
-
-      // Синхронизируем нижний фон после анимации
-      setTimeout(function(){
-        bottomStatic.innerText = newValue;
-      }, 700);
-    }
-
-    // Обновить весь flip-clock
-    function updateFlipClock(remaining){
-      var minutes = Math.floor(remaining / 60);
-      var seconds = remaining % 60;
-
-      var m1 = Math.floor(minutes / 10).toString();
-      var m2 = (minutes % 10).toString();
-      var s1 = Math.floor(seconds / 10).toString();
-      var s2 = (seconds % 10).toString();
-
-      updateCard('m1', m1);
-      updateCard('m2', m2);
-      updateCard('s1', s1);
-      updateCard('s2', s2);
-
-      // Цвета в зависимости от времени
-      flipClock.classList.remove('warning', 'danger');
-      if(remaining <= 10) flipClock.classList.add('danger');
-      else if(remaining <= 60) flipClock.classList.add('warning');
-    }
-
-    function tick(){
-      var now = Date.now();
-      var remaining = Math.ceil((timerEndTime - now) / 1000);
-
-      if(remaining <= 0){
-        remaining = 0;
-        updateFlipClock(0);
-        clearInterval(timerInterval);
-        timerRunning = false;
-        timerPlayBtn.textContent = '▶';
-        timerPlayBtn.classList.remove('active');
-
-        // Звуковой сигнал
-        try{
-          var ctx = new (window.AudioContext || window.webkitAudioContext)();
-          var osc = ctx.createOscillator();
-          var gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.frequency.value = 880;
-          gain.gain.value = 0.3;
-          osc.start();
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1);
-          osc.stop(ctx.currentTime + 1);
-        }catch(e){}
-
-        setTimeout(function(){ alert('⏱ Время вышло!'); }, 100);
-        return;
-      }
-
-      updateFlipClock(remaining);
-    }
-
-    window.timerToggle = function(){
-      if(timerRunning){
-        // Пауза - сохраняем оставшееся время
-        clearInterval(timerInterval);
-        timerRunning = false;
-        timerPlayBtn.textContent = '▶';
-        timerPlayBtn.classList.remove('active');
-
-        var now = Date.now();
-        var remaining = Math.ceil((timerEndTime - now) / 1000);
-        remainingOnPause = Math.max(0, remaining);
-      } else {
-        // Старт/Продолжение - используем сохраненное время
-        timerEndTime = Date.now() + remainingOnPause * 1000;
-        timerRunning = true;
-        timerPlayBtn.textContent = '⏸';
-        timerPlayBtn.classList.add('active');
-        timerInterval = setInterval(tick, 1000);
-        tick();
-      }
-    };
-
-    window.timerReset = function(){
-      clearInterval(timerInterval);
-      timerRunning = false;
-      timerSeconds = 600;
-      remainingOnPause = 600;
-      timerPlayBtn.textContent = '▶';
-      timerPlayBtn.classList.remove('active');
-      flipClock.classList.remove('warning', 'danger');
-      updateFlipClock(600);
-    };
-
-    window.timerAdd = function(sec){
-      if(timerRunning){
-        timerEndTime += sec * 1000;
-        tick();
-      } else {
-        remainingOnPause += sec;
-        if(remainingOnPause < 0) remainingOnPause = 0;
-        updateFlipClock(remainingOnPause);
-      }
-    };
-
-    window.timerSet = function(min){
-      clearInterval(timerInterval);
-      timerRunning = false;
-      timerSeconds = min * 60;
-      remainingOnPause = min * 60;
-      timerPlayBtn.textContent = '▶';
-      timerPlayBtn.classList.remove('active');
-      flipClock.classList.remove('warning', 'danger');
-      updateFlipClock(remainingOnPause);
-    };
-
-    // Инициализация
-    updateFlipClock(600);
-
-  })();
-
-
-  render();
-</script>
+        // Проверяем авторизацию при загрузке страницы
+        checkAuth();
+    </script>
 </body>
 </html>
