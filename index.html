@@ -1630,6 +1630,15 @@
       } else if(!pollRewards.length){
         el.textContent = '⏳ Загрузка наград для опроса выкупов...';
         el.style.color = 'var(--ink-faint)';
+      } else if(lastPollTime){
+        var t = lastPollTime.toLocaleTimeString();
+        if(lastPollSeen > 0){
+          el.textContent = '✅ Опрос идёт (' + t + '): получено выкупов ' + lastPollSeen + ', ошибок ' + lastPollErrors + '. Новые покупки появятся здесь.';
+          el.style.color = 'var(--points)';
+        } else {
+          el.textContent = '✅ Опрос идёт (' + t + '): ' + pollRewards.length + ' наград, выкупов не найдено' + (lastPollErrors ? ' (ошибок: ' + lastPollErrors + ')' : '');
+          el.style.color = 'var(--ink-faint)';
+        }
       } else {
         el.textContent = '✅ Опрос выкупов: ' + pollRewards.length + ' наград';
         el.style.color = 'var(--points)';
@@ -1707,22 +1716,27 @@
     function pollRedemptions(){
       if(!isAuthorized() || !pollRewards.length) return;
       var broadcasterId = getBroadcasterId();
+      var totalSeen = 0, pollErrors = 0;
       pollRewards.forEach(function(r){
         // Опрашиваем и необработанные (UNFULFILLED), и автоматически выполненные (FULFILLED) выкупы —
         // иначе покупки наград с включённым "пропускать очередь" никогда не появляются в панели
-        ['UNFULFILLED', 'FULFILLED'].forEach(function(status){
+        ['UNFULFILLED', 'FULFILLED', 'CANCELED'].forEach(function(status){
           fetch(TWITCH_API + '/channel_points/custom_rewards_redemptions?broadcaster_id=' + broadcasterId
-            + '&reward_id=' + r.id + '&status=' + status + '&first=20&sort=' + (status === 'FULFILLED' ? 'NEWEST' : 'OLDEST'), { headers: getHeaders() })
+            + '&reward_id=' + r.id + '&status=' + status + '&first=20&sort=' + (status === 'UNFULFILLED' ? 'OLDEST' : 'NEWEST'), { headers: getHeaders() })
           .then(function(res){ return res.ok ? res.json() : res.json().then(function(j){ throw new Error(j.message || ('HTTP ' + res.status)); }); })
           .then(function(d){
             if(!d || !d.data) return;
+            totalSeen += d.data.length;
+            if(d.data.length) console.log('[poll]', r.title, '→', status, ':', d.data.length, 'выкупов');
             var changed = false;
             d.data.forEach(function(rd){
               if(processedIds[rd.id]) return;
               // Пропустить выкупы старше момента последней очистки списка
               if(cutoff && rd.redeemed_at && (new Date(rd.redeemed_at).getTime() < cutoff)) return;
               processedIds[rd.id] = true;
+              if(status === 'CANCELED'){ return; } // отменённые не показываем, только логируем
               changed = true;
+              console.log('[poll] НОВАЯ ПОКУПКА:', rd.user_name, '—', r.title, '—', rd.cost, 'баллов —', rd.status, '—', rd.redeemed_at);
               purchases.push({
                 nick: rd.user_name || rd.user_login || '?',
                 text: rd.user_input || '',
@@ -1738,6 +1752,7 @@
             }
           })
           .catch(function(err){
+            pollErrors++;
             var msg = String((err && err.message) || err);
             // 404 = награда удалена или отключена на Twitch — не критично, тихо пропускаем
             if(msg.indexOf('404') === -1){
@@ -1749,7 +1764,13 @@
           });
         });
       });
+      lastPollSeen = totalSeen;
+      lastPollErrors = pollErrors;
+      lastPollTime = new Date();
+      updatePurchasesStatus();
     }
+
+    var lastPollTime = null, lastPollSeen = 0, lastPollErrors = 0;
 
     // Опрос выкупов каждые 5 секунд
     setInterval(pollRedemptions, 5000);
@@ -1762,6 +1783,17 @@
 
     renderPurchases();
     updatePurchasesStatus();
+
+    // Отладка в консоли: window.debugPurchases()
+    window.debugPurchases = function(){
+      console.log('=== DEBUG PURCHASES ===');
+      console.log('Авторизация:', isAuthorized(), '| broadcaster:', getBroadcasterId());
+      console.log('Наград для опроса:', pollRewards.length, pollRewards.map(function(r){ return r.title; }));
+      console.log('Обработанных ID:', Object.keys(processedIds).length);
+      console.log('Cutoff:', cutoff ? new Date(cutoff).toLocaleString() : 'нет');
+      console.log('Текущие покупки:', JSON.parse(JSON.stringify(purchases)));
+      console.log('Последний опрос:', lastPollTime, '| выкупов:', lastPollSeen, '| ошибок:', lastPollErrors);
+    };
 
   })();
 
