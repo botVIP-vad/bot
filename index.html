@@ -540,7 +540,7 @@
         html += '<div class="row">'
           + '<div class="idx">' + (i+1) + '</div>'
           + '<div class="nick" title="' + String(p.nick).replace(/"/g,'&quot;') + '">' + p.nick + '</div>'
-          + '<div class="points">' + (p.points||0) + ' б.</div>'
+          + '<div class="points">' + (p.points||0) + '</div>'
           + '<button class="del" title="Удалить" onclick="removeAt(' + i + ')">&times;</button>'
           + '</div>';
       });
@@ -1203,7 +1203,7 @@
         html += '<div class="purchase-row">'
           + '<span class="p-nick">' + nick + '</span>'
           + '<span class="p-text" title="' + text + '">' + text + '</span>'
-          + '<span class="p-cost">' + p.cost + ' б.</span>'
+          + '<span class="p-cost">' + p.cost + ' </span>'
           + '<button class="p-accept" title="Добавить участника" onclick="confirmPurchase(' + i + ')">ПОДТВЕРДИТЬ</button>'
           + '<button class="p-reject" title="Отклонить и вернуть баллы" onclick="rejectPurchase(' + i + ')">ОТКЛОНИТЬ</button>'
           + '</div>';
