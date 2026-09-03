@@ -1733,8 +1733,7 @@
             var changed = false;
             d.data.forEach(function(rd){
               if(processedIds[rd.id]) return;
-              // Пропустить выкупы старше момента последней очистки списка
-              if(cutoff && rd.redeemed_at && (new Date(rd.redeemed_at).getTime() < cutoff)) return;
+              // Фильтр по времени отключён: он мог скрывать реальные покупки после "Очистить"
               processedIds[rd.id] = true;
               if(status === 'CANCELED'){ return; } // отменённые не показываем, только логируем
               changed = true;
@@ -1794,9 +1793,26 @@
       console.log('Авторизация:', isAuthorized(), '| broadcaster:', getBroadcasterId());
       console.log('Наград для опроса:', pollRewards.length, pollRewards.map(function(r){ return r.title; }));
       console.log('Обработанных ID:', Object.keys(processedIds).length);
-      console.log('Cutoff:', cutoff ? new Date(cutoff).toLocaleString() : 'нет');
       console.log('Текущие покупки:', JSON.parse(JSON.stringify(purchases)));
       console.log('Последний опрос:', lastPollTime, '| выкупов:', lastPollSeen, '| ошибок:', lastPollErrors);
+    };
+
+    // Жёсткий тест: запрашивает выкупы ВСЕХ статусов без фильтра по первым 5 наградам
+    window.testRedemptions = function(){
+      if(!isAuthorized()){ console.error('Не авторизован'); return; }
+      var broadcasterId = getBroadcasterId();
+      console.log('=== TEST REDEMPTIONS (без фильтра статуса) ===');
+      console.log('broadcaster_id =', broadcasterId);
+      pollRewards.slice(0, 5).forEach(function(r){
+        fetch(TWITCH_API + '/channel_points/custom_rewards_redemptions?broadcaster_id=' + broadcasterId
+          + '&reward_id=' + r.id + '&first=20', { headers: getHeaders() })
+        .then(function(res){ console.log('HTTP', res.status, '—', r.title); return res.json(); })
+        .then(function(d){
+          console.log('  выкупов:', (d.data || []).length, (d.data || []).map(function(x){ return x.user_name + ' / ' + x.status + ' / ' + x.redeemed_at; }));
+          if(d.message) console.log('  сообщение Twitch:', d.message);
+        })
+        .catch(function(e){ console.error('  ошибка:', e); });
+      });
     };
 
   })();
