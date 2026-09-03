@@ -119,7 +119,7 @@
   .wheel-overlay{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;
     background:rgba(14,15,18,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:20px;pointer-events:none}
   .wheel-overlay.active{display:flex;animation:fadeIn .25s ease}
-  .wheel-overlay .close, .wheel-overlay .spin-btn, .wheel-overlay canvas, .wheel-overlay .wheel-canvas-wrap{pointer-events:auto}
+  .wheel-overlay .close, .wheel-overlay .spin-btn, .wheel-overlay canvas, .wheel-overlay .wheel-canvas-wrap, .wheel-overlay .wheel-side, .wheel-overlay .wheel-side *{pointer-events:auto}
   @keyframes fadeIn{from{opacity:0}to{opacity:1}}
   .wheel-overlay .close{position:absolute;top:20px;right:24px;background:rgba(255,255,255,.08);border:1px solid var(--line);
     color:var(--ink);width:42px;height:42px;border-radius:50%;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
@@ -476,14 +476,9 @@
     <div class="wheel-side">
       <div class="side-label">Режим рулетки</div>
       <div class="mode-toggle">
-        <button class="mode-btn" id="modeNormalBtn" onclick="setWheelMode('normal')">
-          <span class="m-ico">🎡</span>ОБЫЧНЫЙ
-        </button>
-        <button class="mode-btn" id="modeElimBtn" onclick="setWheelMode('elimination')">
-          <span class="m-ico">💀</span>ВЫБЫВАНИЕ
-        </button>
+        <button class="mode-btn" id="modeNormalBtn" onclick="setWheelMode('normal')">ОБЫЧНЫЙ</button>
+        <button class="mode-btn" id="modeElimBtn" onclick="setWheelMode('elimination')">ВЫБЫВАНИЕ</button>
       </div>
-      <div class="side-note" id="modeNote">Победитель определяется, участники остаются в списке.</div>
 
       <div class="side-label">Время вращения</div>
       <div class="duration-box">
@@ -572,9 +567,6 @@
     wheelMode = mode;
     document.getElementById('modeNormalBtn').classList.toggle('active', mode === 'normal');
     document.getElementById('modeElimBtn').classList.toggle('active', mode === 'elimination');
-    document.getElementById('modeNote').textContent = mode === 'elimination'
-      ? 'Победитель выбывает из колеса — крути, пока не останется один!'
-      : 'Победитель определяется, участники остаются в списке.';
   }
 
   function setSpinDuration(val){
