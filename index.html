@@ -269,7 +269,7 @@
   <div class="topbar-in">
     <div class="logo">
       <span class="logo-mark">
-        <img src="icon1.png" alt="WheelBot" width="22" height="22" />
+        <img src="icon1.png" alt="WheelBot" width="30" height="30" />
       </span>
       WheelBot
     </div>
@@ -358,47 +358,7 @@
   <img src="icon.png" alt="Рулетка" width="48" height="48" />
 </button>
 
-<!-- Settings overlay -->
-<div class="settings-overlay" id="settingsOverlay">
-  <button class="close" onclick="closeSettings()">✕</button>
-  <div class="settings-box card" style="margin:0">
-    <div class="kicker">⚙️ Настройки</div>
-    <h2>Основные настройки</h2>
-    <p class="sub">Настрой параметры рулетки и таймера</p>
 
-    <div class="settings-section">
-      <h3>🎡 Рулетка</h3>
-      <div class="setting-row">
-        <label>Анимация вращения</label>
-        <div class="setting-toggle active" id="toggleAnimation" onclick="toggleSetting(this)"></div>
-      </div>
-      <div class="setting-row">
-        <label>Звук победителя</label>
-        <div class="setting-toggle active" id="toggleSound" onclick="toggleSetting(this)"></div>
-      </div>
-    </div>
-
-    <div class="settings-section">
-      <h3>⏱ Таймер</h3>
-      <div class="setting-row">
-        <label>Звук окончания</label>
-        <div class="setting-toggle active" id="toggleTimerSound" onclick="toggleSetting(this)"></div>
-      </div>
-      <div class="setting-row">
-        <label>Предупреждение (сек)</label>
-        <input type="number" id="timerWarning" value="30" min="5" max="120" />
-      </div>
-    </div>
-
-    <div class="settings-section">
-      <h3>🎨 Оформление</h3>
-      <div class="setting-row">
-        <label>Видео-фон</label>
-        <div class="setting-toggle active" id="toggleVideoBg" onclick="toggleSetting(this); toggleVideoBg()"></div>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- Рулетка overlay (полный экран поверх) -->
 <div class="wheel-overlay" id="wheelOverlay">
