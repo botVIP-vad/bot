@@ -29,12 +29,6 @@
   .logo-mark{width:34px;height:34px;border-radius:10px;background:var(--grad);display:grid;place-items:center;box-shadow:0 6px 16px -4px rgba(121,80,242,.6)}
   .total{margin-left:auto;color:var(--ink-dim);font-size:.9rem;background:rgba(255,255,255,.04);border:1px solid var(--line);padding:6px 14px;border-radius:999px}
 
-  /* ===== Edit counter ===== */
-  .edit-counter{position:fixed;bottom:24px;left:24px;z-index:150;background:var(--grad);color:#fff;
-    font-weight:800;font-size:1rem;padding:8px 16px;border-radius:999px;box-shadow:0 4px 15px -3px rgba(121,80,242,.5);
-    pointer-events:none;min-width:60px;text-align:center}
-  .edit-counter span{color:var(--points)}
-
   main{max-width:920px;margin:0 auto;padding:30px 22px 60px;background:rgba(14,15,18,.7);backdrop-filter:blur(10px);border-radius:20px;border:1px solid var(--line)}
   .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px}
   .kicker{font-size:.72rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--primary-2);margin-bottom:6px}
@@ -187,6 +181,20 @@
     color:var(--ink-dim);cursor:pointer;transition:.2s}
   .timer-preset:hover{background:rgba(121,80,242,.15);border-color:var(--primary);color:#fff}
 
+  /* ===== Purchases panel (под таймером) ===== */
+  .purchases-panel{width:100%;background:rgba(14,15,18,.88);backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:18px;
+    padding:14px 16px;box-shadow:0 8px 30px -8px rgba(0,0,0,.6)}
+  .purchases-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .purchases-title{font-size:.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink-faint)}
+  .purchases-clear{background:none;border:0;color:var(--ink-faint);cursor:pointer;font-size:.72rem;padding:2px 6px;border-radius:6px}
+  .purchases-clear:hover{color:var(--donation);background:rgba(246,100,108,.12)}
+  .purchases-list{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow:auto}
+  .purchase-row{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+    border-radius:10px;padding:7px 10px;animation:fadeIn .25s ease}
+  .purchase-row .p-nick{font-weight:800;font-size:.85rem;color:var(--primary-2);flex-shrink:0}
+  .purchase-row .p-text{flex:1;min-width:0;font-size:.8rem;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .purchase-row .p-cost{font-weight:800;font-size:.8rem;color:var(--points);flex-shrink:0}
+
   /* Flip-Clock */
   .flip-clock{display:flex;gap:12px}
   .flip-container{display:flex;flex-direction:column;align-items:center}
@@ -274,6 +282,17 @@
       <span class="timer-preset" onclick="timerSet(15)">15м</span>
       <span class="timer-preset" onclick="timerSet(30)">30м</span>
       <span class="timer-preset" onclick="timerSet(60)">60м</span>
+    </div>
+  </div>
+
+  <!-- Покупки наград -->
+  <div class="purchases-panel" id="purchasesPanel">
+    <div class="purchases-head">
+      <div class="purchases-title">🛒 Покупки наград</div>
+      <button class="purchases-clear" onclick="clearPurchases()">Очистить</button>
+    </div>
+    <div class="purchases-list" id="purchasesList">
+      <div class="empty" style="padding:14px 0;font-size:.78rem">Пока никто не купил награду</div>
     </div>
   </div>
 </div>
@@ -995,9 +1014,90 @@
       list.innerHTML = html;
     }
 
+    /* ===== Покупки наград (выкупы channel points) ===== */
+    var PURCH_KEY = 'wheelbot_purchases';
+    var processedKey = 'wheelbot_purchases_processed';
+    var purchases = [];
+    var processedIds = {};
+    try{
+      var pd = JSON.parse(localStorage.getItem(PURCH_KEY) || '[]');
+      if(Array.isArray(pd)) purchases = pd;
+      var pr = JSON.parse(localStorage.getItem(processedKey) || '{}');
+      if(pr && typeof pr === 'object') processedIds = pr;
+    }catch(e){}
+
+    window.clearPurchases = function(){
+      purchases = [];
+      processedIds = {};
+      localStorage.setItem(PURCH_KEY, '[]');
+      localStorage.setItem(processedKey, '{}');
+      renderPurchases();
+    };
+
+    function renderPurchases(){
+      var list = document.getElementById('purchasesList');
+      if(!purchases.length){
+        list.innerHTML = '<div class="empty" style="padding:14px 0;font-size:.78rem">Пока никто не купил награду</div>';
+        return;
+      }
+      var html = '';
+      purchases.forEach(function(p){
+        var text = p.text ? String(p.text).replace(/</g,'&lt;').replace(/"/g,'&quot;') : '';
+        html += '<div class="purchase-row">'
+          + '<span class="p-nick">' + String(p.nick).replace(/</g,'&lt;') + '</span>'
+          + '<span class="p-text" title="' + text + '">' + text + '</span>'
+          + '<span class="p-cost">' + p.cost + ' б.</span>'
+          + '</div>';
+      });
+      list.innerHTML = html;
+    }
+
+    function savePurchases(){
+      localStorage.setItem(PURCH_KEY, JSON.stringify(purchases));
+      localStorage.setItem(processedKey, JSON.stringify(processedIds));
+    }
+
+    function pollRedemptions(){
+      if(!isAuthorized() || !rewards.length) return;
+      var broadcasterId = getBroadcasterId();
+      rewards.forEach(function(r){
+        fetch(TWITCH_API + '/channel_points/custom_rewards_redemptions?broadcaster_id=' + broadcasterId
+          + '&reward_id=' + r.id + '&status=UNFULFILLED&first=50&sort=OLDEST', { headers: getHeaders() })
+        .then(function(res){ return res.ok ? res.json() : null; })
+        .then(function(d){
+          if(!d || !d.data) return;
+          var changed = false;
+          d.data.forEach(function(rd){
+            if(processedIds[rd.id]) return;
+            processedIds[rd.id] = true;
+            changed = true;
+            purchases.push({
+              nick: rd.user_name || rd.user_login || '?',
+              text: rd.user_input || '',
+              cost: rd.cost || r.cost || 0
+            });
+            // Отмечаем выкуп выполненным, чтобы не копилось
+            fetch(TWITCH_API + '/channel_points/custom_rewards_redemptions?broadcaster_id=' + broadcasterId
+              + '&reward_id=' + r.id, {
+              method: 'PATCH',
+              headers: getHeaders(),
+              body: JSON.stringify({ status: 'FULFILLED', fulfillment_ids: [rd.id] })
+            }).catch(function(){});
+          });
+          if(changed) savePurchases();
+        })
+        .catch(function(){});
+      });
+    }
+
+    // Опрос выкупов каждые 5 секунд
+    setInterval(pollRedemptions, 5000);
+
     document.addEventListener('keydown', function(e){
       if(e.key === 'Escape' && document.getElementById('rewardsOverlay').classList.contains('active')) closeRewards();
     });
+
+    renderPurchases();
 
   })();
 
@@ -1161,40 +1261,6 @@
 
 
   render();
-</script>
-
-<!-- Edit counter -->
-<div class="edit-counter" id="editCounter">Правки: <span id="editCount">1</span></div>
-
-<script>
-  // Edit counter - starts at 1, increments on each edit
-  (function(){
-    var EDIT_COUNTER_KEY = 'wheelbot_edit_counter';
-    var count = parseInt(localStorage.getItem(EDIT_COUNTER_KEY) || '1', 10);
-    if(isNaN(count)) count = 1;
-    document.getElementById('editCount').textContent = count;
-
-    // Function to increment counter
-    window.incrementEditCounter = function(){
-      count++;
-      localStorage.setItem(EDIT_COUNTER_KEY, count);
-      document.getElementById('editCount').textContent = count;
-    };
-
-    // Track edits on inputs
-    document.addEventListener('change', function(e){
-      if(e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')){
-        window.incrementEditCounter();
-      }
-    });
-
-    // Track clicks on buttons
-    document.addEventListener('click', function(e){
-      if(e.target && (e.target.tagName === 'BUTTON' || e.target.closest('button'))){
-        window.incrementEditCounter();
-      }
-    });
-  })();
 </script>
 
 </body>
