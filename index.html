@@ -82,6 +82,36 @@
   .settings-fab.active{box-shadow:0 0 0 3px var(--points),0 6px 20px -4px rgba(121,80,242,.7)}
   .settings-fab img{width:48px;height:48px;object-fit:contain}
 
+  /* ===== Chat button ===== */
+  .chat-fab{position:fixed;left:24px;top:calc(50% - 220px);z-index:150;width:70px;height:70px;border-radius:30px;border:0;
+    background:var(--grad);box-shadow:0 6px 20px -4px rgba(121,80,242,.6);cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:.25s;padding:0}
+  .chat-fab:hover{transform:scale(1.1);box-shadow:0 10px 30px -4px rgba(121,80,242,.7)}
+  .chat-fab.active{box-shadow:0 0 0 3px var(--points),0 6px 20px -4px rgba(121,80,242,.7)}
+  .chat-fab img{width:48px;height:48px;object-fit:contain}
+
+  /* ===== Chat overlay ===== */
+  .chat-overlay{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;
+    background:rgba(14,15,18,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:20px}
+  .chat-overlay.active{display:flex;animation:twFade .25s ease}
+  .chat-overlay .close{position:absolute;top:20px;right:24px;background:rgba(255,255,255,.08);border:1px solid var(--line);
+    color:var(--ink);width:42px;height:42px;border-radius:50%;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+  .chat-overlay .close:hover{background:var(--donation);color:#fff}
+  .chat-box{width:100%;max-width:560px;display:flex;flex-direction:column;gap:12px}
+  .chat-box .chat-title{text-align:center;margin-bottom:6px}
+  .chat-box .chat-title h2{font-size:1.4rem;font-weight:800;letter-spacing:-.5px}
+  .chat-box .chat-title p{color:var(--ink-dim);font-size:.85rem}
+  .chat-messages{height:60vh;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:16px;
+    padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+  .chat-messages::-webkit-scrollbar{width:8px}
+  .chat-messages::-webkit-scrollbar-track{background:rgba(255,255,255,.04);border-radius:99px}
+  .chat-messages::-webkit-scrollbar-thumb{background:var(--primary);border-radius:99px}
+  .chat-msg{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;padding:8px 12px;
+    font-size:.88rem;line-height:1.45;word-break:break-word;animation:fadeIn .2s ease}
+  .chat-msg .chat-nick{font-weight:800;color:var(--primary-2);margin-right:6px}
+  .chat-msg.chat-self .chat-nick{color:var(--points)}
+  .chat-status{color:var(--ink-faint);font-size:.8rem;text-align:center}
+
   /* ===== Connection status indicator ===== */
   .tw-status-dot{position:fixed;right:24px;top:80px;z-index:50;width:16px;height:16px;border-radius:50%;
     border:2px solid rgba(255,255,255,.2);transition:.3s}
@@ -562,6 +592,26 @@
 
     <button class="btn tw-login-btn" id="twLoginBtn" onclick="twitchLogin()">Войти через Twitch</button>
     <button class="btn tw-logout-btn" id="twLogoutBtn" onclick="twitchLogout()" style="display:none">🚪 Выйти</button>
+  </div>
+</div>
+
+<!-- Плавающая кнопка чата (слева, над настройками) -->
+<button class="chat-fab" id="chatFab" onclick="toggleChat()" title="Чат Twitch">
+  <img src="chat.png" alt="Чат" />
+</button>
+
+<!-- Chat overlay -->
+<div class="chat-overlay" id="chatOverlay">
+  <button class="close" onclick="closeChat()">✕</button>
+  <div class="chat-box">
+    <div class="chat-title">
+      <h2>💬 Чат Twitch</h2>
+      <p>Канал: <strong>welvol</strong></p>
+    </div>
+    <div class="chat-status" id="chatStatus">⏳ Подключение к чату…</div>
+    <div class="chat-messages" id="chatMessages">
+      <div class="empty">Загрузка сообщений…</div>
+    </div>
   </div>
 </div>
 
@@ -1076,11 +1126,96 @@
     document.getElementById('wheelFab').classList.remove('active');
   }
 
+  // ===== Чат Twitch (канал welvol) =====
+  var chatSocket = null;
+  var CHAT_CHANNEL = 'welvol';
+  function chatConnect(){
+    chatDisconnect();
+    var statusEl = document.getElementById('chatStatus');
+    var listEl = document.getElementById('chatMessages');
+    listEl.innerHTML = '<div class="empty">Загрузка сообщений…</div>';
+    statusEl.textContent = '⏳ Подключение к чату…';
+    try{
+      chatSocket = new WebSocket('wss://irc-ws.twitch.tv:443');
+      chatSocket.onopen = function(){
+        chatSocket.send('CAP REQ :twitch.tv/tags');
+        chatSocket.send('PASS SCHMOOPIIE');
+        chatSocket.send('NICK justinfan' + Math.floor(Math.random()*100000));
+        chatSocket.send('JOIN #' + CHAT_CHANNEL);
+      };
+      chatSocket.onmessage = function(ev){
+        var lines = String(ev.data).split('\r\n');
+        for(var i=0;i<lines.length;i++){
+          var line = lines[i];
+          if(!line) continue;
+          if(line.indexOf('PING') === 0){ chatSocket.send('PONG :tmi.twitch.tv'); continue; }
+          if(line.indexOf('JOIN') !== -1 && line.indexOf(' tmi.twitch.tv JOIN') !== -1){
+            statusEl.textContent = '🟢 Подключено к чату #' + CHAT_CHANNEL;
+            continue;
+          }
+          var idx = line.indexOf('PRIVMSG #' + CHAT_CHANNEL + ' :');
+          if(idx === -1) continue;
+          var tags = line.substring(0, idx);
+          // display-name и цвет ника из IRC-тегов
+          var dn = tags.match(/display-name=([^;\s]+)/);
+          var color = tags.match(/color=([^;\s]+)/);
+          var nick = (dn && dn[1]) ? dn[1] : (line.match(/^:([^!]+)!/) || [,'?'])[1];
+          var text = line.substring(idx + ('PRIVMSG #' + CHAT_CHANNEL + ' :').length);
+          var div = document.createElement('div');
+          div.className = 'chat-msg';
+          var nickColor = (color && color[1]) ? color[1] : '';
+          div.innerHTML = '<span class="chat-nick" style="' + (nickColor ? 'color:'+nickColor : '') + '"></span>';
+          var nickSpan = div.firstChild;
+          nickSpan.textContent = nick; // безопасное добавление ника
+          var textNode = document.createElement('span');
+          textNode.textContent = text; // безопасное добавление текста (без XSS)
+          div.appendChild(textNode);
+          var emptyEl = listEl.querySelector('.empty');
+          if(emptyEl) emptyEl.remove();
+          listEl.appendChild(div);
+          // Ограничиваем историю 200 сообщениями
+          while(listEl.children.length > 200) listEl.removeChild(listEl.firstChild);
+          listEl.scrollTop = listEl.scrollHeight;
+        }
+      };
+      chatSocket.onclose = function(){
+        if(chatOverlayEl.classList.contains('active')){
+          statusEl.textContent = '🔴 Соединение потеряно. Открой чат заново.';
+        }
+        chatSocket = null;
+      };
+      chatSocket.onerror = function(){ statusEl.textContent = '🔴 Ошибка соединения с чатом'; };
+    }catch(e){ statusEl.textContent = '🔴 Ошибка соединения с чатом'; }
+  }
+  function chatDisconnect(){
+    try{ if(chatSocket){ chatSocket.onclose = null; chatSocket.close(); } }catch(e){}
+    chatSocket = null;
+  }
+  var chatOverlayEl = document.getElementById('chatOverlay');
+  function openChat(){
+    chatOverlayEl.classList.add('active');
+    document.getElementById('chatFab').classList.add('active');
+    chatConnect();
+  }
+  function closeChat(){
+    chatOverlayEl.classList.remove('active');
+    document.getElementById('chatFab').classList.remove('active');
+    chatDisconnect();
+  }
+  function toggleChat(){
+    if(chatOverlayEl.classList.contains('active')) closeChat();
+    else openChat();
+  }
+  window.openChat = openChat;
+  window.closeChat = closeChat;
+  window.toggleChat = toggleChat;
+
   // Close overlays on Escape
   document.addEventListener('keydown', function(e){
     if(e.key === 'Escape'){
       if(document.getElementById('wheelOverlay').classList.contains('active')) closeWheel();
       if(document.getElementById('twOverlay').classList.contains('active')) closeTwitch();
+      if(chatOverlayEl.classList.contains('active')) closeChat();
     }
   });
 
