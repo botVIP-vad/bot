@@ -69,7 +69,7 @@
     transition:.25s;padding:0}
   .wheel-fab:hover{transform:translateY(-50%) scale(1.08);box-shadow:0 14px 40px -6px rgba(121,80,242,.8)}
   .wheel-fab:active{transform:translateY(-50%) scale(.96)}
-  .wheel-fab svg{flex-shrink:0}
+  .wheel-fab img{width:48px;height:48px;object-fit:contain}
 
   /* ===== Рулетка overlay (полный экран поверх) ===== */
   .wheel-overlay{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;
@@ -202,7 +202,7 @@
 
 <!-- Плавающая кнопка рулетки (слева) -->
 <button class="wheel-fab" onclick="openWheel()" title="Открыть рулетку">
-  <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07L19.07 4.93"/></svg>
+  <img src="icon.png" alt="Рулетка" width="48" height="48" />
 </button>
 
 <!-- Рулетка overlay (полный экран поверх) -->
