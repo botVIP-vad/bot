@@ -1803,8 +1803,9 @@
       purchases.push({
         nick: ev.user_name || ev.user_login || '?',
         text: ev.user_input || '',
-        cost: ev.cost || 0,
-        reward: ev.reward_title || '',
+        // В EventSub стоимость лежит во вложенном объекте reward, а не на верхнем уровне
+        cost: (ev.reward && ev.reward.cost) || ev.cost || 0,
+        reward: ev.reward_title || (ev.reward && ev.reward.title) || '',
         redemptionId: ev.id,
         rewardId: ev.reward_id
       });
