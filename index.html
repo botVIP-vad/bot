@@ -1680,7 +1680,7 @@
           + '<span class="p-nick">' + nick + '</span>'
           + (title ? '<span class="p-text" title="' + title + '">' + title + '</span>' : '')
           + (text ? '<span class="p-text" title="' + text + '">' + text + '</span>' : '')
-          + '<span class="p-cost">' + p.cost + ' </span>'
+          + '<span class="p-cost" title="Стоимость награды">🪙 ' + (p.cost || 0) + '</span>'
           + '<button class="p-accept" title="Добавить участника" onclick="confirmPurchase(' + i + ')">ПОДТВЕРДИТЬ</button>'
           + '<button class="p-reject" title="Отклонить и вернуть баллы" onclick="rejectPurchase(' + i + ')">ОТКЛОНИТЬ</button>'
           + '</div>';
