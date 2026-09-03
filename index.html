@@ -54,7 +54,14 @@
   .row .idx{width:26px;height:26px;border-radius:8px;background:rgba(121,80,242,.16);color:var(--primary-2);
     display:grid;place-items:center;font-size:.78rem;font-weight:700;flex-shrink:0}
   .row .nick{font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .row .points{font-weight:800;color:var(--points);flex-shrink:0}
+  .row .nick-input{flex:1;min-width:0;background:transparent;border:1px solid transparent;border-radius:8px;
+    color:var(--ink);font-family:var(--font);font-weight:700;font-size:.95rem;padding:5px 8px;outline:none;transition:.15s}
+  .row .nick-input:hover{border-color:var(--line)}
+  .row .nick-input:focus{border-color:var(--primary);background:rgba(121,80,242,.07)}
+  .row .points-input{width:80px;flex-shrink:0;background:transparent;border:1px solid transparent;border-radius:8px;
+    color:var(--points);font-family:var(--font);font-weight:800;font-size:.95rem;padding:5px 8px;outline:none;transition:.15s;text-align:right}
+  .row .points-input:hover{border-color:var(--line)}
+  .row .points-input:focus{border-color:var(--primary);background:rgba(121,80,242,.07)}
   .row .del{background:none;border:0;color:var(--ink-faint);cursor:pointer;font-size:1.3rem;line-height:1;padding:2px 6px;border-radius:8px}
   .row .del:hover{color:var(--donation);background:rgba(246,100,108,.12)}
 
@@ -703,8 +710,8 @@
       participants.forEach(function(p, i){
         html += '<div class="row">'
           + '<div class="idx">' + (i+1) + '</div>'
-          + '<div class="nick" title="' + String(p.nick).replace(/"/g,'&quot;') + '">' + p.nick + '</div>'
-          + '<div class="points">' + (p.points||0) + '</div>'
+          + '<input class="nick-input" value="' + String(p.nick).replace(/"/g,'&quot;') + '" title="Ник участника (можно редактировать)" onchange="updateParticipant(' + i + ', this.value, null)" />'
+          + '<input class="points-input" type="number" min="0" value="' + (p.points||0) + '" title="Баллы (можно редактировать)" onchange="updateParticipant(' + i + ', null, this.value)" />'
           + '<button class="del" title="Удалить" onclick="removeAt(' + i + ')">&times;</button>'
           + '</div>';
       });
@@ -712,6 +719,22 @@
       badge.textContent = 'Участников: ' + participants.length + ' · баллов: ' + totalPoints();
     }
   }
+
+  // Редактирование участника прямо в списке
+  window.updateParticipant = function(i, newNick, newPoints){
+    var p = participants[i];
+    if(!p) return;
+    if(newNick !== null && newNick !== undefined){
+      var nick = String(newNick).trim();
+      if(nick){ p.nick = nick; }
+    }
+    if(newPoints !== null && newPoints !== undefined){
+      var pts = parseInt(newPoints, 10);
+      p.points = isNaN(pts) || pts < 0 ? 0 : pts;
+    }
+    save();
+    render();
+  };
 
   document.addEventListener('keydown', function(e){
     if(e.key === 'Enter'){
