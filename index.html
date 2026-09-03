@@ -131,9 +131,10 @@
   .wheel-canvas-wrap canvas{width:100%;height:100%;display:block;filter:drop-shadow(0 20px 60px rgba(121,80,242,.3))}
   .wheel-arrow{position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:0;height:0;
     border-left:18px solid transparent;border-right:18px solid transparent;border-top:32px solid var(--donation);z-index:5;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5))}
-  .arrow-nick{margin-top:4px;background:rgba(14,15,18,.85);border:1px solid var(--line);border-radius:999px;
-    padding:7px 18px;font-weight:800;font-size:.95rem;color:#fff;letter-spacing:.3px;
-    box-shadow:0 6px 18px -6px rgba(0,0,0,.7);transition:color .15s;text-align:center;min-height:20px}
+  .arrow-nick{position:absolute;top:-52px;left:50%;transform:translateX(-50%);z-index:6;white-space:nowrap;
+    background:rgba(14,15,18,.85);border:2px solid #fff;border-radius:999px;
+    padding:6px 20px;font-weight:800;font-size:.95rem;color:#fff;letter-spacing:.3px;
+    box-shadow:0 6px 18px -6px rgba(0,0,0,.7);text-align:center;min-height:20px}
   .elim-banner{display:none;background:rgba(246,100,108,.12);border:1px solid rgba(246,100,108,.35);
     border-radius:12px;padding:10px 12px;text-align:center;font-weight:800;font-size:.92rem;color:var(--donation);
     animation:fadeIn .3s ease}
@@ -468,10 +469,10 @@
   <div class="wheel-content">
     <div class="wheel-left">
       <div class="wheel-canvas-wrap">
+        <div class="arrow-nick" id="arrowNick">&nbsp;</div>
         <div class="wheel-arrow"></div>
         <canvas id="wheelCanvas" width="600" height="600"></canvas>
       </div>
-      <div class="arrow-nick" id="arrowNick">&nbsp;</div>
       <button class="spin-btn" id="spinBtn" disabled>Крутить рулетку</button>
     </div>
 
@@ -555,7 +556,7 @@
   });
 
   /* ===== Рулетка overlay ===== */
-  var WHEEL_COLORS = ['#7950f2','#41c0a9','#f6646c','#f59f00','#1098ad','#e64980','#7048e8','#0ca678','#f76707','#1c7ed6'];
+  var WHEEL_COLORS = ['#2b2140','#1f2f2c','#3a1f24','#33291a','#1a2a33','#2f1a2b','#241a3a','#14332a','#33220f','#12283a'];
   var wcanvas = document.getElementById('wheelCanvas');
   var wctx = wcanvas.getContext('2d');
   var spinBtn = document.getElementById('spinBtn');
@@ -640,7 +641,7 @@
       var end = start + (pts[i]/sum)*Math.PI*2;
       wctx.beginPath(); wctx.moveTo(cx,cy); wctx.arc(cx,cy,r,start,end); wctx.closePath();
       wctx.fillStyle=WHEEL_COLORS[i%WHEEL_COLORS.length]; wctx.fill();
-      wctx.strokeStyle='rgba(0,0,0,.35)'; wctx.lineWidth=2; wctx.stroke();
+      wctx.strokeStyle='#fff'; wctx.lineWidth=2.5; wctx.stroke();
       var mid=(start+end)/2, tr=r*0.62;
       wctx.save(); wctx.translate(cx+Math.cos(mid)*tr, cy+Math.sin(mid)*tr); wctx.rotate(mid+Math.PI/2);
       wctx.fillStyle='#fff'; wctx.font='700 '+Math.min(18,Math.max(12,300/list.length))+'px Inter';
@@ -650,7 +651,7 @@
       start=end;
     }
     wctx.restore();
-    wctx.beginPath(); wctx.arc(cx,cy,r,0,Math.PI*2); wctx.strokeStyle='rgba(255,255,255,.25)'; wctx.lineWidth=3; wctx.stroke();
+    wctx.beginPath(); wctx.arc(cx,cy,r,0,Math.PI*2); wctx.strokeStyle='#fff'; wctx.lineWidth=4; wctx.stroke();
   }
 
   function updateWheelControls(){
