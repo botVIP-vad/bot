@@ -29,6 +29,12 @@
   .logo-mark{width:34px;height:34px;border-radius:10px;background:var(--grad);display:grid;place-items:center;box-shadow:0 6px 16px -4px rgba(121,80,242,.6)}
   .total{margin-left:auto;color:var(--ink-dim);font-size:.9rem;background:rgba(255,255,255,.04);border:1px solid var(--line);padding:6px 14px;border-radius:999px}
 
+  /* ===== Edit counter ===== */
+  .edit-counter{position:fixed;bottom:24px;left:24px;z-index:150;background:var(--grad);color:#fff;
+    font-weight:800;font-size:1rem;padding:8px 16px;border-radius:999px;box-shadow:0 4px 15px -3px rgba(121,80,242,.5);
+    pointer-events:none;min-width:60px;text-align:center}
+  .edit-counter span{color:var(--points)}
+
   main{max-width:920px;margin:0 auto;padding:30px 22px 60px;background:rgba(14,15,18,.7);backdrop-filter:blur(10px);border-radius:20px;border:1px solid var(--line)}
   .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px}
   .kicker{font-size:.72rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--primary-2);margin-bottom:6px}
@@ -1091,5 +1097,40 @@
 
   render();
 </script>
+
+<!-- Edit counter -->
+<div class="edit-counter" id="editCounter">Правки: <span id="editCount">1</span></div>
+
+<script>
+  // Edit counter - starts at 1, increments on each edit
+  (function(){
+    var EDIT_COUNTER_KEY = 'wheelbot_edit_counter';
+    var count = parseInt(localStorage.getItem(EDIT_COUNTER_KEY) || '1', 10);
+    if(isNaN(count)) count = 1;
+    document.getElementById('editCount').textContent = count;
+
+    // Function to increment counter
+    window.incrementEditCounter = function(){
+      count++;
+      localStorage.setItem(EDIT_COUNTER_KEY, count);
+      document.getElementById('editCount').textContent = count;
+    };
+
+    // Track edits on inputs
+    document.addEventListener('change', function(e){
+      if(e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')){
+        window.incrementEditCounter();
+      }
+    });
+
+    // Track clicks on buttons
+    document.addEventListener('click', function(e){
+      if(e.target && (e.target.tagName === 'BUTTON' || e.target.closest('button'))){
+        window.incrementEditCounter();
+      }
+    });
+  })();
+</script>
+
 </body>
 </html>
