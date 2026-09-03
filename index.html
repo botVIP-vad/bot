@@ -763,9 +763,13 @@
     }
 
     window.loadTwitchRewards = function(){
-      if(!isAuthorized()){ rewards = []; renderRewards(); return; }
+      if(!isAuthorized()){
+        rewards = [];
+        renderRewards('🔒 Авторизуйся через Twitch для управления наградами');
+        return;
+      }
       rewardsLoading = true;
-      renderRewards();
+      renderRewards('⏳ Загрузка наград...');
       var broadcasterId = getBroadcasterId();
       fetch(TWITCH_API + '/channel_points/custom_rewards?broadcaster_id=' + broadcasterId + '&only_manageable=true', {
         headers: getHeaders()
@@ -777,21 +781,33 @@
           rewards = d.data.map(function(r){
             return { id: r.id, title: r.title, cost: r.cost, enabled: r.is_enabled, paused: r.is_paused, backgroundColor: r.background_color, prompt: r.prompt || '' };
           });
+          if(rewards.length === 0){
+            renderRewards('📭 Нет наград. Создай первую награду ниже ☝\n\n⚠️ Если у тебя уже есть награды на Twitch, но они не отображаются — значит они созданы другим приложением (другим Client ID). Через API можно видеть только награды, созданные этим же Client ID.');
+          } else {
+            renderRewards();
+          }
         } else {
           rewards = [];
-          if(d.message) console.error('Twitch API error:', d.message);
+          var msg = d.message || 'Неизвестная ошибка';
+          if(msg.indexOf('scope') !== -1){
+            renderRewards('❌ Ошибка прав доступа: ' + msg + '\n\nНужны права: channel:read:redemptions, channel:manage:redemptions');
+          } else if(msg.indexOf('partner') !== -1 || msg.indexOf('affiliate') !== -1){
+            renderRewards('❌ ' + msg + '\n\nⓘ Управление наградами доступно только для Twitch Partners и Affiliates.');
+          } else {
+            renderRewards('❌ Ошибка Twitch API: ' + msg);
+          }
+          console.error('Twitch API error:', msg);
         }
-        renderRewards();
       })
       .catch(function(err){
         rewardsLoading = false;
         console.error('Failed to load rewards:', err);
-        renderRewards();
+        renderRewards('❌ Ошибка сети при загрузке наград.\n\nПроверь подключение к интернету и попробуй снова.');
       });
     };
 
     window.createTwitchReward = function(){
-      if(!isAuthorized()){ alert('Сначала авторизуйся через Twitch'); return; }
+      if(!isAuthorized()){ renderRewards('🔒 Сначала авторизуйся через Twitch'); return; }
       var nameEl = document.getElementById('rewardName');
       var costEl = document.getElementById('rewardCost');
       var name = nameEl.value.trim();
@@ -799,6 +815,7 @@
       if(!name){ shake('rewardName'); return; }
       if(isNaN(cost) || cost < 1) cost = 1;
       var broadcasterId = getBroadcasterId();
+      renderRewards('⏳ Создание награды...');
       fetch(TWITCH_API + '/channel_points/custom_rewards?broadcaster_id=' + broadcasterId, {
         method: 'POST',
         headers: getHeaders(),
@@ -806,10 +823,30 @@
       })
       .then(function(r){ return r.json(); })
       .then(function(d){
-        if(d.data && d.data.length){ nameEl.value = ''; costEl.value = ''; nameEl.focus(); loadTwitchRewards(); }
-        else if(d.message) alert('Ошибка: ' + d.message);
+        if(d.data && d.data.length){
+          nameEl.value = '';
+          costEl.value = '';
+          nameEl.focus();
+          loadTwitchRewards();
+        } else {
+          var msg = d.message || 'Неизвестная ошибка';
+          if(msg.indexOf('scope') !== -1){
+            renderRewards('❌ Нет прав для создания наград.\n\nНужны права: channel:manage:redemptions\n\nПопробуй выйти и войти заново.');
+          } else if(msg.indexOf('broadcaster') !== -1 && msg.indexOf('partner') !== -1){
+            renderRewards('❌ Управление наградами доступно только для Twitch Partners и Affiliates.\n\nЕсли ты уже партнёр/аффилиат, подожди 24 часа после активации.');
+          } else if(msg.indexOf('duplicate') !== -1 || msg.indexOf('already') !== -1){
+            renderRewards('❌ Награда с таким названием уже существует.\n\nПридумай другое название.');
+          } else if(msg.indexOf('cost') !== -1 || msg.indexOf('price') !== -1){
+            renderRewards('❌ Некорректная стоимость награды.\n\n' + msg);
+          } else {
+            renderRewards('❌ Ошибка при создании награды:\n' + msg);
+          }
+        }
       })
-      .catch(function(err){ console.error('Failed to create reward:', err); alert('Не удалось создать награду'); });
+      .catch(function(err){
+        console.error('Failed to create reward:', err);
+        renderRewards('❌ Ошибка сети.\n\nПроверь подключение к интернету и попробуй снова.');
+      });
     };
 
     window.updateTwitchReward = function(rewardId, updates){
@@ -821,20 +858,41 @@
         body: JSON.stringify(updates)
       })
       .then(function(r){ return r.json(); })
-      .then(function(d){ if(d.data && d.data.length) loadTwitchRewards(); else if(d.message) console.error('Update error:', d.message); })
-      .catch(function(err){ console.error('Failed to update reward:', err); });
+      .then(function(d){
+        if(d.data && d.data.length){ loadTwitchRewards(); }
+        else if(d.message){
+          console.error('Update error:', d.message);
+          renderRewards('❌ Ошибка при обновлении:\n' + d.message);
+        }
+      })
+      .catch(function(err){
+        console.error('Failed to update reward:', err);
+        renderRewards('❌ Ошибка сети при обновлении.\nПопробуй снова.');
+      });
     };
 
     window.deleteTwitchReward = function(rewardId){
       if(!isAuthorized()) return;
       if(!confirm('Удалить награду?')) return;
+      renderRewards('⏳ Удаление награды...');
       var broadcasterId = getBroadcasterId();
       fetch(TWITCH_API + '/channel_points/custom_rewards?broadcaster_id=' + broadcasterId + '&id=' + rewardId, {
         method: 'DELETE',
         headers: getHeaders()
       })
-      .then(function(r){ if(r.ok) loadTwitchRewards(); else return r.json().then(function(d){ alert('Ошибка: ' + (d.message || 'Не удалось удалить')); }); })
-      .catch(function(err){ console.error('Failed to delete reward:', err); alert('Не удалось удалить награду'); });
+      .then(function(r){
+        if(r.ok){ loadTwitchRewards(); }
+        else {
+          return r.json().then(function(d){
+            var msg = d.message || 'Не удалось удалить';
+            renderRewards('❌ Ошибка при удалении:\n' + msg);
+          });
+        }
+      })
+      .catch(function(err){
+        console.error('Failed to delete reward:', err);
+        renderRewards('❌ Ошибка сети при удалении.\nПопробуй снова.');
+      });
     };
 
     window.openRewards = function(){
@@ -848,11 +906,12 @@
       document.getElementById('rewardsFab').classList.remove('active');
     };
 
-    function renderRewards(){
+    function renderRewards(customMessage){
       var list = document.getElementById('rewardsList');
-      if(!isAuthorized()){ list.innerHTML = '<div class="empty"></div>'; return; }
-      if(rewardsLoading){ list.innerHTML = '<div class="empty">Загрузка наград...</div>'; return; }
-      if(!rewards.length){ list.innerHTML = '<div class="empty">Нет наград. Создай первую награду ниже ☝</div>'; return; }
+      if(customMessage){ list.innerHTML = '<div class="empty" style="white-space:pre-line">'+customMessage+'</div>'; return; }
+      if(!isAuthorized()){ list.innerHTML = '<div class="empty">🔒 Авторизуйся через Twitch для управления наградами ☝</div>'; return; }
+      if(rewardsLoading){ list.innerHTML = '<div class="empty">⏳ Загрузка наград...</div>'; return; }
+      if(!rewards.length){ list.innerHTML = '<div class="empty">📭 Нет наград. Создай первую награду ниже ☝</div>'; return; }
       var html = '';
       rewards.forEach(function(r){
         html += '<div class="reward-row">'
