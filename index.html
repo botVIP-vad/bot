@@ -1636,8 +1636,10 @@
           el.textContent = '✅ Опрос идёт (' + t + '): получено выкупов ' + lastPollSeen + ', ошибок ' + lastPollErrors + '. Новые покупки появятся здесь.';
           el.style.color = 'var(--points)';
         } else {
-          el.textContent = '✅ Опрос идёт (' + t + '): ' + pollRewards.length + ' наград, выкупов не найдено' + (lastPollErrors ? ' (ошибок: ' + lastPollErrors + ')' : '');
-          el.style.color = 'var(--ink-faint)';
+          el.textContent = '✅ Опрос идёт (' + t + '): ' + pollRewards.length + ' наград, выкупов не найдено'
+            + (lastPollNotFound ? ' · ⚠️ недоступных наград: ' + lastPollNotFound + ' (создай награду через это приложение — кнопка 🎁)' : '')
+            + (lastPollErrors - lastPollNotFound ? ' (ошибок: ' + (lastPollErrors - lastPollNotFound) + ')' : '');
+          el.style.color = lastPollNotFound ? 'var(--donation)' : 'var(--ink-faint)';
         }
       } else {
         el.textContent = '✅ Опрос выкупов: ' + pollRewards.length + ' наград';
@@ -1716,7 +1718,7 @@
     function pollRedemptions(){
       if(!isAuthorized() || !pollRewards.length) return;
       var broadcasterId = getBroadcasterId();
-      var totalSeen = 0, pollErrors = 0;
+      var totalSeen = 0, pollErrors = 0, notFound = 0;
       pollRewards.forEach(function(r){
         // Опрашиваем и необработанные (UNFULFILLED), и автоматически выполненные (FULFILLED) выкупы —
         // иначе покупки наград с включённым "пропускать очередь" никогда не появляются в панели
@@ -1754,23 +1756,25 @@
           .catch(function(err){
             pollErrors++;
             var msg = String((err && err.message) || err);
-            // 404 = награда удалена или отключена на Twitch — не критично, тихо пропускаем
-            if(msg.indexOf('404') === -1){
+            // 404 = Twitch не даёт доступ к выкупам этой награды (обычно она создана не этим приложением)
+            if(msg.indexOf('404') !== -1){
+              notFound++;
+              console.warn('[poll] награда недоступна для опроса (404):', r.title);
+            } else {
               console.error('[poll] ошибка опроса выкупов (награда "' + r.title + '"):', err);
               updatePurchasesStatus('Ошибка опроса выкупов: ' + msg);
-            } else {
-              console.warn('[poll] награда недоступна для опроса (404):', r.title);
             }
           });
         });
       });
       lastPollSeen = totalSeen;
       lastPollErrors = pollErrors;
+      lastPollNotFound = notFound;
       lastPollTime = new Date();
       updatePurchasesStatus();
     }
 
-    var lastPollTime = null, lastPollSeen = 0, lastPollErrors = 0;
+    var lastPollTime = null, lastPollSeen = 0, lastPollErrors = 0, lastPollNotFound = 0;
 
     // Опрос выкупов каждые 5 секунд
     setInterval(pollRedemptions, 5000);
