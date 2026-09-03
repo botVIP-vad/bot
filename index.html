@@ -25,12 +25,23 @@
                radial-gradient(50% 45% at 85% 10%,rgba(65,192,169,.1),transparent 60%)}
   .topbar{position:sticky;top:0;z-index:20;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
     background:rgba(14,15,18,.75);border-bottom:1px solid var(--line);padding:12px 0}
-  .topbar-in{display:flex;align-items:center;gap:12px;max-width:920px;margin:0 auto;padding:0 22px}
+  .topbar-in{display:flex;align-items:center;gap:12px;max-width:920px;margin:0 auto;padding:0 22px;position:relative}
   .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem}
+  .author-credit{position:fixed;right:6px;bottom:6px;left:auto;top:auto;transform:none;color:var(--ink-faint);font-size:.7rem;font-weight:600;white-space:nowrap;z-index:60}
   .logo-mark{width:34px;height:34px;border-radius:10px;background:var(--grad);display:grid;place-items:center;box-shadow:0 6px 16px -4px rgba(121,80,242,.6)}
   .total{margin-left:auto;color:var(--ink-dim);font-size:.9rem;background:rgba(255,255,255,.04);border:1px solid var(--line);padding:6px 14px;border-radius:999px}
 
-  main{max-width:920px;margin:0 auto;padding:30px 22px 60px;background:rgba(14,15,18,.7);backdrop-filter:blur(10px);border-radius:20px;border:1px solid var(--line)}
+  main{max-width:1180px;margin:0 auto;padding:30px 22px 60px;background:rgba(14,15,18,.7);backdrop-filter:blur(10px);border-radius:20px;border:1px solid var(--line)}
+  .main-layout{display:grid;grid-template-columns:minmax(220px,280px) minmax(0,1fr);gap:18px;align-items:start}
+  .recent-panel{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+  .recent-title{color:var(--ink-faint);font-size:.65rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+  .recent-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:.7rem}
+  .recent-table th{color:var(--ink-faint);font-size:.55rem;text-align:left;padding:5px 4px;border-bottom:1px solid var(--line);white-space:nowrap}
+  .recent-table td{padding:7px 4px;border-bottom:1px solid var(--line);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .recent-table tbody tr:last-child td{border-bottom:0}
+  .recent-table .recent-nick{color:var(--primary-2);font-weight:800}
+  .recent-table .recent-value{color:var(--ink-dim)}
+  .recent-empty{color:var(--ink-faint);font-size:.75rem;text-align:center;padding:14px 4px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px}
   .kicker{font-size:.72rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--primary-2);margin-bottom:6px}
   .card h2{font-size:1.4rem;font-weight:800;letter-spacing:-.5px;margin-bottom:4px}
@@ -90,26 +101,27 @@
   .settings-fab img{width:48px;height:48px;object-fit:contain}
 
   /* ===== Chat button ===== */
-  .chat-fab{position:fixed;left:24px;top:calc(50% - 220px);z-index:150;width:70px;height:70px;border-radius:30px;border:0;
+  .chat-fab{position:fixed;left:24px;top:calc(50% - 190px);z-index:150;width:70px;height:70px;border-radius:30px;border:0;
     background:var(--grad);box-shadow:0 6px 20px -4px rgba(121,80,242,.6);cursor:pointer;display:flex;align-items:center;justify-content:center;
     transition:.25s;padding:0}
   .chat-fab:hover{transform:scale(1.1);box-shadow:0 10px 30px -4px rgba(121,80,242,.7)}
   .chat-fab.active{box-shadow:0 0 0 3px var(--points),0 6px 20px -4px rgba(121,80,242,.7)}
   .chat-fab img{width:48px;height:48px;object-fit:contain}
   /* Когда открыт чат — поднимаем кнопки рулетки, меню и наград над оверлеем чата */
-  body.chat-open .wheel-fab, body.chat-open .settings-fab, body.chat-open .rewards-fab{z-index:210}
+  body.chat-open .wheel-fab, body.chat-open .settings-fab, body.chat-open .rewards-fab,
+  body.chat-open .chat-fab{z-index:210}
+  body.stats-open .wheel-fab, body.stats-open .settings-fab, body.stats-open .rewards-fab,
+  body.stats-open .chat-fab, body.stats-open .tw-fab{z-index:210}
 
   /* ===== Chat overlay ===== */
-  .chat-overlay{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;
-    background:rgba(14,15,18,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:20px}
+  .chat-overlay{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:stretch;justify-content:stretch;
+    background:rgba(14,15,18,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:0}
   .chat-overlay.active{display:flex;animation:twFade .25s ease}
-  .chat-overlay .close{position:absolute;top:20px;right:24px;background:rgba(255,255,255,.08);border:1px solid var(--line);
+  .chat-overlay .close{position:absolute;top:20px;right:24px;z-index:5;background:rgba(255,255,255,.08);border:1px solid var(--line);
     color:var(--ink);width:42px;height:42px;border-radius:50%;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
   .chat-overlay .close:hover{background:var(--donation);color:#fff}
-  .chat-box{width:100%;max-width:560px;display:flex;flex-direction:column;gap:12px}
-  .chat-box .chat-title{text-align:center;margin-bottom:6px}
-  .chat-box .chat-title h2{font-size:1.4rem;font-weight:800;letter-spacing:-.5px}
-  .chat-box .chat-title p{color:var(--ink-dim);font-size:.85rem}
+  .chat-box{width:100%;height:100%;max-width:none;display:flex;flex-direction:column}
+  #chatFrame{width:100%;height:100%;max-width:none;border:0!important;border-radius:0!important;background:#18181b}
   .chat-messages{height:60vh;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:16px;
     padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
   .chat-messages::-webkit-scrollbar{width:8px}
@@ -128,12 +140,111 @@
   .tw-status-dot.online{background:#41c0a9;box-shadow:0 0 8px rgba(65,192,169,.6)}
 
   /* ===== Rewards button ===== */
-  .rewards-fab{position:fixed;left:24px;top:calc(50% + 110px);z-index:150;width:70px;height:70px;border-radius:30px;border:0;
+  .rewards-fab{position:fixed;left:24px;top:calc(50% + 40px);z-index:150;width:70px;height:70px;border-radius:30px;border:0;
     background:var(--grad);box-shadow:0 6px 20px -4px rgba(121,80,242,.6);cursor:pointer;display:flex;align-items:center;justify-content:center;
     transition:.25s;padding:0}
   .rewards-fab:hover{transform:scale(1.1);box-shadow:0 10px 30px -4px rgba(121,80,242,.7)}
   .rewards-fab.active{box-shadow:0 0 0 3px var(--points),0 6px 20px -4px rgba(121,80,242,.7)}
   .rewards-fab img{width:48px;height:48px;object-fit:contain}
+
+  /* ===== Stats button ===== */
+  .stats-fab{position:fixed;left:24px;top:calc(50% + 120px);z-index:230;width:70px;height:70px;border-radius:30px;border:0;
+    background:var(--grad);box-shadow:0 6px 20px -4px rgba(121,80,242,.6);cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:.25s;padding:0}
+  .stats-fab:hover{transform:scale(1.1);box-shadow:0 10px 30px -4px rgba(121,80,242,.7)}
+  .stats-fab.active{box-shadow:0 0 0 3px var(--points),0 6px 20px -4px rgba(121,80,242,.7)}
+  body.chat-open .stats-fab{z-index:210}
+
+  /* ===== Stats overlay ===== */
+  .stats-overlay{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;
+    background:rgba(14,15,18,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:20px}
+  .stats-overlay.active{display:flex;animation:twFade .25s ease}
+  .stats-overlay .close{position:absolute;top:20px;right:24px;background:rgba(255,255,255,.08);border:1px solid var(--line);
+    color:var(--ink);width:42px;height:42px;border-radius:50%;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+  .stats-overlay .close:hover{background:var(--donation);color:#fff}
+  /* ===== Таблица статистики ===== */
+  .stats-table-wrap{overflow:auto;margin-top:18px;flex:1;min-height:0;padding-right:6px}
+  .stats-table-wrap::-webkit-scrollbar{width:8px;height:8px}
+  .stats-table-wrap::-webkit-scrollbar-track{background:rgba(255,255,255,.04);border-radius:99px}
+  .stats-table-wrap::-webkit-scrollbar-thumb{background:var(--primary);border-radius:99px}
+  .stats-table{width:100%;border-collapse:collapse;font-size:.85rem}
+  .stats-table th{font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink-faint);
+    text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;
+    position:sticky;top:0;background:#14151a;z-index:1}
+  .stats-table td{padding:8px 10px;border-bottom:1px solid var(--line);word-break:break-word}
+  .stats-table tbody tr{transition:.15s}
+  .stats-table tbody tr:hover{background:rgba(121,80,242,.08)}
+  .stats-table .st-nick{font-weight:800;color:var(--primary-2);white-space:nowrap}
+  .stats-table .st-tg{font-weight:700;color:var(--points)}
+      .stats-table .st-empty{color:var(--ink-faint)}
+  .stats-table .st-date{font-size:.72rem;color:var(--ink-faint);white-space:nowrap}
+  .stats-table .st-time{font-size:.72rem;color:var(--ink-dim);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .stats-table-count{font-size:.72rem;color:var(--ink-faint);margin-top:6px;text-align:right}
+
+  /* ===== Страницы статистики (1 — таблица, 2 — карточки) ===== */
+  .stats-view{display:none;flex:1;min-height:0;flex-direction:column}
+  .stats-view.active{display:flex;animation:fadeIn .2s ease}
+    .stats-pager{position:static;align-self:flex-end;z-index:6;display:flex;align-items:center;gap:6px;margin-top:12px;
+      background:var(--grad);border:0;border-radius:14px;padding:7px;cursor:pointer;color:#fff;
+      font-family:var(--font);font-weight:800;font-size:.85rem;letter-spacing:.5px;transition:.2s;
+    box-shadow:0 10px 28px -8px rgba(121,80,242,.85)}
+  .stats-pager:hover{transform:translateY(-2px);filter:brightness(1.07)}
+  .stats-pager:active{transform:scale(.95)}
+    .stats-page-btn{display:grid;place-items:center;width:28px;height:28px;border:0;border-radius:9px;
+      background:rgba(255,255,255,.18);color:#fff;font:inherit;cursor:pointer;font-size:.95rem;font-weight:800}
+    .stats-page-btn.active{background:#fff;color:var(--primary)}
+    .stats-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;overflow:auto;padding-right:6px}
+    .summary-card{background:rgba(14,15,18,.8);border:1px solid var(--line);border-radius:14px;padding:18px;text-align:center}
+    .summary-card .summary-label{color:var(--ink-faint);font-size:.65rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+    .summary-card .summary-value{margin-top:8px;color:#fff;font-size:1.65rem;font-weight:800;font-variant-numeric:tabular-nums}
+    .summary-card .summary-value.points{color:var(--points)}
+    .summary-card .summary-value.percent{color:var(--primary-2)}
+    .site-stats{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+    .site-stat{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:13px}
+    .site-stat-name{font-weight:800;color:var(--primary-2);margin-bottom:8px}
+    .site-stat-line{display:flex;justify-content:space-between;color:var(--ink-dim);font-size:.78rem;padding:3px 0}
+    .site-stat-line strong{color:var(--ink);font-variant-numeric:tabular-nums}
+
+  .stats-box{width:100%;height:100%;max-width:none;display:flex;flex-direction:column;padding:70px 30px 24px 120px;position:relative}
+  .stats-box > .card{flex:1;display:flex;flex-direction:column;min-height:0;max-width:1400px;width:100%;margin:0 auto}
+  .stats-box::-webkit-scrollbar{width:8px}
+  .stats-box::-webkit-scrollbar-track{background:rgba(255,255,255,.04);border-radius:99px}
+  .stats-box::-webkit-scrollbar-thumb{background:var(--primary);border-radius:99px}
+  #statsList{flex:1;overflow-y:auto;min-height:0;
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;align-content:start;padding-right:6px}
+  #statsList::-webkit-scrollbar{width:8px}
+  #statsList::-webkit-scrollbar-track{background:rgba(255,255,255,.04);border-radius:99px}
+  #statsList::-webkit-scrollbar-thumb{background:var(--primary);border-radius:99px}
+  .stats-search{width:100%;margin:0 0 12px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;
+    color:var(--ink);font-family:var(--font);font-size:.9rem;padding:10px 12px;outline:none}
+  .stats-search:focus{border-color:var(--primary);background:rgba(121,80,242,.07)}
+  @media(max-width:600px){
+    .main-layout{grid-template-columns:1fr}
+    .recent-panel{width:100%}
+    .stats-fab{left:16px;top:calc(50% + 120px);width:70px;height:70px;border-radius:30px}
+    .stats-pager{align-self:flex-end;padding:7px}
+    .stats-box{padding:64px 12px 18px 96px}
+    .stats-table{font-size:.76rem}
+    .stats-table th,.stats-table td{padding:8px 7px}
+    .stats-summary{grid-template-columns:1fr}
+  }
+  /* Карточка статистики — идентична форме ws-data с экрана победителя */
+  .stat-card{background:rgba(14,15,18,.8);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;
+    box-shadow:0 8px 26px -8px rgba(0,0,0,.8)}
+  .stat-card .stat-nick{font-weight:800;font-size:1rem;color:var(--primary-2);margin-bottom:10px;text-align:center;
+    display:flex;align-items:center;justify-content:center;gap:8px}
+  .stat-card .stat-nick .del{background:none;border:0;color:var(--ink-faint);cursor:pointer;font-size:1.1rem;padding:2px 6px;border-radius:6px}
+  .stat-card .stat-nick .del:hover{color:var(--donation);background:rgba(246,100,108,.12)}
+  .stat-card .stat-when{font-size:.65rem;color:var(--ink-faint);text-align:center;margin:-6px 0 10px;
+    letter-spacing:1px;font-variant-numeric:tabular-nums}
+  .stat-card .ws-field{margin-bottom:8px}
+  .stat-card .ws-field label{display:block;font-size:.6rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+    color:var(--ink-faint);margin-bottom:4px}
+  .stat-card input, .stat-card select{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:8px;
+    color:var(--ink);font-family:var(--font);font-size:.85rem;padding:8px 10px;outline:none;transition:.2s}
+  .stat-card input:focus, .stat-card select:focus{border-color:var(--primary);background:rgba(121,80,242,.07)}
+  .stat-card select option{background:#14151a;color:var(--ink)}
+
 
   /* ===== Rewards overlay ===== */
   .rewards-overlay{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;
@@ -182,6 +293,7 @@
 
   /* ===== Wheel content: колесо слева, настройки справа ===== */
   .wheel-content{display:flex;gap:36px;align-items:center;justify-content:center;flex-wrap:wrap}
+  .wheel-content .recent-panel{width:280px;flex-shrink:0}
   .wheel-left{display:flex;flex-direction:column;align-items:center}
   .wheel-side{display:flex;flex-direction:column;gap:18px;background:rgba(255,255,255,.03);border:1px solid var(--line);
     border-radius:18px;padding:22px 24px;width:260px}
@@ -291,6 +403,13 @@
     font-family:var(--font);font-weight:700;font-size:.85rem;border-radius:10px;padding:11px 8px;transition:.2s}
   .ws-btn-exit:hover{background:rgba(121,80,242,.18);border-color:var(--primary);transform:translateY(-2px)}
   .ws-btn-exit:active{transform:scale(.94)}
+  .ws-btn-save{flex:1;background:var(--grad);border:0;color:#fff;cursor:pointer;
+    font-family:var(--font);font-weight:800;font-size:.85rem;border-radius:10px;padding:11px 8px;transition:.2s;
+    box-shadow:0 6px 18px -6px rgba(121,80,242,.7)}
+  .ws-btn-save:hover{transform:translateY(-2px);filter:brightness(1.08);box-shadow:0 8px 22px -6px rgba(121,80,242,.85)}
+  .ws-btn-save:active{transform:scale(.94)}
+  .ws-btn-save.saved{background:var(--points);box-shadow:0 6px 18px -6px rgba(65,192,169,.7)}
+  .ws-btn-save.saved:hover{filter:brightness(1.12);box-shadow:0 10px 26px -6px rgba(65,192,169,.85)}
 
   .spin-btn{background:var(--grad);box-shadow:0 12px 30px -8px rgba(121,80,242,.85);color:#fff;
     border:0;cursor:pointer;font-family:var(--font);font-weight:800;font-size:1.1rem;border-radius:14px;padding:15px 48px;transition:.2s;letter-spacing:.3px}
@@ -385,7 +504,7 @@
   .flip-clock.danger .card-face{background:linear-gradient(180deg,#3a1515 0%,#2a0a0a 100%);color:#ff9090;animation:cardPulse .5s infinite}
   @keyframes cardPulse{0%,100%{box-shadow:0 3px 6px rgba(0,0,0,.4)}50%{box-shadow:0 3px 12px rgba(246,100,108,.4)}}
   .flip-divider{font-size:40px;font-weight:800;color:var(--ink-dim);align-self:center;margin:0 2px}
-</style>
+/* test */</style>
 </head>
 <body>
 <video id="bgVideo" autoplay muted loop playsinline poster="">
@@ -467,6 +586,7 @@
 <header class="topbar">
   <div class="topbar-in">
     <div class="logo">
+      <span class="author-credit">by: @vadymtm90</span>
       <span class="logo-mark">
         <img src="icon1.png" alt="WheelBot" width="30" height="30" />
       </span>
@@ -477,7 +597,12 @@
 </header>
 
 <main class="main-menu">
-  <section class="card">
+  <div class="main-layout">
+    <div class="recent-panel">
+      <div class="recent-title">Последние 5 выпадений</div>
+      <div id="recentStatsMain"></div>
+    </div>
+    <section class="card">
     <div class="kicker">Участники</div>
     <h2>Добавить участника</h2>
     <p class="sub">Впиши ник и количество баллов. Чем больше баллов тем больше шанс в рулетке.</p>
@@ -502,7 +627,8 @@
       <button class="btn clearbtn" onclick="clearAll()">🗑 Очистить всё</button>
     </div>
 
-  </section>
+    </section>
+  </div>
 </main>
 
 <!-- Экран победителя -->
@@ -512,15 +638,16 @@
     <div class="ws-timer-value" id="wsTimerValue">00:00</div>
   </div>
   <div class="ws-data">
-    <div class="ws-field"><label>Деп</label><input id="wsDep" type="text" autocomplete="off" /></div>
-    <div class="ws-field"><label>Вывод</label><input id="wsWithdraw" type="text" autocomplete="off" /></div>
-    <div class="ws-field"><label>ТГ</label><input id="wsTg" type="text" autocomplete="off" /></div>
+    <div class="ws-field"><label>Деп</label><input id="wsDep" type="text" autocomplete="off" onchange="saveWinnerData()" /></div>
+    <div class="ws-field"><label>Вывод</label><input id="wsWithdraw" type="text" autocomplete="off" onchange="saveWinnerData()" /></div>
+    <div class="ws-field"><label>ТГ</label><input id="wsTg" type="text" autocomplete="off" onchange="saveWinnerData()" /></div>
     <div class="ws-field"><label>Сайт</label>
-      <select id="wsSite">
+      <select id="wsSite" onchange="saveWinnerData()">
         <option value="" disabled selected>Выбери сайт</option>
       </select>
     </div>
     <div class="ws-btns">
+      <button class="ws-btn-save" id="wsSaveBtn" onclick="saveWinnerDataWithFeedback()">💾 СОХРАНИТЬ</button>
       <button class="ws-btn-reroll" onclick="winnerReroll()">РЕРОЛ</button>
       <button class="ws-btn-exit" onclick="winnerExit()">ВЫХОД</button>
     </div>
@@ -531,7 +658,7 @@
     <div class="ws-points" id="wsPoints"></div>
   </div>
   <div class="ws-messages">
-    <div class="ws-msg-label">Сообщения</div>
+    <div class="ws-msg-label">Сообщения победителя</div>
     <div class="ws-msg-list" id="wsMsgList"></div>
   </div>
 </div>
@@ -558,6 +685,39 @@
 <button class="rewards-fab" id="rewardsFab" onclick="openRewards()" title="Управление наградами">
   <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v10H4V12M22 7H2v5h20V7zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
 </button>
+
+<!-- Кнопка статистики -->
+<button class="stats-fab" id="statsFab" onclick="toggleStats()" title="Статистика победителей">
+  <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M8 17V9m5 8V5m5 12v-6"/></svg>
+</button>
+
+<!-- Stats overlay -->
+<div class="stats-overlay" id="statsOverlay">
+  <button class="close" onclick="closeStats()">✕</button>
+  <div class="stats-box">
+    <div class="card" style="margin:0">
+      <div class="kicker">📊 Статистика победителей</div>
+      <h2>Данные по никам</h2>
+      <p class="sub">Форма как на экране победителя. Изменения сохраняются в локал-облако автоматически.</p>
+      <div class="stats-view active" id="statsTableView">
+        <div class="stats-table-wrap" id="statsTableWrap"></div>
+      </div>
+      <div class="stats-view" id="statsCardsView">
+        <input class="stats-search" id="statsSearch" type="search" placeholder="Поиск по нику" oninput="renderStatsCards()" autocomplete="off" />
+        <div id="statsList"></div>
+      </div>
+      <div class="stats-view" id="statsSummaryView">
+        <div id="statsSummary" class="stats-summary"></div>
+      </div>
+      <div class="stats-pager" id="statsPager" aria-label="Страница статистики">
+        <button class="stats-page-btn active" data-page="1" onclick="setStatsPage(1)">1</button>
+        <button class="stats-page-btn" data-page="2" onclick="setStatsPage(2)">2</button>
+        <button class="stats-page-btn" data-page="3" onclick="setStatsPage(3)">3</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <!-- Rewards overlay -->
 <div class="rewards-overlay" id="rewardsOverlay">
@@ -614,12 +774,8 @@
 <div class="chat-overlay" id="chatOverlay">
   <button class="close" onclick="closeChat()">✕</button>
   <div class="chat-box">
-    <div class="chat-title">
-      <h2>💬 Чат Twitch</h2>
-      <p>Канал: <strong>welvol</strong></p>
-    </div>
     <iframe id="chatFrame" src="" height="500" width="350"
-      style="width:100%;max-width:560px;height:60vh;border:1px solid var(--line);border-radius:16px;background:#18181b"></iframe>
+      style="width:100%;height:100%;background:#18181b"></iframe>
   </div>
 </div>
 
@@ -639,6 +795,10 @@
 <div class="wheel-overlay" id="wheelOverlay">
   <button class="close" onclick="closeWheel()">✕</button>
   <div class="wheel-content">
+    <div class="recent-panel">
+      <div class="recent-title">Последние 5 выпадений</div>
+      <div id="recentStatsWheel"></div>
+    </div>
     <div class="wheel-left">
       <div class="wheel-canvas-wrap">
         <div class="arrow-nick" id="arrowNick">&nbsp;</div>
@@ -823,6 +983,86 @@
   var wsTimerInterval = null;
   var wsTimerStart = 0;
   var wsChatSocket = null;
+
+  /* ===== Локал-облако: данные победителя по нику ===== */
+  var WINNER_DATA_KEY = 'wheelbot_winner_data';
+  var WINNER_HISTORY_KEY = 'wheelbot_winner_history';
+  function loadWinnerDataStore(){
+    try{
+      var d = JSON.parse(localStorage.getItem(WINNER_DATA_KEY) || '{}');
+      return (d && typeof d === 'object' && !Array.isArray(d)) ? d : {};
+    }catch(e){ return {}; }
+  }
+  function loadWinnerHistory(){
+    try{
+      var history = JSON.parse(localStorage.getItem(WINNER_HISTORY_KEY) || 'null');
+      if(Array.isArray(history)) return history;
+    }catch(e){}
+    var store = loadWinnerDataStore();
+    var migrated = Object.keys(store).map(function(key){
+      var item = store[key] || {};
+      return { nick:key, dep:item.dep || '', withdraw:item.withdraw || '', tg:item.tg || '', site:item.site || '', timestamp:item.timestamp || new Date().toISOString() };
+    });
+    localStorage.setItem(WINNER_HISTORY_KEY, JSON.stringify(migrated));
+    return migrated;
+  }
+  function addWinnerHistory(){
+    if(!lastResult || !lastResult.nick) return;
+    var history = loadWinnerHistory();
+    history.push({
+      nick: String(lastResult.nick).toLowerCase(),
+      dep: document.getElementById('wsDep').value,
+      withdraw: document.getElementById('wsWithdraw').value,
+      tg: document.getElementById('wsTg').value,
+      site: document.getElementById('wsSite').value,
+      timestamp: new Date().toISOString()
+    });
+    localStorage.setItem(WINNER_HISTORY_KEY, JSON.stringify(history));
+    renderRecentWinners();
+  }
+    // Сохраняем данные полей экрана победителя строго под ником текущего победителя
+  window.saveWinnerData = function(){
+    if(!lastResult || !lastResult.nick) return;
+    var store = loadWinnerDataStore();
+    var key = String(lastResult.nick).toLowerCase();
+    var existing = store[key] || {};
+    store[key] = {
+      dep: document.getElementById('wsDep').value,
+      withdraw: document.getElementById('wsWithdraw').value,
+      tg: document.getElementById('wsTg').value,
+      site: document.getElementById('wsSite').value,
+      timestamp: existing.timestamp || new Date().toISOString()
+    };
+    localStorage.setItem(WINNER_DATA_KEY, JSON.stringify(store));
+  };
+  // Сохранить с визуальной обратной связью на кнопке
+  window.saveWinnerDataWithFeedback = function(){
+    saveWinnerData();
+    addWinnerHistory();
+    winnerExit();
+    var btn = document.getElementById('wsSaveBtn');
+    if(!btn) return;
+    var originalText = btn.textContent;
+    btn.textContent = '✓ Сохранено';
+    btn.classList.add('saved');
+    btn.disabled = true;
+    setTimeout(function(){
+      btn.textContent = originalText;
+      btn.classList.remove('saved');
+      btn.disabled = false;
+    }, 1500);
+  };
+  // Загружаем данные ТОЛЬКО выпавшего ника — чужие данные не показываем
+  function fillWinnerData(nick){
+    var store = loadWinnerDataStore();
+    var key = String(nick || '').toLowerCase();
+    var d = store[key]; // данные есть только если этот ник раньше выигрывал
+    document.getElementById('wsDep').value = '';
+    document.getElementById('wsWithdraw').value = '';
+    document.getElementById('wsTg').value = (d && d.tg) || '';
+    document.getElementById('wsSite').value = '';
+  }
+
   function wsTimerTick(){
     var s = Math.floor((Date.now() - wsTimerStart) / 1000);
     var m = Math.floor(s / 60), sec = s % 60;
@@ -861,6 +1101,8 @@
             if(pm) nick = pm[1].toLowerCase();
           }
           if(nick === target){
+            var message = line.slice(idx + 'PRIVMSG #welvol :'.length).trim();
+            appendWinnerMessage(message);
             // Победитель написал в чат — останавливаем секундомер, красим в зелёный
             if(wsTimerInterval){ clearInterval(wsTimerInterval); wsTimerInterval = null; }
             wsTimerTick();
@@ -882,6 +1124,15 @@
     try{ if(wsChatSocket){ wsChatSocket.onclose = null; wsChatSocket.close(); } }catch(e){}
     wsChatSocket = null;
   }
+  function appendWinnerMessage(message){
+    if(!message) return;
+    var listEl = document.getElementById('wsMsgList');
+    if(!listEl) return;
+    var empty = listEl.querySelector('.ws-msg-empty');
+    if(empty) empty.remove();
+    listEl.insertAdjacentHTML('beforeend', '<div class="ws-msg"><strong>ТГ:</strong> ' + escapeHtml(message) + '</div>');
+    listEl.scrollTop = listEl.scrollHeight;
+  }
   window.confirmWinner = function(){
     document.getElementById('resultPanel').classList.remove('active');
     // После подтверждения победителя сбрасываем выбывание —
@@ -897,6 +1148,8 @@
     if(lastResult){
       document.getElementById('wsNick').textContent = lastResult.nick;
       document.getElementById('wsPoints').textContent = (lastResult.points||0) + ' ';
+      // Подтягиваем сохранённые данные (деп/вывод/ТГ/сайт) только этого ника
+      fillWinnerData(lastResult.nick);
       // Сообщения победителя из заявок (покупок наград)
       var msgs = [];
       try{
@@ -908,7 +1161,7 @@
       var listEl = document.getElementById('wsMsgList');
       listEl.innerHTML = msgs.length
         ? msgs.map(function(p){ return '<div class="ws-msg">' + String(p.text).replace(/</g,'&lt;') + '</div>'; }).join('')
-        : '<div class="ws-msg" style="color:var(--ink-faint)">Нет сообщений</div>';
+        : '<div class="ws-msg ws-msg-empty" style="color:var(--ink-faint)">Нет сообщений</div>';
       // Запускаем секундомер заново
       wsTimerStart = Date.now();
       wsTimerTick();
@@ -1107,11 +1360,15 @@
   });
 
   // Twitch overlay
-  function openTwitch(){ document.getElementById('twOverlay').classList.add('active'); }
+  function openTwitch(){
+    closeStatsIfOpen();
+    document.getElementById('twOverlay').classList.add('active');
+  }
   function closeTwitch(){ document.getElementById('twOverlay').classList.remove('active'); }
 
   // Toggle main menu (settings button) - like a toggle/X button
   function toggleMainMenu(){
+    closeStatsIfOpen();
     // Закрываем чат, если он открыт
     if(typeof closeChat === 'function') closeChat();
     // Сначала закрываем рулетку (как крестик ✕)
@@ -1131,6 +1388,7 @@
 
   // Wheel overlay - highlight button when open
   function openWheel(){
+    closeStatsIfOpen();
     // Закрываем чат, если он открыт
     if(typeof closeChat === 'function') closeChat();
     // Сбрасываем выбывание при новом открытии рулетки
@@ -1157,6 +1415,7 @@
   // ===== Чат Twitch (канал welvol) — iframe embed =====
   var chatOverlayEl = document.getElementById('chatOverlay');
   function openChat(){
+    closeStatsIfOpen();
     chatOverlayEl.classList.add('active');
     document.getElementById('chatFab').classList.add('active');
     document.body.classList.add('chat-open');
@@ -1180,6 +1439,11 @@
   window.openChat = openChat;
   window.closeChat = closeChat;
   window.toggleChat = toggleChat;
+
+  function closeStatsIfOpen(){
+    var statsOverlay = document.getElementById('statsOverlay');
+    if(statsOverlay && statsOverlay.classList.contains('active') && typeof closeStats === 'function') closeStats();
+  }
 
   // Close overlays on Escape
   document.addEventListener('keydown', function(e){
@@ -1596,6 +1860,7 @@
     };
 
     window.openRewards = function(){
+      closeStatsIfOpen();
       document.getElementById('rewardsOverlay').classList.add('active');
       document.getElementById('rewardsFab').classList.add('active');
       loadTwitchRewards();
@@ -1996,7 +2261,7 @@
   (function(){
     var timerSeconds = 600; // 10 минут по умолчанию
     var timerRunning = false;
-    var timerInterval = null;
+    var timerFrame = null;
     var timerEndTime = 0;
     var remainingOnPause = 600; // Оставшееся время при паузе
 
@@ -2063,7 +2328,7 @@
       if(remaining <= 0){
         remaining = 0;
         updateFlipClock(0);
-        clearInterval(timerInterval);
+        timerFrame = null;
         timerRunning = false;
         timerPlayBtn.textContent = '▶';
         timerPlayBtn.classList.remove('active');
@@ -2087,12 +2352,14 @@
       }
 
       updateFlipClock(remaining);
+      timerFrame = requestAnimationFrame(tick);
     }
 
     window.timerToggle = function(){
       if(timerRunning){
         // Пауза - сохраняем оставшееся время
-        clearInterval(timerInterval);
+        cancelAnimationFrame(timerFrame);
+        timerFrame = null;
         timerRunning = false;
         timerPlayBtn.textContent = '▶';
         timerPlayBtn.classList.remove('active');
@@ -2106,13 +2373,13 @@
         timerRunning = true;
         timerPlayBtn.textContent = '⏸';
         timerPlayBtn.classList.add('active');
-        timerInterval = setInterval(tick, 1000);
         tick();
       }
     };
 
     window.timerReset = function(){
-      clearInterval(timerInterval);
+      cancelAnimationFrame(timerFrame);
+      timerFrame = null;
       timerRunning = false;
       timerSeconds = 600;
       remainingOnPause = 600;
@@ -2125,6 +2392,8 @@
     window.timerAdd = function(sec){
       if(timerRunning){
         timerEndTime += sec * 1000;
+        cancelAnimationFrame(timerFrame);
+        timerFrame = null;
         tick();
       } else {
         remainingOnPause += sec;
@@ -2134,7 +2403,8 @@
     };
 
     window.timerSet = function(min){
-      clearInterval(timerInterval);
+      cancelAnimationFrame(timerFrame);
+      timerFrame = null;
       timerRunning = false;
       timerSeconds = min * 60;
       remainingOnPause = min * 60;
@@ -2153,6 +2423,225 @@
   render();
   setWheelMode('normal');
   setSpinDuration(5);
+
+  /* ===== Статистика победителей (кнопка под рулеткой) ===== */
+  var siteOptionsStats = ['SkinBro', 'Petuh', 'SkinHouse', 'Upgrader', 'DinoDrop', 'SnakeSkin', 'Jabka', 'CSGORUN', 'Case-Battle', 'Skinity'];
+  var statsPage = 1;
+
+  window.toggleStats = function(){
+    var ov = document.getElementById('statsOverlay');
+    if(ov.classList.contains('active')) closeStats();
+    else{
+      if(typeof closeChat === 'function') closeChat();
+      ov.classList.add('active');
+      document.body.classList.add('stats-open');
+      document.getElementById('statsFab').classList.add('active');
+      statsPage = 1;
+      updateStatsPage();
+      renderStats();
+    }
+  };
+  window.closeStats = function(){
+    document.getElementById('statsOverlay').classList.remove('active');
+    document.body.classList.remove('stats-open');
+    document.getElementById('statsFab').classList.remove('active');
+    };
+
+  window.setStatsPage = function(page){
+    statsPage = page === 3 ? 3 : (page === 2 ? 2 : 1);
+    updateStatsPage();
+  };
+  function updateStatsPage(){
+    var tableView = document.getElementById('statsTableView');
+    var cardsView = document.getElementById('statsCardsView');
+    var summaryView = document.getElementById('statsSummaryView');
+    var pager = document.getElementById('statsPager');
+    var onCards = statsPage === 2;
+    var onSummary = statsPage === 3;
+    tableView.classList.toggle('active', !onCards && !onSummary);
+    cardsView.classList.toggle('active', onCards);
+    summaryView.classList.toggle('active', onSummary);
+    pager.querySelectorAll('.stats-page-btn').forEach(function(button){
+      button.classList.toggle('active', Number(button.dataset.page) === statsPage);
+    });
+  }
+
+  // Отрисовка списка: для каждого ника — форма, идентичная ws-data с экрана победителя
+  function renderStats(){
+    var store = loadWinnerDataStore();
+    var keys = Object.keys(store).sort();
+    var history = loadWinnerHistory();
+    renderStatsCards(history);
+    renderStatsTable(history);
+    renderStatsSummary(history);
+  }
+
+  window.renderStatsCards = function(history){
+    var listEl = document.getElementById('statsList');
+    var query = String(document.getElementById('statsSearch').value || '').trim().toLowerCase();
+    var filtered = (history || loadWinnerHistory()).filter(function(item){
+      return String(item.nick || '').toLowerCase().indexOf(query) !== -1;
+    });
+    var grouped = {};
+    filtered.forEach(function(item){
+      var key = String(item.nick || '').toLowerCase();
+      if(!grouped[key]) grouped[key] = { nick:key, count:0, dep:0, withdraw:0, depNumeric:true, withdrawNumeric:true, tg:'', site:'' };
+      var group = grouped[key];
+      group.count++;
+      var dep = parseFloat(String(item.dep || '').replace(',', '.'));
+      var withdraw = parseFloat(String(item.withdraw || '').replace(',', '.'));
+      if(isNaN(dep)) group.depNumeric = false; else group.dep += dep;
+      if(isNaN(withdraw)) group.withdrawNumeric = false; else group.withdraw += withdraw;
+      if(item.tg) group.tg = item.tg;
+      if(item.site) group.site = item.site;
+    });
+    var groups = Object.keys(grouped).map(function(key){ return grouped[key]; });
+    if(!groups.length){
+      listEl.innerHTML = '<div class="empty">Ничего не найдено</div>';
+      return;
+    }
+    var html = '';
+    groups.forEach(function(group){
+      html += '<div class="stat-card">'
+        + '<div class="stat-nick">👤 ' + escapeHtml(group.nick) + '</div>'
+        + '<div class="stat-when">ВЫПАДЕНИЙ: ' + group.count + '</div>'
+        + '<div class="ws-field"><label>Деп сумма</label><input type="text" value="' + (group.depNumeric ? group.dep : '—') + '" readonly /></div>'
+        + '<div class="ws-field"><label>Вывод сумма</label><input type="text" value="' + (group.withdrawNumeric ? group.withdraw : '—') + '" readonly /></div>'
+        + '<div class="ws-field"><label>ТГ</label><input type="text" value="' + escapeAttr(group.tg || '') + '" readonly /></div>'
+        + '<div class="ws-field"><label>Сайт</label><input type="text" value="' + escapeAttr(group.site || '') + '" readonly /></div>'
+        + '</div>';
+    });
+    listEl.innerHTML = html;
+  };
+
+  function formatStatsDate(ts){
+    if(!ts) return '—';
+    var d = new Date(ts);
+    return isNaN(d.getTime()) ? '—' : d.toLocaleString('ru-RU');
+  }
+
+  function renderRecentWinners(){
+    var history = loadWinnerHistory().slice(-5).reverse();
+    var targets = [document.getElementById('recentStatsMain'), document.getElementById('recentStatsWheel')];
+    targets.forEach(function(target){
+      if(!target) return;
+      if(!history.length){
+        target.innerHTML = '<div class="recent-empty">Пока нет данных</div>';
+        return;
+      }
+      var html = '<table class="recent-table"><thead><tr><th>НИК</th><th>ДЕП</th><th>ВЫВОД</th><th>САЙТ</th></tr></thead><tbody>';
+      history.forEach(function(item){
+        html += '<tr><td class="recent-nick" title="' + escapeAttr(item.nick || '') + '">' + escapeHtml(item.nick || '—') + '</td>'
+          + '<td class="recent-value">' + escapeHtml(item.dep || '—') + '</td>'
+          + '<td class="recent-value">' + escapeHtml(item.withdraw || '—') + '</td>'
+          + '<td class="recent-value" title="' + escapeAttr(item.site || '') + '">' + escapeHtml(item.site || '—') + '</td></tr>';
+      });
+      target.innerHTML = html + '</tbody></table>';
+    });
+  }
+
+  renderRecentWinners();
+
+  function renderStatsSummary(history){
+    var summary = document.getElementById('statsSummary');
+    var totalDep = 0, totalWithdraw = 0, depCount = 0, withdrawCount = 0;
+    var sites = {};
+    history.forEach(function(item){
+      var dep = parseFloat(String(item.dep || '').replace(',', '.'));
+      var withdraw = parseFloat(String(item.withdraw || '').replace(',', '.'));
+      if(!isNaN(dep)){ totalDep += dep; depCount++; }
+      if(!isNaN(withdraw)){ totalWithdraw += withdraw; withdrawCount++; }
+      var site = String(item.site || '').trim() || 'Без сайта';
+      if(!sites[site]) sites[site] = { count:0, dep:0, withdraw:0, depCount:0, withdrawCount:0 };
+      sites[site].count++;
+      if(!isNaN(dep)){ sites[site].dep += dep; sites[site].depCount++; }
+      if(!isNaN(withdraw)){ sites[site].withdraw += withdraw; sites[site].withdrawCount++; }
+    });
+    var percent = totalDep > 0 ? (totalWithdraw / totalDep * 100).toFixed(1) : '0.0';
+    var html = '<div class="summary-card"><div class="summary-label">Всего депов</div><div class="summary-value">' + totalDep + '</div></div>'
+      + '<div class="summary-card"><div class="summary-label">Всего выводов</div><div class="summary-value points">' + totalWithdraw + '</div></div>'
+      + '<div class="summary-card"><div class="summary-label">Успешные выводы</div><div class="summary-value percent">' + percent + '%</div></div>'
+      + '<div class="site-stats">';
+    Object.keys(sites).sort().forEach(function(site){
+      var data = sites[site];
+      html += '<div class="site-stat"><div class="site-stat-name">' + escapeHtml(site) + '</div>'
+        + '<div class="site-stat-line"><span>Выпадений</span><strong>' + data.count + '</strong></div>'
+        + '<div class="site-stat-line"><span>Депы</span><strong>' + (data.depCount ? data.dep : '—') + '</strong></div>'
+        + '<div class="site-stat-line"><span>Выводы</span><strong>' + (data.withdrawCount ? data.withdraw : '—') + '</strong></div></div>';
+    });
+    html += '</div>';
+    summary.innerHTML = html;
+  }
+
+    // Табличка: НИК | ТГ | ДЕП | ВЫВОД | САЙТ | ДАТА | ВРЕМЯ
+  function renderStatsTable(history){
+    var wrap = document.getElementById('statsTableWrap');
+    if(!history.length){ wrap.innerHTML = ''; return; }
+    var esc = function(s){ s = String(s || ''); return s ? escapeHtml(s) : '<span class="st-empty">—</span>'; };
+    var fmtDate = function(ts){
+      if(!ts){ return '<span class="st-empty">—</span>'; }
+      try{
+        var d = new Date(ts);
+        if(isNaN(d.getTime())){ return '<span class="st-empty">—</span>'; }
+        var dd = String(d.getDate()).padStart(2,'0');
+        var mm = String(d.getMonth()+1).padStart(2,'0');
+        var yy = String(d.getFullYear()).slice(-2);
+        var hh = String(d.getHours()).padStart(2,'0');
+        var mi = String(d.getMinutes()).padStart(2,'0');
+        return { date: dd+'.'+mm+'.'+yy, time: hh+':'+mi };
+      }catch(e){ return '<span class="st-empty">—</span>'; }
+    };
+    var html = '<table class="stats-table"><thead><tr>'
+      + '<th>НИК</th><th>ТГ</th><th>ДЕП</th><th>ВЫВОД</th><th>САЙТ</th><th>ДАТА</th><th>ВРЕМЯ</th>'
+      + '</tr></thead><tbody>';
+    history.slice().reverse().forEach(function(d){
+      var key = String(d.nick || '').toLowerCase();
+      var when = fmtDate(d.timestamp);
+      html += '<tr>'
+        + '<td class="st-nick">' + escapeHtml(key) + '</td>'
+        + '<td class="st-tg">' + esc(d.tg) + '</td>'
+        + '<td>' + esc(d.dep) + '</td>'
+        + '<td>' + esc(d.withdraw) + '</td>'
+        + '<td>' + esc(d.site) + '</td>'
+        + '<td class="st-date">' + (when.date || when) + '</td>'
+        + '<td class="st-time">' + (when.time || '<span class="st-empty">—</span>') + '</td>'
+        + '</tr>';
+    });
+    html += '</tbody></table>'
+      + '<div class="stats-table-count">Всего выпадений: ' + history.length + '</div>';
+    wrap.innerHTML = html;
+  }
+
+  function escapeHtml(s){ return String(s).replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function escapeAttr(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/'/g,'&#39;'); }
+
+    // Обновление поля конкретного ника — сохраняем в то же локал-облако
+  window.updateStatsEntry = function(key, field, value){
+    var store = loadWinnerDataStore();
+    if(!store[key]) store[key] = {};
+    store[key][field] = value;
+    store[key].timestamp = new Date().toISOString();
+    localStorage.setItem(WINNER_DATA_KEY, JSON.stringify(store));
+    renderStats();
+  };
+
+  // Добавление записей происходит автоматически: когда победитель заполняет
+  // данные на экране победителя (saveWinnerData) — ник появляется в статистике
+
+  // Удалить запись ника
+  window.deleteStatsEntry = function(key){
+    if(!confirm('Удалить статистику для ' + key + '?')) return;
+    var store = loadWinnerDataStore();
+    delete store[key];
+    localStorage.setItem(WINNER_DATA_KEY, JSON.stringify(store));
+    renderStats();
+  };
+
+  // Escape закрывает статистику
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && document.getElementById('statsOverlay').classList.contains('active')) closeStats();
+  });
+
 </script>
 
 </body>
