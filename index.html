@@ -1532,7 +1532,11 @@
         if(d.data && d.data.length){ loadTwitchRewards(); }
         else if(d.message){
           console.error('Update error:', d.message);
-          renderRewards('❌ Ошибка при обновлении:\n' + d.message);
+          if(d.message.indexOf('Client-Id') !== -1){
+            renderRewards('⚠️ Эту награду нельзя изменить — она создана НЕ через это приложение (или канал не Partner/Affiliate).\n\nСоздай новую награду через форму ниже — её покупки будут отображаться в панели.');
+          } else {
+            renderRewards('❌ Ошибка при обновлении:\n' + d.message);
+          }
         }
       })
       .catch(function(err){
