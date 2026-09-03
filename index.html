@@ -63,70 +63,54 @@
   .launch:hover{transform:translateY(-2px);filter:brightness(1.05)}
   .hint-note{color:var(--ink-faint);font-size:.82rem;margin-top:8px;text-align:center}
 
-  /* ===== Рулетка (встроенная, тот же адрес) ===== */
-  #wheel{scroll-margin-top:90px}
-  .wheel-section{max-width:920px;margin:0 auto;padding:0 22px 60px}
-  .card.wheel-card{text-align:center}
-  .wheel-box{display:flex;flex-direction:column;align-items:center;gap:18px;margin-top:8px}
-  .wheel-wrap{position:relative;width:min(100%,420px);aspect-ratio:1;margin:0 auto}
-  canvas.wh{width:100%;height:100%;display:block;filter:drop-shadow(0 20px 50px rgba(0,0,0,.5))}
-  .pointer{position:absolute;top:-8px;left:50%;transform:translateX(-50%);z-index:5;
-    width:0;height:0;border-left:18px solid transparent;border-right:18px solid transparent;
-    border-top:30px solid #fff;filter:drop-shadow(0 4px 5px rgba(0,0,0,.5))}
-  .hub{position:absolute;inset:50% 0 0 50%;transform:translate(-50%,-50%);z-index:4;
-    width:84px;height:84px;border-radius:50%;background:var(--grad);display:grid;place-items:center;
-    box-shadow:0 8px 24px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.35);pointer-events:none}
-  .spinbtn{background:var(--grad);box-shadow:0 12px 30px -8px rgba(121,80,242,.85);color:#fff;
-    border:0;cursor:pointer;font-family:var(--font);font-weight:800;font-size:1.1rem;
-    border-radius:14px;padding:15px 42px;transition:.2s;letter-spacing:.3px}
-  .spinbtn:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.06)}
-  .spinbtn:disabled{opacity:.4;cursor:not-allowed}
-  .winner-big{min-height:34px;text-align:center;font-weight:800;font-size:1.4rem;color:var(--primary-2);text-shadow:0 0 18px rgba(121,80,242,.5)}
-  .hint-wheel{color:var(--ink-faint);font-size:.9rem;text-align:center;max-width:34ch}
-  .wheel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  /* ===== Плавающая кнопка рулетки ===== */
+  .wheel-fab{position:fixed;left:24px;top:50%;transform:translateY(-50%);z-index:50;width:70px;height:70px;border-radius:30px;border:0;
+    background:var(--grad);box-shadow:0 8px 30px -6px rgba(121,80,242,.7);cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:.25s;padding:0}
+  .wheel-fab:hover{transform:translateY(-50%) scale(1.08);box-shadow:0 14px 40px -6px rgba(121,80,242,.8)}
+  .wheel-fab:active{transform:translateY(-50%) scale(.96)}
+  .wheel-fab img{width:90px;height:90px;object-fit:contain}
 
-  /* ===== Twitch ===== */
-  .twitch-card{margin-top:20px;border-color:rgba(145,70,255,.25)}
-  .twitch-card .kicker{color:#9146ff}
-  .tw-form{display:grid;grid-template-columns:1fr auto auto;gap:10px;margin-bottom:12px;align-items:end}
-  @media(max-width:520px){.tw-form{grid-template-columns:1fr}.tw-form .btn{grid-column:1/-1}}
-  .tw-login-btn{background:linear-gradient(135deg,#9146ff,#772ce8);color:#fff;align-self:end}
+  /* ===== Рулетка overlay (полный экран поверх) ===== */
+  .wheel-overlay{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;
+    background:rgba(14,15,18,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:20px}
+  .wheel-overlay.active{display:flex;animation:fadeIn .25s ease}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .wheel-overlay .close{position:absolute;top:20px;right:24px;background:rgba(255,255,255,.08);border:1px solid var(--line);
+    color:var(--ink);width:42px;height:42px;border-radius:50%;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+  .wheel-overlay .close:hover{background:var(--donation);color:#fff}
+  .wheel-overlay .title{text-align:center;margin-bottom:24px}
+  .wheel-overlay .title h2{font-size:1.8rem;font-weight:800;letter-spacing:-1px;margin-bottom:4px}
+  .wheel-overlay .title p{color:var(--ink-dim);font-size:.95rem}
+  .wheel-canvas-wrap{position:relative;width:min(80vh,520px);aspect-ratio:1;margin-bottom:20px}
+  .wheel-canvas-wrap canvas{width:100%;height:100%;display:block;filter:drop-shadow(0 20px 60px rgba(121,80,242,.3))}
+  .wheel-arrow{position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:0;height:0;
+    border-left:18px solid transparent;border-right:18px solid transparent;border-top:32px solid var(--donation);z-index:5;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5))}
+  .wheel-hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70px;height:70px;border-radius:50%;background:var(--grad);
+    box-shadow:0 0 0 6px rgba(121,80,242,.4),0 8px 30px rgba(0,0,0,.5);z-index:4;display:grid;place-items:center;font-size:1.5rem}
+  .spin-btn{background:var(--grad);box-shadow:0 12px 30px -8px rgba(121,80,242,.85);color:#fff;
+    border:0;cursor:pointer;font-family:var(--font);font-weight:800;font-size:1.1rem;border-radius:14px;padding:15px 48px;transition:.2s;letter-spacing:.3px}
+  .spin-btn:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.06)}
+  .spin-btn:disabled{opacity:.4;cursor:not-allowed}
+  .winner-display{min-height:36px;text-align:center;font-weight:800;font-size:1.5rem;color:var(--points);margin-bottom:8px;text-shadow:0 0 20px rgba(65,192,169,.4)}
+  .wheel-hint{color:var(--ink-faint);font-size:.85rem;text-align:center}
+
+  /* ===== Twitch Login ===== */
+  .tw-login-card{margin-top:20px;border-color:rgba(145,70,255,.3)}
+  .tw-login-card .kicker{color:#9146ff}
+  .tw-status-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:rgba(145,70,255,.08);border:1px solid rgba(145,70,255,.2);margin-bottom:14px;font-size:.88rem}
+  .tw-status-bar.online{background:rgba(65,192,169,.08);border-color:rgba(65,192,169,.3)}
+  .tw-avatar{width:32px;height:32px;border-radius:50%;border:2px solid #9146ff;object-fit:cover;background:#1a1a2e}
+  .tw-login-btn{background:linear-gradient(135deg,#9146ff,#772ce8);color:#fff;width:100%;margin-top:6px}
   .tw-login-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
-  .tw-logout-btn{background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink);align-self:end}
+  .tw-logout-btn{background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink);margin-top:10px}
   .tw-logout-btn:hover{background:rgba(246,100,108,.15);border-color:rgba(246,100,108,.4);color:var(--donation)}
-  .tw-status{font-size:.85rem;padding:8px 14px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--line);display:inline-block;margin-bottom:10px}
-  .tw-error{font-size:.82rem;color:var(--donation);background:rgba(246,100,108,.1);border:1px solid rgba(246,100,108,.3);border-radius:10px;padding:8px 14px;margin-bottom:10px}
-  .tw-help{margin-top:12px;font-size:.82rem;color:var(--ink-faint)}
-  .tw-help summary{cursor:pointer;color:var(--ink-dim);font-weight:600;margin-bottom:8px}
-  .tw-help ol{padding-left:20px;line-height:1.7}
-  .tw-help code{background:rgba(255,255,255,.08);padding:2px 6px;border-radius:4px;font-size:.78rem;color:var(--primary-2)}
-  .tw-file-warn{background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.35);color:#f5a623;border-radius:10px;padding:10px 14px;font-size:.82rem;margin-bottom:12px}
-
-  .rewards-card{margin-top:20px;border-color:rgba(145,70,255,.25)}
-  .rewards-card .kicker{color:#9146ff}
-  .rw-create{display:grid;gap:10px;margin-bottom:16px;padding:16px;background:rgba(145,70,255,.05);border:1px solid rgba(145,70,255,.15);border-radius:12px}
-  .rw-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  @media(max-width:420px){.rw-row{grid-template-columns:1fr}}
-  .rw-checkboxes{display:flex;gap:18px;flex-wrap:wrap}
-  .chk{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--ink-dim);cursor:pointer}
-  .chk input{accent-color:#9146ff;width:16px;height:16px;cursor:pointer}
-  .rw-add-btn{background:linear-gradient(135deg,#9146ff,#772ce8);color:#fff;align-self:start}
-  .rw-add-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
-  .reward-list{display:flex;flex-direction:column;gap:8px;max-height:360px;overflow:auto;padding-right:4px}
-  .reward-item{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
-  .ri-left{flex:1;min-width:0}
-  .ri-title{font-weight:700;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .ri-meta{font-size:.76rem;color:var(--ink-faint);margin-top:2px}
-  .ri-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
-  .ri-badge{font-size:.68rem;font-weight:800;padding:3px 8px;border-radius:999px;letter-spacing:.5px}
-  .ri-badge.on{background:rgba(65,192,169,.15);color:var(--points)}
-  .ri-badge.off{background:rgba(255,255,255,.06);color:var(--ink-faint)}
-  .ri-btn{background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink-dim);cursor:pointer;width:30px;height:30px;border-radius:8px;font-size:.9rem;display:grid;place-items:center;transition:.2s}
-  .ri-btn:hover{background:rgba(145,70,255,.15);border-color:rgba(145,70,255,.4);color:#9146ff}
-  .ri-btn.del:hover{background:rgba(246,100,108,.15);border-color:rgba(246,100,108,.4);color:var(--donation)}
-  .sync-btn{margin-top:16px;background:linear-gradient(135deg,#9146ff,#772ce8);color:#fff;width:100%;box-shadow:0 10px 26px -10px rgba(145,70,255,.7)}
-  .sync-btn:hover:not(:disabled){filter:brightness(1.1);transform:translateY(-2px)}
-  .sync-btn:disabled{opacity:.5;cursor:not-allowed}
+  .tw-help{margin-top:14px;font-size:.8rem;color:var(--ink-faint);line-height:1.6}
+  .tw-help summary{cursor:pointer;color:var(--ink-dim);font-weight:600;margin-bottom:8px;user-select:none}
+  .tw-help ol{padding-left:18px}
+  .tw-help li{margin-bottom:4px}
+  .tw-help code{background:rgba(255,255,255,.08);padding:2px 6px;border-radius:4px;font-size:.78rem;color:#9146ff}
+  .tw-token-display{font-size:.72rem;color:var(--ink-faint);word-break:break-all;margin-top:8px;max-height:60px;overflow:auto;background:rgba(0,0,0,.2);padding:6px 10px;border-radius:6px}
 </style>
 </head>
 <body>
@@ -170,104 +154,74 @@
       <button class="btn clearbtn" onclick="clearAll()">🗑 Очистить всё</button>
     </div>
 
-    <a class="btn launch" href="#wheel">
-      🎡 Открыть рулетку&nbsp;(прокрутить вниз)
-    </a>
   </section>
-</main>
 
-<main>
-  <section class="card twitch-card">
-    <div class="kicker">Twitch</div>
-    <h2>Подключить Twitch</h2>
-    <p class="sub">Управляй наградами канала и синхронизируй баллы зрителей с рулеткой.</p>
+  <!-- Twitch Login / Registration -->
+  <section class="card tw-login-card">
+    <div class="kicker">🎮 Twitch</div>
+    <h2>Авторизация Twitch</h2>
+    <p class="sub">Войди через Twitch, чтобы управлять наградами канала и синхронизировать баллы.</p>
 
-    <div class="tw-file-warn" id="twFileWarn" style="display:none">⚠️ Файл открыт локально (file://) — OAuth не сработал. Запусти через локальный сервер (например, <code>http-server</code> или Live Server в VS Code).</div>
-
-    <div class="tw-form">
-      <div class="field">
-        <label for="twClientId">Client ID приложения Twitch</label>
-        <input id="twClientId" type="text" placeholder="например, abcdefghijklmnopqrstuvwxyz1234" autocomplete="off" />
-      </div>
-      <button class="btn tw-login-btn" id="twLoginBtn" onclick="window._topbot_twitchLogin()">🎮 Подключить</button>
-      <button class="btn tw-logout-btn" id="twLogoutBtn" onclick="window._topbot_twitchLogout()" style="display:none">Отключить</button>
+    <!-- Статус подключения -->
+    <div class="tw-status-bar" id="twStatusBar">
+      <span id="twStatusIcon">⚪</span>
+      <span id="twStatusText">Не подключено — введи Client ID и нажми «Войти»</span>
     </div>
 
-    <div class="tw-status" id="twStatus">Не подключено</div>
-    <div class="tw-error" id="twError" style="display:none"></div>
+    <!-- Форма Client ID -->
+    <div class="field" id="twClientIdField">
+      <label for="twClientId">Client ID приложения Twitch</label>
+      <input id="twClientId" type="text" placeholder="Вставь сюда свой Client ID" autocomplete="off" />
+    </div>
 
+    <!-- Кнопка входа -->
+    <button class="btn tw-login-btn" id="twLoginBtn" onclick="twitchLogin()">Войти через Twitch</button>
+
+    <!-- Кнопка выхода (скрыта по умолчанию) -->
+    <button class="btn tw-logout-btn" id="twLogoutBtn" onclick="twitchLogout()" style="display:none">🚪 Выйти</button>
+
+    <!-- Отображение токена (для отладки) -->
+    <div class="tw-token-display" id="twTokenDisplay" style="display:none"></div>
+
+    <!-- Инструкция -->
     <details class="tw-help">
-      <summary>💡 Как получить Client ID?</summary>
+      <summary>📖 Инструкция: как получить Client ID</summary>
       <ol>
         <li>Перейди на <a href="https://dev.twitch.tv/console" target="_blank" style="color:#9146ff">dev.twitch.tv/console</a></li>
         <li>Нажми <strong>Register Your Application</strong></li>
-        <li>В поле <em>OAuth Redirect URLs</em> добавь: <code id="twRedirectUrl">—</code></li>
-        <li>Category выбери <strong>Application Integration</strong>, тип — <strong>Confidential</strong></li>
-        <li>Скопируй <strong>Client ID</strong> и вставь выше</li>
+        <li>Имя: любое (например, <code>TopBot-Roulette</code>)</li>
+        <li>OAuth Redirect URLs: <code id="twRedirectUri">—</code></li>
+        <li>Category: <strong>Website Integration</strong></li>
+        <li>Скопируй <strong>Client ID</strong> и вставь в поле выше</li>
+        <li>Нажми «Войти через Twitch» и разреши доступ</li>
       </ol>
+      <p style="margin-top:8px;color:var(--ink-faint)">⚠️ Для работы OAuth файл должен быть открыт через <code>http://localhost</code> или <code>https://</code>, но не через <code>file://</code></p>
     </details>
-  </section>
-
-  <section class="card rewards-card" id="rewardsCard" style="display:none">
-    <div class="kicker">Награды канала</div>
-    <h2>Управление наградами</h2>
-    <p class="sub">Создавай, включай/выключай и удаляй награды за баллы канала.</p>
-
-    <div class="rw-create">
-      <div class="field">
-        <label for="rwTitle">Название награды</label>
-        <input id="rwTitle" type="text" maxlength="45" placeholder="например, Участие в рулетке" />
-      </div>
-      <div class="rw-row">
-        <div class="field">
-          <label for="rwCost">Стоимость (баллы)</label>
-          <input id="rwCost" type="number" min="1" step="1" placeholder="100" />
-        </div>
-        <div class="field">
-          <label for="rwColor">Цвет фона</label>
-          <input id="rwColor" type="color" value="#9146FF" />
-        </div>
-      </div>
-      <div class="field">
-        <label for="rwPrompt">Описание (prompt)</label>
-        <input id="rwPrompt" type="text" maxlength="200" placeholder="Что получит зритель за эту награду" />
-      </div>
-      <div class="rw-checkboxes">
-        <label class="chk"><input type="checkbox" id="rwNeedInput" /> Требовать ввод текста</label>
-        <label class="chk"><input type="checkbox" id="rwEnabled" checked /> Награда включена</label>
-      </div>
-      <button class="btn rw-add-btn" onclick="window._topbot_createReward()">＋ Создать награду</button>
-    </div>
-
-    <div class="reward-list" id="rewardsList">
-      <div class="empty">Наград пока нет. Создай первую выше ☝</div>
-    </div>
-
-    <button class="btn sync-btn" id="syncBtn" onclick="window._topbot_syncRedemptions()">🔄 Синхронизировать с рулеткой</button>
-    <p class="hint-note">Добавит зрителей, купивших награды, в список участников рулетки (1 покупка = 1 балл)</p>
   </section>
 </main>
 
-<section class="wheel-section card wheel-card" id="wheel">
-  <div class="wheel-head">
-    <div class="kicker">Рулетка</div>
-  </div>
-  <h2>Колесо участников</h2>
-  <p class="sub" style="margin-bottom:20px">Чем больше баллов — тем больше сектор и шанс выиграть.</p>
+<!-- Плавающая кнопка рулетки (слева) -->
+<button class="wheel-fab" onclick="openWheel()" title="Открыть рулетку">
+  <img src="icon.png" alt="Рулетка" />
+</button>
 
-  <div class="wheel-box">
-    <div class="wheel-wrap">
-      <div class="pointer"></div>
-      <canvas id="wheelCanvas" class="wh" width="720" height="720"></canvas>
-      <div class="hub">
-        <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
-      </div>
-    </div>
-    <button class="spinbtn" id="spinBtn" disabled>Крутить рулетку</button>
-    <div class="winner-big" id="winner"></div>
-    <div class="hint-wheel" id="whint">Добавь хотя бы 2 участника выше</div>
+<!-- Рулетка overlay (полный экран поверх) -->
+<div class="wheel-overlay" id="wheelOverlay">
+  <button class="close" onclick="closeWheel()">✕</button>
+  <div class="title">
+    <h2>Колесо участников</h2>
+    <p>Крути колесо — победитель определяется по баллам</p>
   </div>
-</section>
+  <div class="wheel-canvas-wrap">
+    <div class="wheel-arrow"></div>
+    <canvas id="wheelCanvas" width="600" height="600"></canvas>
+    <div class="wheel-hub">🎡</div>
+  </div>
+  <button class="spin-btn" id="spinBtn" disabled>Крутить рулетку</button>
+  <div class="winner-display" id="winnerDisplay"></div>
+  <div class="wheel-hint" id="wheelHint">Добавь хотя бы 2 участника выше</div>
+</div>
+
 <script>
   var KEY = 'topbot_participants';
   var participants = load();
@@ -319,108 +273,8 @@
       list.innerHTML = html;
       badge.textContent = 'Участников: ' + participants.length + ' · баллов: ' + totalPoints();
     }
-    if(typeof drawWheel === 'function'){ drawWheel(); updateSpinControls(); }
   }
 
-/* ===== Встроенная рулетка ===== */
-  var spinState = { spinning:false, rotation:0 };
-  var WHEEL_COLORS = ['#7950f2','#8b5cf6','#41c0a9','#f6646c','#f5a623','#2f9e44','#1c7ed6','#e64980','#ae3ec9','#f76707','#5c7cfa','#38a3a5'];
-  var wcanvas = document.getElementById('wheelCanvas');
-  var wctx = wcanvas.getContext('2d');
-  var spinBtn = document.getElementById('spinBtn');
-  var winnerEl = document.getElementById('winner');
-  var whintEl = document.getElementById('whint');
-
-  function shortWheelName(n){
-    if(typeof n !== 'string') n = String(n||'');
-    return n.length > 9 ? n.slice(0,8) + '…' : n;
-  }
-  function drawWheel(){
-    var S = wcanvas.width, cx = S/2, cy = S/2, r = S/2 - 8;
-    wctx.clearRect(0, 0, S, S);
-    if(participants.length === 0){
-      wctx.beginPath(); wctx.arc(cx, cy, r, 0, Math.PI*2);
-      wctx.fillStyle = 'rgba(255,255,255,.04)'; wctx.fill();
-      wctx.strokeStyle = 'rgba(255,255,255,.12)'; wctx.lineWidth = 3; wctx.stroke();
-      wctx.fillStyle = '#6d6d78';
-      wctx.font = '700 26px Inter'; wctx.textAlign = 'center'; wctx.textBaseline = 'middle';
-      wctx.fillText('Нет участников', cx, cy);
-      return;
-    }
-    wctx.save();
-    wctx.translate(cx, cy);
-    wctx.rotate(spinState.rotation);
-    wctx.translate(-cx, -cy);
-
-    var pts = participants.map(function(p){ return Math.max(p.points||0, 1); });
-    var sum = pts.reduce(function(a,b){ return a + b; }, 0);
-    var start = -Math.PI/2;
-    for(var i = 0; i < participants.length; i++){
-      var frac = pts[i] / sum;
-      var end = start + frac * Math.PI * 2;
-      wctx.beginPath(); wctx.moveTo(cx, cy); wctx.arc(cx, cy, r, start, end); wctx.closePath();
-      wctx.fillStyle = WHEEL_COLORS[i % WHEEL_COLORS.length]; wctx.fill();
-      wctx.strokeStyle = 'rgba(0,0,0,.35)'; wctx.lineWidth = 2; wctx.stroke();
-      var mid = (start + end) / 2, tr = r * 0.62;
-      wctx.save();
-      wctx.translate(cx + Math.cos(mid)*tr, cy + Math.sin(mid)*tr);
-      wctx.rotate(mid + Math.PI/2);
-      wctx.fillStyle = '#fff';
-      wctx.font = '700 ' + Math.min(18, Math.max(11, 320/participants.length)) + 'px Inter';
-      wctx.textAlign = 'center'; wctx.textBaseline = 'middle';
-      wctx.fillText(shortWheelName(participants[i].nick), 0, 0, r * 0.5);
-      wctx.restore();
-      start = end;
-    }
-    wctx.restore();
-    wctx.beginPath(); wctx.arc(cx, cy, r, 0, Math.PI*2);
-    wctx.strokeStyle = 'rgba(255,255,255,.25)'; wctx.lineWidth = 3; wctx.stroke();
-  }
-  function updateSpinControls(){
-    var ok = participants.length >= 2;
-    spinBtn.disabled = !ok || spinState.spinning;
-    spinBtn.textContent = spinState.spinning ? 'Крутим…' : 'Крутить рулетку';
-    whintEl.textContent = ok ? 'Больше баллов — больше шанс.' : 'Добавь хотя бы 2 участника выше';
-  }
-  function spinWheel(){
-    if(spinState.spinning || participants.length < 2) return;
-    spinState.spinning = true;
-    updateSpinControls();
-    winnerEl.textContent = '';
-
-    var pts = participants.map(function(p){ return Math.max(p.points||0, 1); });
-    var total = pts.reduce(function(a,b){ return a + b; }, 0);
-    var roll = Math.random() * total;
-    var idxWin = 0, acc = 0;
-    for(var i = 0; i < pts.length; i++){ acc += pts[i]; if(roll <= acc){ idxWin = i; break; } }
-
-    var beforeFrac = pts.slice(0, idxWin).reduce(function(a,b){ return a + b; }, 0) / total;
-    var segMid = (beforeFrac + (pts[idxWin]/2)/total) * Math.PI * 2;
-    var winAngle = -Math.PI/2 + segMid;
-    var targetLocal = -Math.PI/2 - winAngle;
-    var target = spinState.rotation + Math.PI * 2 * (5 + Math.random()*5);
-    var delta = ((targetLocal - target) % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
-    target += delta;
-
-    var current = spinState.rotation, totalMove = target - current;
-    var t0 = null, DUR = 4500;
-    function frame(ts){
-      if(t0 === null) t0 = ts;
-      var p = Math.min(1, (ts - t0) / DUR);
-      var ease = 1 - Math.pow(1 - p, 3);
-      spinState.rotation = current + totalMove * ease;
-      drawWheel();
-      if(p < 1){ requestAnimationFrame(frame); }
-      else{
-        spinState.spinning = false;
-        var won = participants[idxWin];
-        winnerEl.textContent = '🎉 ' + won.nick + '  (' + (won.points||0) + ' б.)';
-        updateSpinControls();
-      }
-    }
-    requestAnimationFrame(frame);
-  }
-  spinBtn.addEventListener('click', spinWheel);
   document.addEventListener('keydown', function(e){
     if(e.key === 'Enter'){
       var t = e.target;
@@ -428,188 +282,234 @@
     }
   });
 
-  /* ===== TWITCH INTEGRATION ===== */
-  (function(){
-    var T_OAUTH = 'https://id.twitch.tv/oauth2/authorize';
-    var T_API   = 'https://api.twitch.tv/helix';
-    var T_SCOPES = 'channel:read:redemptions channel:manage:redemptions';
-    var T_KEY   = 'topbot_twitch';
-    var tw = { clientId:'', accessToken:'', broadcasterId:'', broadcasterName:'', rewards:[], error:'' };
+  /* ===== Рулетка overlay ===== */
+  var WHEEL_COLORS = ['#7950f2','#41c0a9','#f6646c','#f59f00','#1098ad','#e64980','#7048e8','#0ca678','#f76707','#1c7ed6'];
+  var wcanvas = document.getElementById('wheelCanvas');
+  var wctx = wcanvas.getContext('2d');
+  var spinBtn = document.getElementById('spinBtn');
+  var winnerDisplay = document.getElementById('winnerDisplay');
+  var wheelHint = document.getElementById('wheelHint');
+  var wheelOverlay = document.getElementById('wheelOverlay');
+  var spinState = { spinning:false, rotation:0 };
 
-    function t_load(){
-      try{ var d=JSON.parse(localStorage.getItem(T_KEY)||'{}'); tw.clientId=d.clientId||''; tw.accessToken=d.accessToken||''; tw.broadcasterId=d.broadcasterId||''; tw.broadcasterName=d.broadcasterName||''; }catch(e){}
+  function openWheel(){ wheelOverlay.classList.add('active'); drawWheel(); updateWheelControls(); }
+  function closeWheel(){ wheelOverlay.classList.remove('active'); }
+
+  function shortName(nick){ return nick.length > 9 ? nick.slice(0,8)+'…' : nick; }
+
+  function drawWheel(){
+    var size = wcanvas.width, cx = size/2, cy = size/2, r = size/2 - 10;
+    wctx.clearRect(0,0,size,size);
+    if(participants.length < 2){
+      wctx.beginPath(); wctx.arc(cx,cy,r,0,Math.PI*2); wctx.fillStyle='rgba(255,255,255,.04)'; wctx.fill();
+      wctx.strokeStyle='rgba(255,255,255,.2)'; wctx.lineWidth=3; wctx.stroke();
+      wctx.fillStyle='#6d6d78'; wctx.font='700 24px Inter'; wctx.textAlign='center'; wctx.textBaseline='middle';
+      wctx.fillText('Нет участников', cx, cy);
+      return;
     }
-    function t_save(){ localStorage.setItem(T_KEY, JSON.stringify({clientId:tw.clientId,accessToken:tw.accessToken,broadcasterId:tw.broadcasterId,broadcasterName:tw.broadcasterName})); }
+    wctx.save(); wctx.translate(cx,cy); wctx.rotate(spinState.rotation); wctx.translate(-cx,-cy);
+    var pts = participants.map(function(p){ return Math.max(p.points||0,1); });
+    var sum = pts.reduce(function(a,b){ return a+b; }, 0);
+    var start = -Math.PI/2;
+    for(var i=0;i<participants.length;i++){
+      var end = start + (pts[i]/sum)*Math.PI*2;
+      wctx.beginPath(); wctx.moveTo(cx,cy); wctx.arc(cx,cy,r,start,end); wctx.closePath();
+      wctx.fillStyle=WHEEL_COLORS[i%WHEEL_COLORS.length]; wctx.fill();
+      wctx.strokeStyle='rgba(0,0,0,.35)'; wctx.lineWidth=2; wctx.stroke();
+      var mid=(start+end)/2, tr=r*0.62;
+      wctx.save(); wctx.translate(cx+Math.cos(mid)*tr, cy+Math.sin(mid)*tr); wctx.rotate(mid+Math.PI/2);
+      wctx.fillStyle='#fff'; wctx.font='700 '+Math.min(18,Math.max(12,300/participants.length))+'px Inter';
+      wctx.textAlign='center'; wctx.textBaseline='middle';
+      wctx.fillText(shortName(participants[i].nick), 0, 0, r*0.5);
+      wctx.restore();
+      start=end;
+    }
+    wctx.restore();
+    wctx.beginPath(); wctx.arc(cx,cy,r,0,Math.PI*2); wctx.strokeStyle='rgba(255,255,255,.25)'; wctx.lineWidth=3; wctx.stroke();
+  }
 
-    function t_checkRedirect(){
-      var h=window.location.hash;
-      if(h && h.indexOf('access_token')!==-1){
-        var p=new URLSearchParams(h.substring(1)); var tok=p.get('access_token');
-        if(tok){
-          tw.accessToken=tok;
-          history.replaceState(null,null,window.location.pathname+window.location.search);
-          t_save();
-          if(window.opener){ try{window.opener.postMessage({type:'twitch_auth',token:tok,clientId:tw.clientId},'*');}catch(e){} window.close(); }
-          else t_fetchUser();
-          return true;
-        }
-      }
+  function updateWheelControls(){
+    var ok = participants.length >= 2;
+    spinBtn.disabled = !ok || spinState.spinning;
+    spinBtn.textContent = spinState.spinning ? 'Крутим…' : 'Крутить рулетку';
+    wheelHint.textContent = ok ? 'Больше баллов — больше шанс.' : 'Добавь хотя бы 2 участника выше';
+  }
+
+  function spinWheel(){
+    if(spinState.spinning || participants.length < 2) return;
+    spinState.spinning = true; updateWheelControls(); winnerDisplay.textContent = '';
+    var pts = participants.map(function(p){ return Math.max(p.points||0,1); });
+    var total = pts.reduce(function(a,b){ return a+b; }, 0);
+    var roll = Math.random()*total, idxWin=0, acc=0;
+    for(var i=0;i<pts.length;i++){ acc+=pts[i]; if(roll<=acc){ idxWin=i; break; } }
+    var beforeFrac = pts.slice(0,idxWin).reduce(function(a,b){return a+b;},0)/total;
+    var segMid = (beforeFrac + (pts[idxWin]/2)/total)*Math.PI*2;
+    var targetLocal = -Math.PI/2 - (-Math.PI/2 + segMid);
+    var target = spinState.rotation + Math.PI*2*(5+Math.random()*5);
+    var delta = ((targetLocal-target)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+    target += delta;
+    var current=spinState.rotation, totalMove=target-current;
+    var t0=null, DUR=4500;
+    function frame(ts){
+      if(t0===null) t0=ts;
+      var p=Math.min(1,(ts-t0)/DUR), ease=1-Math.pow(1-p,3);
+      spinState.rotation=current+totalMove*ease; drawWheel();
+      if(p<1){ requestAnimationFrame(frame); }
+      else{ spinState.spinning=false; var w=participants[idxWin]; winnerDisplay.textContent='🎉 '+w.nick+'  ('+(w.points||0)+' б.)'; updateWheelControls(); }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  spinBtn.addEventListener('click', spinWheel);
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && wheelOverlay.classList.contains('active')){ closeWheel(); }
+  });
+
+  /* ===== TWITCH OAUTH (Implicit Grant Flow) ===== */
+  (function(){
+    var TWITCH_AUTH_URL = 'https://id.twitch.tv/oauth2/authorize';
+    var TWITCH_API = 'https://api.twitch.tv/helix';
+    var TWITCH_SCOPE = 'user:read:email channel:read:redemptions channel:manage:redemptions';
+    var TW_KEY = 'twitch_auth_data';
+
+    function saveTwitchData(){
+      localStorage.setItem(TW_KEY, JSON.stringify({
+        accessToken: twitchData.accessToken,
+        clientId: twitchData.clientId,
+        user: twitchData.user
+      }));
+    }
+    function loadTwitchData(){
+      try{
+        var d = JSON.parse(localStorage.getItem(TW_KEY));
+        if(d && d.accessToken){ twitchData.accessToken = d.accessToken; twitchData.clientId = d.clientId||''; twitchData.user = d.user||null; return true; }
+      }catch(e){}
       return false;
     }
-
-    function t_api(path,method,body){
-      var hdrs={'Client-Id':tw.clientId,'Authorization':'Bearer '+tw.accessToken};
-      if(body) hdrs['Content-Type']='application/json';
-      return fetch(T_API+path,{method:method||'GET',headers:hdrs,body:body?JSON.stringify(body):undefined})
-        .then(function(r){
-          if(r.status===401) throw new Error('UNAUTHORIZED');
-          if(r.status===429) throw new Error('RATE_LIMIT');
-          if(!r.ok) return r.json().then(function(d){throw new Error(d.message||'API_ERROR');});
-          if(r.status===204) return {};
-          return r.json();
-        });
+    function clearTwitchData(){
+      localStorage.removeItem(TW_KEY);
+      twitchData.accessToken = ''; twitchData.user = null;
     }
 
-    function t_fetchUser(){
-      return t_api('/users').then(function(d){
-        if(d.data && d.data.length){ tw.broadcasterId=d.data[0].id; tw.broadcasterName=d.data[0].display_name; t_save(); t_render(); t_fetchRewards(); }
-      }).catch(function(err){ if(err.message==='UNAUTHORIZED'){tw.error='Токен недействителен. Авторизуйтесь заново.';t_logout();}else{tw.error='Ошибка: '+err.message;t_render();} });
+    var twitchData = { accessToken:'', clientId:'', user:null };
+
+    // Установить redirect URI в подсказку
+    var rtu = document.getElementById('twRedirectUri');
+    if(rtu) rtu.textContent = window.location.origin + window.location.pathname;
+
+    // Проверить URL на наличие токена (после возврата от Twitch)
+    function checkAuthRedirect(){
+      var hash = window.location.hash;
+      if(hash && hash.indexOf('access_token') !== -1){
+        var params = new URLSearchParams(hash.substring(1));
+        var token = params.get('access_token');
+        if(token){
+          // Очищаем хэш из адресной строки
+          history.replaceState(null, null, window.location.pathname + window.location.search);
+          twitchData.accessToken = token;
+          twitchData.clientId = document.getElementById('twClientId').value.trim();
+          saveTwitchData();
+          fetchTwitchUser(token);
+        }
+      }
     }
 
-    function t_fetchRewards(){
-      if(!tw.broadcasterId) return Promise.resolve();
-      return t_api('/channel_points/custom_rewards?broadcaster_id='+tw.broadcasterId)
-        .then(function(d){ tw.rewards=d.data||[]; t_renderRewards(); })
-        .catch(function(err){ tw.error='Не удалось загрузить награды: '+err.message; t_render(); });
-    }
-
-    function t_createReward(data){
-      return t_api('/channel_points/custom_rewards?broadcaster_id='+tw.broadcasterId,'POST',data)
-        .then(function(){ t_fetchRewards(); }).catch(function(err){ tw.error='Ошибка создания: '+err.message; t_render(); });
-    }
-
-    function t_updateReward(id,data){
-      return t_api('/channel_points/custom_rewards?broadcaster_id='+tw.broadcasterId+'&id='+id,'PATCH',data)
-        .then(function(){ t_fetchRewards(); }).catch(function(err){ tw.error='Ошибка обновления: '+err.message; t_render(); });
-    }
-
-    function t_deleteReward(id){
-      return t_api('/channel_points/custom_rewards?broadcaster_id='+tw.broadcasterId+'&id='+id,'DELETE')
-        .then(function(){ t_fetchRewards(); }).catch(function(err){ tw.error='Ошибка удаления: '+err.message; t_render(); });
-    }
-
-    function t_login(){
-      var cid=document.getElementById('twClientId').value.trim();
-      if(!cid){ shake('twClientId'); return; }
-      tw.clientId=cid; t_save();
-      var redirectUri=window.location.origin+window.location.pathname;
-      var params=new URLSearchParams({client_id:cid,redirect_uri:redirectUri,response_type:'token',scope:T_SCOPES,state:'topbot_'+Date.now()});
-      var w=window.open(T_OAUTH+'?'+params.toString(),'twitch_oauth','width=520,height=680,menubar=no,toolbar=no');
-      if(!w||w.closed){ tw.error='Попап заблокирован. Разрешите всплывающие окна.'; t_render(); }
-    }
-
-    function t_logout(){
-      tw.accessToken=''; tw.broadcasterId=''; tw.broadcasterName=''; tw.rewards=[]; tw.error='';
-      t_save(); t_render(); t_renderRewards();
-    }
-
-    function t_syncRedemptions(){
-      if(!tw.broadcasterId||!tw.rewards.length){ alert('Подключите Twitch.'); return; }
-      var btn=document.getElementById('syncBtn'); btn.disabled=true; btn.textContent='⏳ Загрузка...';
-      var promises=tw.rewards.map(function(r){
-        return t_api('/channel_points/custom_redemptions?broadcaster_id='+tw.broadcasterId+'&reward_id='+r.id+'&status=FULFILLED&first=100')
-          .then(function(d){return {reward:r,redemptions:d.data||[]};}).catch(function(){return {reward:r,redemptions:[]};});
+    // Получить данные пользователя с Twitch
+    function fetchTwitchUser(token){
+      var cid = document.getElementById('twClientId').value.trim();
+      fetch(TWITCH_API + '/users', {
+        headers: { 'Client-ID': cid, 'Authorization': 'Bearer ' + token }
+      })
+      .then(function(r){ if(!r.ok) throw new Error('Auth failed'); return r.json(); })
+      .then(function(d){
+        if(d.data && d.data.length){
+          twitchData.user = d.data[0];
+          twitchData.clientId = cid;
+          saveTwitchData();
+          updateTwitchUI();
+        }
+      })
+      .catch(function(err){
+        console.error('Twitch auth error:', err);
+        twitchData.user = null;
+        updateTwitchUI();
       });
-      Promise.all(promises).then(function(results){
-        var up={};
-        results.forEach(function(res){ res.redemptions.forEach(function(red){ var n=red.user_name||red.user_login||'unknown'; up[n]=(up[n]||0)+1; }); });
-        var added=0,updated=0;
-        Object.keys(up).forEach(function(name){
-          var ex=null; for(var i=0;i<participants.length;i++){ if(participants[i].nick===name){ex=participants[i];break;} }
-          if(ex){ ex.points=(ex.points||0)+up[name]; updated++; } else { participants.push({nick:name,points:up[name]}); added++; }
-        });
-        save(); render(); btn.disabled=false; btn.textContent='🔄 Синхронизировать с рулеткой';
-        alert('Готово!\nДобавлено: '+added+'\nОбновлено: '+updated);
-      }).catch(function(err){ btn.disabled=false; btn.textContent='🔄 Синхронизировать с рулеткой'; alert('Ошибка: '+err.message); });
     }
 
-    function t_render(){
-      var cidEl=document.getElementById('twClientId');
-      var statusEl=document.getElementById('twStatus');
-      var loginBtn=document.getElementById('twLoginBtn');
-      var logoutBtn=document.getElementById('twLogoutBtn');
-      var rewCard=document.getElementById('rewardsCard');
-      var errEl=document.getElementById('twError');
-      if(cidEl) cidEl.value=tw.clientId;
-      if(tw.accessToken&&tw.broadcasterName){
-        if(statusEl) statusEl.textContent='✅ Подключён: '+tw.broadcasterName;
-        if(loginBtn) loginBtn.style.display='none';
-        if(logoutBtn) logoutBtn.style.display='';
-        if(rewCard) rewCard.style.display='';
+    // Обновить интерфейс Twitch
+    function updateTwitchUI(){
+      var statusBar = document.getElementById('twStatusBar');
+      var statusIcon = document.getElementById('twStatusIcon');
+      var statusText = document.getElementById('twStatusText');
+      var clientIdField = document.getElementById('twClientIdField');
+      var loginBtn = document.getElementById('twLoginBtn');
+      var logoutBtn = document.getElementById('twLogoutBtn');
+      var tokenDisplay = document.getElementById('twTokenDisplay');
+      var clientIdInput = document.getElementById('twClientId');
+
+      if(twitchData.user){
+        // Авторизованы
+        statusBar.classList.add('online');
+        if(twitchData.user.profile_image_url){
+          statusIcon.innerHTML = '<img src="'+twitchData.user.profile_image_url+'" class="tw-avatar" />';
+        } else {
+          statusIcon.textContent = '🟢';
+        }
+        statusText.innerHTML = '<strong>'+twitchData.user.display_name+'</strong> · @'+twitchData.user.login;
+        if(twitchData.user.email) statusText.innerHTML += ' · '+twitchData.user.email;
+        if(clientIdField) clientIdField.style.display = 'none';
+        if(loginBtn) loginBtn.style.display = 'none';
+        if(logoutBtn) logoutBtn.style.display = '';
+        if(clientIdInput) clientIdInput.value = twitchData.clientId;
+        if(tokenDisplay){
+          tokenDisplay.style.display = 'none';
+          tokenDisplay.textContent = '';
+        }
       } else {
-        if(statusEl) statusEl.textContent='Не подключено';
-        if(loginBtn) loginBtn.style.display='';
-        if(logoutBtn) logoutBtn.style.display='none';
-        if(rewCard) rewCard.style.display='none';
+        // Не авторизованы
+        statusBar.classList.remove('online');
+        statusIcon.textContent = '⚪';
+        statusText.textContent = 'Не подключено — введи Client ID и нажми «Войти»';
+        if(clientIdField) clientIdField.style.display = '';
+        if(loginBtn) loginBtn.style.display = '';
+        if(logoutBtn) logoutBtn.style.display = 'none';
+        if(tokenDisplay) tokenDisplay.style.display = 'none';
+        if(clientIdInput && twitchData.clientId) clientIdInput.value = twitchData.clientId;
       }
-      if(errEl){ errEl.textContent=tw.error||''; errEl.style.display=tw.error?'':'none'; }
     }
 
-    function t_renderRewards(){
-      var list=document.getElementById('rewardsList');
-      if(!list) return;
-      if(!tw.rewards.length){ list.innerHTML='<div class="empty">Наград пока нет. Создай первую выше ☝</div>'; return; }
-      var html='';
-      for(var i=0;i<tw.rewards.length;i++){
-        var r=tw.rewards[i]; var en=r.is_enabled!==false;
-        html+='<div class="reward-item"><div class="ri-left">'
-          +'<div class="ri-title">'+String(r.title||'—').replace(/</g,'&lt;')+'</div>'
-          +'<div class="ri-meta">'+(r.cost||0)+' баллов'+(r.is_user_input_required?' · ввод текста':'')+(r.max_per_stream?' · макс./стрим: '+r.max_per_stream:'')
-          +'</div></div><div class="ri-right">'
-          +'<span class="ri-badge '+(en?'on':'off')+'">'+(en?'ВКЛ':'ВЫКЛ')+'</span>'
-          +'<button class="ri-btn" onclick="window._topbot_toggleReward(\''+r.id+'\','+(!en)+')">'+(en?'⏸':'▶')+'</button>'
-          +'<button class="ri-btn del" onclick="window._topbot_deleteReward(\''+r.id+'\')">&times;</button>'
-          +'</div></div>';
-      }
-      list.innerHTML=html;
+    // Функция входа
+    window.twitchLogin = function(){
+      var cid = document.getElementById('twClientId').value.trim();
+      if(!cid){ shake('twClientId'); return; }
+      twitchData.clientId = cid;
+      var redirectUri = window.location.origin + window.location.pathname;
+      var url = TWITCH_AUTH_URL +
+        '?client_id=' + encodeURIComponent(cid) +
+        '&redirect_uri=' + encodeURIComponent(redirectUri) +
+        '&response_type=token' +
+        '&scope=' + encodeURIComponent(TWITCH_SCOPE);
+      window.location.href = url;
+    };
+
+    // Функция выхода
+    window.twitchLogout = function(){
+      clearTwitchData();
+      updateTwitchUI();
+    };
+
+    // Инициализация
+    loadTwitchData();
+    checkAuthRedirect();
+    // Если есть токен но нет данных пользователя — загрузить
+    if(twitchData.accessToken && !twitchData.user){
+      fetchTwitchUser(twitchData.accessToken);
+    } else {
+      updateTwitchUI();
     }
 
-    function t_handleCreate(){
-      var title=document.getElementById('rwTitle').value.trim();
-      var cost=parseInt(document.getElementById('rwCost').value,10);
-      var prompt=document.getElementById('rwPrompt').value.trim();
-      var bgColor=document.getElementById('rwColor').value;
-      var needInput=document.getElementById('rwNeedInput').checked;
-      var enabled=document.getElementById('rwEnabled').checked;
-      if(!title){ shake('rwTitle'); return; }
-      if(isNaN(cost)||cost<1){ shake('rwCost'); return; }
-      var data={title:title,cost:cost,is_enabled:enabled,is_user_input_required:needInput,background_color:bgColor};
-      if(prompt) data.prompt=prompt;
-      t_createReward(data);
-      document.getElementById('rwTitle').value='';
-      document.getElementById('rwCost').value='';
-      document.getElementById('rwPrompt').value='';
-      document.getElementById('rwNeedInput').checked=false;
-      document.getElementById('rwEnabled').checked=true;
-    }
-
-    function t_initUI(){
-      if(window.location.protocol==='file:'){ var fw=document.getElementById('twFileWarn'); if(fw) fw.style.display=''; }
-      var rtu=document.getElementById('twRedirectUrl'); if(rtu) rtu.textContent=window.location.origin+window.location.pathname;
-      window._topbot_twitchLogin=t_login;
-      window._topbot_twitchLogout=t_logout;
-      window._topbot_toggleReward=function(id,en){t_updateReward(id,{is_enabled:en});};
-      window._topbot_deleteReward=function(id){ if(confirm('Удалить награду?')) t_deleteReward(id); };
-      window._topbot_createReward=t_handleCreate;
-      window._topbot_syncRedemptions=t_syncRedemptions;
-      window.addEventListener('message',function(e){ if(e.data&&e.data.type==='twitch_auth'){tw.accessToken=e.data.token;if(e.data.clientId)tw.clientId=e.data.clientId;t_save();t_fetchUser();} });
-      t_render();
-    }
-
-    t_load();
-    if(!t_checkRedirect() && tw.accessToken) t_fetchUser();
-    t_initUI();
   })();
+
   render();
 </script>
 </body>
