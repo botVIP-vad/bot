@@ -1592,19 +1592,27 @@
     /* ===== Покупки наград (выкупы channel points) ===== */
     var PURCH_KEY = 'wheelbot_purchases';
     var processedKey = 'wheelbot_purchases_processed';
+    var cutoffKey = 'wheelbot_purchases_cutoff';
     var purchases = [];
     var processedIds = {};
+    var cutoff = 0; // выкупы старше этого момента не показываем (чтобы история не возвращалась после "Очистить")
     try{
       var pd = JSON.parse(localStorage.getItem(PURCH_KEY) || '[]');
       if(Array.isArray(pd)) purchases = pd;
       var pr = JSON.parse(localStorage.getItem(processedKey) || '{}');
       if(pr && typeof pr === 'object') processedIds = pr;
+      cutoff = parseInt(localStorage.getItem(cutoffKey) || '0', 10) || 0;
     }catch(e){}
 
     window.clearPurchases = function(){
       purchases = [];
-      // processedIds НЕ сбрасываем — иначе уже показанные выкупы снова вернутся из истории Twitch
+      processedIds = {};
+      // Запоминаем момент очистки: старая история выкупов больше не подхватится,
+      // а новые покупки будут появляться как обычно
+      cutoff = Date.now();
       localStorage.setItem(PURCH_KEY, '[]');
+      localStorage.setItem(processedKey, '{}');
+      localStorage.setItem(cutoffKey, String(cutoff));
       renderPurchases();
     };
 
@@ -1711,6 +1719,8 @@
             var changed = false;
             d.data.forEach(function(rd){
               if(processedIds[rd.id]) return;
+              // Пропустить выкупы старше момента последней очистки списка
+              if(cutoff && rd.redeemed_at && (new Date(rd.redeemed_at).getTime() < cutoff)) return;
               processedIds[rd.id] = true;
               changed = true;
               purchases.push({
@@ -1728,8 +1738,14 @@
             }
           })
           .catch(function(err){
-            console.error('[poll] ошибка опроса выкупов (награда "' + r.title + '"):', err);
-            updatePurchasesStatus('Ошибка опроса выкупов: ' + (err.message || err));
+            var msg = String((err && err.message) || err);
+            // 404 = награда удалена или отключена на Twitch — не критично, тихо пропускаем
+            if(msg.indexOf('404') === -1){
+              console.error('[poll] ошибка опроса выкупов (награда "' + r.title + '"):', err);
+              updatePurchasesStatus('Ошибка опроса выкупов: ' + msg);
+            } else {
+              console.warn('[poll] награда недоступна для опроса (404):', r.title);
+            }
           });
         });
       });
