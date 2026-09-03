@@ -89,6 +89,8 @@
   .chat-fab:hover{transform:scale(1.1);box-shadow:0 10px 30px -4px rgba(121,80,242,.7)}
   .chat-fab.active{box-shadow:0 0 0 3px var(--points),0 6px 20px -4px rgba(121,80,242,.7)}
   .chat-fab img{width:48px;height:48px;object-fit:contain}
+  /* Когда открыт чат — поднимаем кнопки рулетки, меню и наград над оверлеем чата */
+  body.chat-open .wheel-fab, body.chat-open .settings-fab, body.chat-open .rewards-fab{z-index:210}
 
   /* ===== Chat overlay ===== */
   .chat-overlay{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;
@@ -608,10 +610,8 @@
       <h2>💬 Чат Twitch</h2>
       <p>Канал: <strong>welvol</strong></p>
     </div>
-    <div class="chat-status" id="chatStatus">⏳ Подключение к чату…</div>
-    <div class="chat-messages" id="chatMessages">
-      <div class="empty">Загрузка сообщений…</div>
-    </div>
+    <iframe id="chatFrame" src="" height="500" width="350"
+      style="width:100%;max-width:560px;height:60vh;border:1px solid var(--line);border-radius:16px;background:#18181b"></iframe>
   </div>
 </div>
 
@@ -1088,6 +1088,8 @@
 
   // Toggle main menu (settings button) - like a toggle/X button
   function toggleMainMenu(){
+    // Закрываем чат, если он открыт
+    if(typeof closeChat === 'function') closeChat();
     // Сначала закрываем рулетку (как крестик ✕)
     closeWheel();
     // Затем переключаем меню
@@ -1105,6 +1107,8 @@
 
   // Wheel overlay - highlight button when open
   function openWheel(){
+    // Закрываем чат, если он открыт
+    if(typeof closeChat === 'function') closeChat();
     // Сбрасываем выбывание при новом открытии рулетки
     eliminatedObjs = [];
     // Запоминаем состав участников на момент открытия (для расчёта шанса)
@@ -1126,81 +1130,24 @@
     document.getElementById('wheelFab').classList.remove('active');
   }
 
-  // ===== Чат Twitch (канал welvol) =====
-  var chatSocket = null;
-  var CHAT_CHANNEL = 'welvol';
-  function chatConnect(){
-    chatDisconnect();
-    var statusEl = document.getElementById('chatStatus');
-    var listEl = document.getElementById('chatMessages');
-    listEl.innerHTML = '<div class="empty">Загрузка сообщений…</div>';
-    statusEl.textContent = '⏳ Подключение к чату…';
-    try{
-      chatSocket = new WebSocket('wss://irc-ws.twitch.tv:443');
-      chatSocket.onopen = function(){
-        chatSocket.send('CAP REQ :twitch.tv/tags');
-        chatSocket.send('PASS SCHMOOPIIE');
-        chatSocket.send('NICK justinfan' + Math.floor(Math.random()*100000));
-        chatSocket.send('JOIN #' + CHAT_CHANNEL);
-      };
-      chatSocket.onmessage = function(ev){
-        var lines = String(ev.data).split('\r\n');
-        for(var i=0;i<lines.length;i++){
-          var line = lines[i];
-          if(!line) continue;
-          if(line.indexOf('PING') === 0){ chatSocket.send('PONG :tmi.twitch.tv'); continue; }
-          if(line.indexOf('JOIN') !== -1 && line.indexOf(' tmi.twitch.tv JOIN') !== -1){
-            statusEl.textContent = '🟢 Подключено к чату #' + CHAT_CHANNEL;
-            continue;
-          }
-          var idx = line.indexOf('PRIVMSG #' + CHAT_CHANNEL + ' :');
-          if(idx === -1) continue;
-          var tags = line.substring(0, idx);
-          // display-name и цвет ника из IRC-тегов
-          var dn = tags.match(/display-name=([^;\s]+)/);
-          var color = tags.match(/color=([^;\s]+)/);
-          var nick = (dn && dn[1]) ? dn[1] : (line.match(/^:([^!]+)!/) || [,'?'])[1];
-          var text = line.substring(idx + ('PRIVMSG #' + CHAT_CHANNEL + ' :').length);
-          var div = document.createElement('div');
-          div.className = 'chat-msg';
-          var nickColor = (color && color[1]) ? color[1] : '';
-          div.innerHTML = '<span class="chat-nick" style="' + (nickColor ? 'color:'+nickColor : '') + '"></span>';
-          var nickSpan = div.firstChild;
-          nickSpan.textContent = nick; // безопасное добавление ника
-          var textNode = document.createElement('span');
-          textNode.textContent = text; // безопасное добавление текста (без XSS)
-          div.appendChild(textNode);
-          var emptyEl = listEl.querySelector('.empty');
-          if(emptyEl) emptyEl.remove();
-          listEl.appendChild(div);
-          // Ограничиваем историю 200 сообщениями
-          while(listEl.children.length > 200) listEl.removeChild(listEl.firstChild);
-          listEl.scrollTop = listEl.scrollHeight;
-        }
-      };
-      chatSocket.onclose = function(){
-        if(chatOverlayEl.classList.contains('active')){
-          statusEl.textContent = '🔴 Соединение потеряно. Открой чат заново.';
-        }
-        chatSocket = null;
-      };
-      chatSocket.onerror = function(){ statusEl.textContent = '🔴 Ошибка соединения с чатом'; };
-    }catch(e){ statusEl.textContent = '🔴 Ошибка соединения с чатом'; }
-  }
-  function chatDisconnect(){
-    try{ if(chatSocket){ chatSocket.onclose = null; chatSocket.close(); } }catch(e){}
-    chatSocket = null;
-  }
+  // ===== Чат Twitch (канал welvol) — iframe embed =====
   var chatOverlayEl = document.getElementById('chatOverlay');
   function openChat(){
     chatOverlayEl.classList.add('active');
     document.getElementById('chatFab').classList.add('active');
-    chatConnect();
+    document.body.classList.add('chat-open');
+    // Официальный embed чата: Twitch блокирует прямой iframe обычной страницы,
+    // поэтому используем /embed/.../chat с параметром parent (домен текущей страницы)
+    var parent = window.location.hostname || 'localhost';
+    document.getElementById('chatFrame').src =
+      'https://www.twitch.tv/embed/welvol/chat?parent=' + encodeURIComponent(parent);
   }
   function closeChat(){
     chatOverlayEl.classList.remove('active');
     document.getElementById('chatFab').classList.remove('active');
-    chatDisconnect();
+    document.body.classList.remove('chat-open');
+    // Выгружаем iframe, чтобы остановить соединение чата
+    document.getElementById('chatFrame').src = '';
   }
   function toggleChat(){
     if(chatOverlayEl.classList.contains('active')) closeChat();
@@ -1693,7 +1640,7 @@
       if(!isAuthorized() || !p.rewardId || !p.redemptionId) return;
       var broadcasterId = getBroadcasterId();
       fetch(TWITCH_API + '/channel_points/custom_rewards_redemptions?broadcaster_id=' + broadcasterId
-        + '&reward_id=' + p.rewardId, {
+        + '&reward_id=' + p.rewardId + '&id=' + p.redemptionId, {
         method: 'PATCH',
         headers: getHeaders(),
         body: JSON.stringify({ status: status, fulfillment_ids: [p.redemptionId] })
@@ -1727,7 +1674,10 @@
               rewardId: r.id
             });
           });
-          if(changed) savePurchases();
+          if(changed){
+            savePurchases();
+            renderPurchases(); // сразу показываем новые покупки в панели
+          }
         })
         .catch(function(){});
       });
@@ -1735,6 +1685,8 @@
 
     // Опрос выкупов каждые 5 секунд
     setInterval(pollRedemptions, 5000);
+    // Если уже авторизованы — загружаем награды сразу, чтобы опрос выкупов работал без открытия оверлея
+    if(isAuthorized()) loadTwitchRewards();
 
     document.addEventListener('keydown', function(e){
       if(e.key === 'Escape' && document.getElementById('rewardsOverlay').classList.contains('active')) closeRewards();
