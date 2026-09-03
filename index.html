@@ -358,7 +358,7 @@
   <div class="tw-box card tw-login-card" style="margin:0">
     <div class="kicker">🎮 Twitch</div>
     <h2>Авторизация Twitch</h2>
-    <p class="sub">.</p>
+    <p class="sub">Войди через Twitch чтобы управлять наградами канала. После нажатия кнопки ты будешь перенаправлен на Twitch для подтверждения.</p>
 
     <div class="tw-status-bar" id="twStatusBar">
       <span id="twStatusIcon">⚪</span>
@@ -370,8 +370,20 @@
       <input id="twClientId" type="text" placeholder="Вставь сюда свой Client ID" autocomplete="off" />
     </div>
 
+    <div style="background:rgba(145,70,255,.08);border:1px solid rgba(145,70,255,.2);border-radius:10px;padding:12px 14px;margin:14px 0;font-size:.82rem;color:var(--ink-dim);line-height:1.5">
+      <strong>⚠️ Важно:</strong> В настройках приложения на <a href="https://dev.twitch.tv/console" target="_blank" style="color:#9146ff">dev.twitch.tv/console</a> добавь этот URI в OAuth Redirect URLs:<br/>
+      <code id="twRedirectUri" style="display:block;margin-top:6px;background:rgba(0,0,0,.3);padding:8px;border-radius:6px;color:#9146ff;word-break:break-all">—</code>
+    </div>
+
     <button class="btn tw-login-btn" id="twLoginBtn" onclick="twitchLogin()">Войти через Twitch</button>
     <button class="btn tw-logout-btn" id="twLogoutBtn" onclick="twitchLogout()" style="display:none">🚪 Выйти</button>
+
+    <p style="margin-top:14px;font-size:.78rem;color:var(--ink-faint);line-height:1.5">
+      💡 <strong>Не работает?</strong> Убедись что:<br/>
+      1. Ты добавил URI из поля выше в OAuth Redirect URLs на dev.twitch.tv/console<br/>
+      2. Ты используешь правильный Client ID<br/>
+      3. Файл открыт через http://localhost или https:// (не file://)
+    </p>
   </div>
 </div>
 
@@ -620,14 +632,32 @@
     var rtu = document.getElementById('twRedirectUri');
     if(rtu) rtu.textContent = window.location.origin + window.location.pathname;
 
-    // Проверить URL на наличие токена (после возврата от Twitch)
+    // Проверить URL на наличие токена или ошибки (после возврата от Twitch)
     function checkAuthRedirect(){
       var hash = window.location.hash;
-      if(hash && hash.indexOf('access_token') !== -1){
+      if(hash){
         var params = new URLSearchParams(hash.substring(1));
-        var token = params.get('access_token');
-        if(token){
-          // Очищаем хэш из адресной строки
+
+        // Проверяем ошибки от Twitch
+        var error = params.get('error');
+        var errorDesc = params.get('error_description');
+        if(error){
+          history.replaceState(null, null, window.location.pathname + window.location.search);
+          var errorMsg = '❌ Ошибка Twitch: ' + (errorDesc || error);
+          if(error === 'redirect_uri_mismatch'){
+            errorMsg = '❌ Redirect URI не совпадает!\n\nУбедись что в Twitch Console (dev.twitch.tv/console) в OAuth Redirect URLs добавлен именно этот URI:\n\n' + (window.location.origin + window.location.pathname);
+          } else if(error === 'invalid_client'){
+            errorMsg = '❌ Неверный Client ID!\n\nПроверь что ты скопировал правильный Client ID из Twitch Console.';
+          } else if(error === 'access_denied'){
+            errorMsg = '❌ Доступ запрещён.\n\nТы нажал "Отмена" на странице Twitch.';
+          }
+          showTwitchError(errorMsg);
+          return;
+        }
+
+        // Проверяем токен
+        if(params.has('access_token')){
+          var token = params.get('access_token');
           history.replaceState(null, null, window.location.pathname + window.location.search);
           twitchData.accessToken = token;
           twitchData.clientId = document.getElementById('twClientId').value.trim();
@@ -635,6 +665,15 @@
           fetchTwitchUser(token);
         }
       }
+    }
+
+    // Показать ошибку Twitch в статус баре
+    function showTwitchError(msg){
+      var statusText = document.getElementById('twStatusText');
+      var statusBar = document.getElementById('twStatusBar');
+      if(statusText) statusText.innerHTML = msg.replace(/\n/g, '<br/>');
+      if(statusBar) statusBar.style.borderColor = 'rgba(246,100,108,.5)';
+      console.error('Twitch auth error:', msg);
     }
 
     // Получить данные пользователя с Twitch
