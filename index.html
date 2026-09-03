@@ -365,6 +365,15 @@
       <span id="twStatusText">Не подключено — введи Client ID и нажми «Войти»</span>
     </div>
 
+    <div id="twFileWarning" style="display:none;background:rgba(246,100,108,.1);border:1px solid rgba(246,100,108,.3);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:.82rem;color:var(--donation);line-height:1.5">
+      ⚠️ <strong>Файл открыт напрямую (file://)</strong><br/>
+      Twitch OAuth не работает без сервера. Открой через:
+      <ul style="margin:6px 0 0 18px;padding:0">
+        <li>VS Code: установи расширение "Live Server" и нажми "Go Live"</li>
+        <li>Или терминал: <code style="background:rgba(0,0,0,.3);padding:2px 6px;border-radius:4px">npx http-server -p 8080</code></li>
+      </ul>
+    </div>
+
     <div class="field" id="twClientIdField">
       <label for="twClientId">Client ID приложения Twitch</label>
       <input id="twClientId" type="text" placeholder="Вставь сюда свой Client ID" autocomplete="off" />
@@ -660,8 +669,13 @@
           var token = params.get('access_token');
           history.replaceState(null, null, window.location.pathname + window.location.search);
           twitchData.accessToken = token;
-          twitchData.clientId = document.getElementById('twClientId').value.trim();
+          // Берём Client ID из поля, а если оно пустое — из сохранённых данных
+          var cidInput = document.getElementById('twClientId').value.trim();
+          if(!cidInput && twitchData.clientId) cidInput = twitchData.clientId;
+          twitchData.clientId = cidInput;
           saveTwitchData();
+          // Открываем оверлей Twitch чтобы видеть статус входа
+          document.getElementById('twOverlay').classList.add('active');
           fetchTwitchUser(token);
         }
       }
@@ -669,6 +683,9 @@
 
     // Показать ошибку Twitch в статус баре
     function showTwitchError(msg){
+      // Открываем оверлей Twitch чтобы ошибка была видна
+      var ov = document.getElementById('twOverlay');
+      if(ov) ov.classList.add('active');
       var statusText = document.getElementById('twStatusText');
       var statusBar = document.getElementById('twStatusBar');
       if(statusText) statusText.innerHTML = msg.replace(/\n/g, '<br/>');
@@ -678,7 +695,12 @@
 
     // Получить данные пользователя с Twitch
     function fetchTwitchUser(token){
-      var cid = document.getElementById('twClientId').value.trim();
+      var cid = document.getElementById('twClientId').value.trim() || twitchData.clientId;
+      if(!cid){
+        showTwitchError('❌ Нет Client ID. Вставь Client ID в поле и попробуй войти снова.');
+        return;
+      }
+      document.getElementById('twClientId').value = cid;
       fetch(TWITCH_API + '/users', {
         headers: { 'Client-ID': cid, 'Authorization': 'Bearer ' + token }
       })
@@ -758,12 +780,23 @@
       var cid = document.getElementById('twClientId').value.trim();
       if(!cid){ shake('twClientId'); return; }
       twitchData.clientId = cid;
-      var redirectUri = window.location.origin + window.location.pathname;
+      saveTwitchData(); // Сохраняем Client ID до ухода на Twitch — он переживёт обновление страницы
+
+      // Проверяем протокол
+      var origin = window.location.origin;
+      if(!origin || origin === 'null' || origin === 'file://'){
+        showTwitchError('❌ Нельзя авторизаться при открытии файла напрямую (file://).\n\nНужно открыть через локальный сервер:\n\n1. Установи: npm install -g http-server\n2. Запусти: http-server -p 8080\n3. Открой: http://localhost:8080/roulette.html\n\nИли используй Live Server в VS Code.');
+        return;
+      }
+
+      var redirectUri = origin + window.location.pathname;
       var url = TWITCH_AUTH_URL +
         '?client_id=' + encodeURIComponent(cid) +
         '&redirect_uri=' + encodeURIComponent(redirectUri) +
         '&response_type=token' +
         '&scope=' + encodeURIComponent(TWITCH_SCOPE);
+
+      console.log('Redirecting to Twitch:', url);
       window.location.href = url;
     };
 
@@ -776,6 +809,14 @@
     // Инициализация
     loadTwitchData();
     checkAuthRedirect();
+
+    // Предупреждение если открыт через file://
+    if(window.location.protocol === 'file:' || !window.location.origin || window.location.origin === 'null'){
+      var fw = document.getElementById('twFileWarning');
+      if(fw) fw.style.display = 'block';
+      console.warn('Twitch OAuth requires http:// or https:// protocol. Current:', window.location.href);
+    }
+
     // Если есть токен но нет данных пользователя — загрузить
     if(twitchData.accessToken && !twitchData.user){
       fetchTwitchUser(twitchData.accessToken);
