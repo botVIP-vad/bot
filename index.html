@@ -128,27 +128,45 @@
   .tw-overlay .close:hover{background:var(--donation);color:#fff}
   .tw-box{width:100%;max-width:480px}
 
-  /* ===== Таймер (правый верхний угол) ===== */
-  .timer-wrap{position:fixed;top:80px;right:24px;z-index:40;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
-  .timer-display{background:rgba(14,15,18,.85);backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:16px;
-    padding:16px 24px;text-align:center;min-width:160px;box-shadow:0 8px 30px -8px rgba(0,0,0,.5)}
-  .timer-label{font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px}
-  .timer-time{font-size:2.8rem;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-1px;
-    background:linear-gradient(135deg,#7950f2,#41c0a9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-    line-height:1.1;transition:.3s}
-  .timer-time.warning{background:linear-gradient(135deg,#f6646c,#f59f00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:timPulse 1s infinite}
-  .timer-time.danger{background:linear-gradient(135deg,#f6646c,#e03131);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:timShake .3s infinite}
-  @keyframes timPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
-  @keyframes timShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
-  .timer-controls{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
-  .timer-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.05);
-    color:var(--ink);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:.2s}
+  /* ===== Flip-Timer ===== */
+  .timer-wrap{position:fixed;top:80px;right:24px;z-index:40;display:flex;flex-direction:column;align-items:center;gap:12px}
+  .timer-display{background:rgba(14,15,18,.88);backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:18px;
+    padding:20px 24px;box-shadow:0 8px 30px -8px rgba(0,0,0,.6)}
+  .timer-label{font-size:.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:12px;text-align:center}
+  .timer-controls{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+  .timer-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.05);
+    color:var(--ink);cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;transition:.2s}
   .timer-btn:hover{background:rgba(121,80,242,.2);border-color:var(--primary);color:#fff;transform:translateY(-1px)}
   .timer-btn.active{background:var(--primary);border-color:var(--primary);color:#fff}
-  .timer-presets{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:4px}
-  .timer-preset{font-size:.68rem;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.03);
+  .timer-presets{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+  .timer-preset{font-size:.65rem;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.03);
     color:var(--ink-dim);cursor:pointer;transition:.2s}
   .timer-preset:hover{background:rgba(121,80,242,.15);border-color:var(--primary);color:#fff}
+
+  /* Flip-Clock */
+  .flip-clock{display:flex;gap:12px}
+  .flip-container{display:flex;flex-direction:column;align-items:center}
+  .flip-label{color:#707584;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-top:10px}
+  .digit-group{display:flex;gap:4px}
+  .flip-card{position:relative;width:52px;height:72px;font-size:48px;font-weight:800;color:#deebff;border-radius:8px;perspective:400px}
+  .card-face{position:absolute;left:0;width:100%;height:50%;overflow:hidden;background:linear-gradient(180deg,#252a3a 0%,#1a1d2e 100%);
+    backface-visibility:hidden;box-shadow:0 3px 6px rgba(0,0,0,.4)}
+  .card-top,.card-fold-top{top:0;border-top-left-radius:8px;border-top-right-radius:8px;border-bottom:1px solid rgba(0,0,0,.5)}
+  .card-top .text,.card-fold-top .text{position:absolute;left:50%;transform:translateX(-50%);top:0;height:72px;line-height:72px}
+  .card-bottom,.card-fold-bottom{bottom:0;border-bottom-left-radius:8px;border-bottom-right-radius:8px}
+  .card-bottom .text,.card-fold-bottom .text{position:absolute;left:50%;transform:translateX(-50%);bottom:0;height:72px;line-height:72px}
+  .card-top{z-index:1}
+  .card-bottom{z-index:1}
+  .card-fold-top{transform-origin:bottom;z-index:3}
+  .card-fold-bottom{transform-origin:top;transform:rotateX(90deg);z-index:2}
+  .flip .card-fold-top{animation:flipTop .35s ease-in forwards}
+  .flip .card-fold-bottom{animation:flipBottom .35s ease-out .35s forwards}
+  @keyframes flipTop{0%{transform:rotateX(0deg)}100%{transform:rotateX(-90deg)}}
+  @keyframes flipBottom{0%{transform:rotateX(90deg)}100%{transform:rotateX(0deg)}}
+  .flip-clock.warning .card-face{background:linear-gradient(180deg,#3a2020 0%,#2a1515 100%);color:#ffb4b4}
+  .flip-clock.danger .card-face{background:linear-gradient(180deg,#3a1515 0%,#2a0a0a 100%);color:#ff9090;animation:cardPulse .5s infinite}
+  @keyframes cardPulse{0%,100%{box-shadow:0 3px 6px rgba(0,0,0,.4)}50%{box-shadow:0 3px 12px rgba(246,100,108,.4)}}
+  .flip-divider{font-size:40px;font-weight:800;color:var(--ink-dim);align-self:center;margin:0 2px}
 </style>
 </head>
 <body>
@@ -157,11 +175,49 @@
 </video>
 <div class="bgfx"></div>
 
-<!-- Таймер -->
+<!-- Flip-Timer -->
 <div class="timer-wrap" id="timerWrap">
   <div class="timer-display">
     <div class="timer-label">⏱ Таймер</div>
-    <div class="timer-time" id="timerTime">10:00</div>
+    <div class="flip-clock" id="flipClock">
+      <!-- Минуты -->
+      <div class="flip-container">
+        <div class="digit-group">
+          <div class="flip-card" id="m1">
+            <div class="card-face card-top"><div class="text">1</div></div>
+            <div class="card-face card-bottom"><div class="text">1</div></div>
+            <div class="card-face card-fold-top"><div class="text">1</div></div>
+            <div class="card-face card-fold-bottom"><div class="text">1</div></div>
+          </div>
+          <div class="flip-card" id="m2">
+            <div class="card-face card-top"><div class="text">0</div></div>
+            <div class="card-face card-bottom"><div class="text">0</div></div>
+            <div class="card-face card-fold-top"><div class="text">0</div></div>
+            <div class="card-face card-fold-bottom"><div class="text">0</div></div>
+          </div>
+        </div>
+        <div class="flip-label">Минуты</div>
+      </div>
+      <div class="flip-divider">:</div>
+      <!-- Секунды -->
+      <div class="flip-container">
+        <div class="digit-group">
+          <div class="flip-card" id="s1">
+            <div class="card-face card-top"><div class="text">0</div></div>
+            <div class="card-face card-bottom"><div class="text">0</div></div>
+            <div class="card-face card-fold-top"><div class="text">0</div></div>
+            <div class="card-face card-fold-bottom"><div class="text">0</div></div>
+          </div>
+          <div class="flip-card" id="s2">
+            <div class="card-face card-top"><div class="text">0</div></div>
+            <div class="card-face card-bottom"><div class="text">0</div></div>
+            <div class="card-face card-fold-top"><div class="text">0</div></div>
+            <div class="card-face card-fold-bottom"><div class="text">0</div></div>
+          </div>
+        </div>
+        <div class="flip-label">Секунды</div>
+      </div>
+    </div>
     <div class="timer-controls">
       <button class="timer-btn" onclick="timerToggle()" id="timerPlayBtn" title="Старт/Пауза">▶</button>
       <button class="timer-btn" onclick="timerReset()" title="Сброс">↺</button>
@@ -576,35 +632,84 @@
 
   })();
 
-  /* ===== ТАЙМЕР ===== */
+
+  /* ===== FLIP-TIMER ===== */
   (function(){
     var timerSeconds = 600; // 10 минут по умолчанию
     var timerRunning = false;
     var timerInterval = null;
     var timerEndTime = 0;
+    var remainingOnPause = 600; // Оставшееся время при паузе
 
-    var timerTimeEl = document.getElementById('timerTime');
+    var flipClock = document.getElementById('flipClock');
     var timerPlayBtn = document.getElementById('timerPlayBtn');
 
-    function formatTime(s){
-      var m = Math.floor(s / 60);
-      var sec = s % 60;
-      return (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+    // Обновить одну карточку с анимацией
+    function updateCard(cardId, newValue){
+      var card = document.getElementById(cardId);
+      if(!card) return;
+
+      var topStatic = card.querySelector('.card-top .text');
+      var bottomStatic = card.querySelector('.card-bottom .text');
+      var topFold = card.querySelector('.card-fold-top .text');
+      var bottomFold = card.querySelector('.card-fold-bottom .text');
+
+      var currentValue = topStatic.innerText;
+      if(currentValue === newValue) return;
+
+      // Сброс анимации
+      card.classList.remove('flip');
+      void card.offsetWidth; // Форсируем перерисовку
+
+      // Устанавливаем стартовые значения
+      topStatic.innerText = newValue;
+      topFold.innerText = currentValue;
+      bottomFold.innerText = newValue;
+      bottomStatic.innerText = currentValue;
+
+      // Запускаем анимацию
+      card.classList.add('flip');
+
+      // Синхронизируем нижний фон после анимации
+      setTimeout(function(){
+        bottomStatic.innerText = newValue;
+      }, 700);
     }
 
-    function updateTimer(){
+    // Обновить весь flip-clock
+    function updateFlipClock(remaining){
+      var minutes = Math.floor(remaining / 60);
+      var seconds = remaining % 60;
+
+      var m1 = Math.floor(minutes / 10).toString();
+      var m2 = (minutes % 10).toString();
+      var s1 = Math.floor(seconds / 10).toString();
+      var s2 = (seconds % 10).toString();
+
+      updateCard('m1', m1);
+      updateCard('m2', m2);
+      updateCard('s1', s1);
+      updateCard('s2', s2);
+
+      // Цвета в зависимости от времени
+      flipClock.classList.remove('warning', 'danger');
+      if(remaining <= 10) flipClock.classList.add('danger');
+      else if(remaining <= 60) flipClock.classList.add('warning');
+    }
+
+    function tick(){
       var now = Date.now();
       var remaining = Math.ceil((timerEndTime - now) / 1000);
 
       if(remaining <= 0){
         remaining = 0;
-        timerTimeEl.textContent = formatTime(0);
-        timerTimeEl.classList.add('danger');
+        updateFlipClock(0);
         clearInterval(timerInterval);
         timerRunning = false;
         timerPlayBtn.textContent = '▶';
         timerPlayBtn.classList.remove('active');
-        // Звуковой сигнал (браузерный)
+
+        // Звуковой сигнал
         try{
           var ctx = new (window.AudioContext || window.webkitAudioContext)();
           var osc = ctx.createOscillator();
@@ -617,33 +722,33 @@
           gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1);
           osc.stop(ctx.currentTime + 1);
         }catch(e){}
-        alert('⏱ Время вышло!');
+
+        setTimeout(function(){ alert('⏱ Время вышло!'); }, 100);
         return;
       }
 
-      timerTimeEl.textContent = formatTime(remaining);
-
-      // Цвета в зависимости от времени
-      timerTimeEl.classList.remove('warning', 'danger');
-      if(remaining <= 10) timerTimeEl.classList.add('danger');
-      else if(remaining <= 30) timerTimeEl.classList.add('warning');
+      updateFlipClock(remaining);
     }
 
     window.timerToggle = function(){
       if(timerRunning){
-        // Пауза
+        // Пауза - сохраняем оставшееся время
         clearInterval(timerInterval);
         timerRunning = false;
         timerPlayBtn.textContent = '▶';
         timerPlayBtn.classList.remove('active');
+
+        var now = Date.now();
+        var remaining = Math.ceil((timerEndTime - now) / 1000);
+        remainingOnPause = Math.max(0, remaining);
       } else {
-        // Старт
-        timerEndTime = Date.now() + timerSeconds * 1000;
+        // Старт/Продолжение - используем сохраненное время
+        timerEndTime = Date.now() + remainingOnPause * 1000;
         timerRunning = true;
         timerPlayBtn.textContent = '⏸';
         timerPlayBtn.classList.add('active');
-        timerInterval = setInterval(updateTimer, 100);
-        updateTimer();
+        timerInterval = setInterval(tick, 1000);
+        tick();
       }
     };
 
@@ -651,23 +756,21 @@
       clearInterval(timerInterval);
       timerRunning = false;
       timerSeconds = 600;
+      remainingOnPause = 600;
       timerPlayBtn.textContent = '▶';
       timerPlayBtn.classList.remove('active');
-      timerTimeEl.classList.remove('warning', 'danger');
-      timerTimeEl.textContent = '10:00';
+      flipClock.classList.remove('warning', 'danger');
+      updateFlipClock(600);
     };
 
     window.timerAdd = function(sec){
-      timerSeconds += sec;
-      if(timerSeconds < 0) timerSeconds = 0;
-      if(!timerRunning){
-        timerTimeEl.textContent = formatTime(timerSeconds);
-        timerTimeEl.classList.remove('warning', 'danger');
-        if(timerSeconds <= 30 && timerSeconds > 10) timerTimeEl.classList.add('warning');
-        else if(timerSeconds <= 10) timerTimeEl.classList.add('danger');
-      } else {
+      if(timerRunning){
         timerEndTime += sec * 1000;
-        updateTimer();
+        tick();
+      } else {
+        remainingOnPause += sec;
+        if(remainingOnPause < 0) remainingOnPause = 0;
+        updateFlipClock(remainingOnPause);
       }
     };
 
@@ -675,15 +778,18 @@
       clearInterval(timerInterval);
       timerRunning = false;
       timerSeconds = min * 60;
+      remainingOnPause = min * 60;
       timerPlayBtn.textContent = '▶';
       timerPlayBtn.classList.remove('active');
-      timerTimeEl.classList.remove('warning', 'danger');
-      timerTimeEl.textContent = formatTime(timerSeconds);
-      if(timerSeconds <= 300 && timerSeconds > 60) timerTimeEl.classList.add('warning');
-      else if(timerSeconds <= 60) timerTimeEl.classList.add('danger');
+      flipClock.classList.remove('warning', 'danger');
+      updateFlipClock(remainingOnPause);
     };
 
+    // Инициализация
+    updateFlipClock(600);
+
   })();
+
 
   render();
 </script>
