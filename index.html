@@ -127,10 +127,50 @@
   .wheel-overlay .title{text-align:center;margin-bottom:24px}
   .wheel-overlay .title h2{font-size:1.8rem;font-weight:800;letter-spacing:-1px;margin-bottom:4px}
   .wheel-overlay .title p{color:var(--ink-dim);font-size:.95rem}
-  .wheel-canvas-wrap{position:relative;width:min(80vh,520px);aspect-ratio:1;margin-bottom:20px}
+  .wheel-canvas-wrap{position:relative;width:min(62vh,460px);aspect-ratio:1;margin-bottom:20px}
   .wheel-canvas-wrap canvas{width:100%;height:100%;display:block;filter:drop-shadow(0 20px 60px rgba(121,80,242,.3))}
   .wheel-arrow{position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:0;height:0;
     border-left:18px solid transparent;border-right:18px solid transparent;border-top:32px solid var(--donation);z-index:5;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5))}
+
+  /* ===== Wheel content: колесо слева, настройки справа ===== */
+  .wheel-content{display:flex;gap:36px;align-items:center;justify-content:center;flex-wrap:wrap}
+  .wheel-left{display:flex;flex-direction:column;align-items:center}
+  .wheel-side{display:flex;flex-direction:column;gap:18px;background:rgba(255,255,255,.03);border:1px solid var(--line);
+    border-radius:18px;padding:22px 24px;width:260px}
+
+  /* Режимы */
+  .wheel-side .side-label{font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink-faint);text-align:center}
+  .mode-toggle{display:flex;gap:8px;background:rgba(255,255,255,.05);border:1px solid var(--line);padding:6px;border-radius:14px}
+  .mode-btn{flex:1;padding:13px 10px;border-radius:10px;border:0;background:transparent;color:var(--ink-dim);
+    font-family:var(--font);font-weight:800;font-size:.82rem;cursor:pointer;transition:.25s;position:relative;overflow:hidden}
+  .mode-btn::after{content:'';position:absolute;inset:0;border-radius:10px;background:radial-gradient(circle at center,rgba(255,255,255,.35),transparent 70%);
+    opacity:0;transform:scale(.4);transition:opacity .5s,transform .5s;pointer-events:none}
+  .mode-btn:hover:not(.active){color:var(--ink);background:rgba(121,80,242,.18);transform:translateY(-2px);
+    box-shadow:0 6px 16px -6px rgba(121,80,242,.5)}
+  .mode-btn:active{transform:scale(.93)}
+  .mode-btn.active{background:var(--grad);color:#fff;box-shadow:0 8px 22px -8px rgba(121,80,242,.9)}
+  .mode-btn.active::after{opacity:1;transform:scale(1.4);animation:modeRipple .6s ease}
+  @keyframes modeRipple{from{opacity:.9;transform:scale(.3)}to{opacity:0;transform:scale(1.5)}}
+  .mode-btn .m-ico{display:block;font-size:1.15rem;margin-bottom:3px}
+
+  /* Время вращения */
+  .duration-box{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+  .duration-value{text-align:center;font-weight:800;font-size:1.7rem;letter-spacing:-.5px;margin-bottom:2px;
+    color:#fff;text-shadow:0 0 18px rgba(121,80,242,.6)}
+  .duration-unit{text-align:center;font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+    color:var(--ink-faint);margin-bottom:12px}
+  .duration-slider{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:999px;outline:none;cursor:pointer;
+    background:linear-gradient(90deg,var(--primary) 0%,var(--primary-2) var(--fill,50%),rgba(255,255,255,.1) var(--fill,50%));
+    transition:box-shadow .2s}
+  .duration-slider:hover{box-shadow:0 0 0 5px rgba(121,80,242,.15)}
+  .duration-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;
+    background:#fff;border:3px solid var(--primary-2);box-shadow:0 3px 10px rgba(0,0,0,.5);transition:.2s;cursor:grab}
+  .duration-slider:hover::-webkit-slider-thumb{transform:scale(1.25);box-shadow:0 0 14px rgba(155,124,255,.8)}
+  .duration-slider:active::-webkit-slider-thumb{cursor:grabbing;transform:scale(1.4)}
+  .duration-slider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid var(--primary-2);
+    box-shadow:0 3px 10px rgba(0,0,0,.5);cursor:grab}
+  .duration-scale{display:flex;justify-content:space-between;margin-top:6px;font-size:.6rem;color:var(--ink-faint)}
+  .side-note{font-size:.68rem;color:var(--ink-faint);text-align:center;line-height:1.5}
 
   .spin-btn{background:var(--grad);box-shadow:0 12px 30px -8px rgba(121,80,242,.85);color:#fff;
     border:0;cursor:pointer;font-family:var(--font);font-weight:800;font-size:1.1rem;border-radius:14px;padding:15px 48px;transition:.2s;letter-spacing:.3px}
@@ -422,13 +462,38 @@
     <h2>Колесо участников</h2>
     <p></p>
   </div>
-  <div class="wheel-canvas-wrap">
-    <div class="wheel-arrow"></div>
-    <canvas id="wheelCanvas" width="600" height="600"></canvas>
+  <div class="wheel-content">
+    <div class="wheel-left">
+      <div class="wheel-canvas-wrap">
+        <div class="wheel-arrow"></div>
+        <canvas id="wheelCanvas" width="600" height="600"></canvas>
+      </div>
+      <button class="spin-btn" id="spinBtn" disabled>Крутить рулетку</button>
+      <div class="winner-display" id="winnerDisplay"></div>
+      <div class="wheel-hint" id="wheelHint"></div>
+    </div>
+
+    <div class="wheel-side">
+      <div class="side-label">Режим рулетки</div>
+      <div class="mode-toggle">
+        <button class="mode-btn" id="modeNormalBtn" onclick="setWheelMode('normal')">
+          <span class="m-ico">🎡</span>ОБЫЧНЫЙ
+        </button>
+        <button class="mode-btn" id="modeElimBtn" onclick="setWheelMode('elimination')">
+          <span class="m-ico">💀</span>ВЫБЫВАНИЕ
+        </button>
+      </div>
+      <div class="side-note" id="modeNote">Победитель определяется, участники остаются в списке.</div>
+
+      <div class="side-label">Время вращения</div>
+      <div class="duration-box">
+        <div class="duration-value" id="durationValue">5.0</div>
+        <div class="duration-unit">секунд</div>
+        <input type="range" class="duration-slider" id="durationSlider" min="1" max="15" step="0.5" value="5" oninput="setSpinDuration(this.value)" />
+        <div class="duration-scale"><span>1с</span><span>8с</span><span>15с</span></div>
+      </div>
+    </div>
   </div>
-  <button class="spin-btn" id="spinBtn" disabled>Крутить рулетку</button>
-  <div class="winner-display" id="winnerDisplay"></div>
-  <div class="wheel-hint" id="wheelHint"></div>
 </div>
 
 <script>
@@ -500,6 +565,25 @@
   var wheelHint = document.getElementById('wheelHint');
   var wheelOverlay = document.getElementById('wheelOverlay');
   var spinState = { spinning:false, rotation:0 };
+  var wheelMode = 'normal';      // 'normal' | 'elimination'
+  var spinDurationSec = 5;       // время вращения в секундах
+
+  function setWheelMode(mode){
+    wheelMode = mode;
+    document.getElementById('modeNormalBtn').classList.toggle('active', mode === 'normal');
+    document.getElementById('modeElimBtn').classList.toggle('active', mode === 'elimination');
+    document.getElementById('modeNote').textContent = mode === 'elimination'
+      ? 'Победитель выбывает из колеса — крути, пока не останется один!'
+      : 'Победитель определяется, участники остаются в списке.';
+  }
+
+  function setSpinDuration(val){
+    spinDurationSec = parseFloat(val);
+    document.getElementById('durationValue').textContent = spinDurationSec.toFixed(1).replace('.', '.');
+    var pct = (spinDurationSec - 1) / (15 - 1) * 100;
+    var slider = document.getElementById('durationSlider');
+    slider.style.setProperty('--fill', pct + '%');
+  }
 
   function openWheel(){ openWheelFull(); }
   function closeWheel(){ wheelOverlay.classList.remove('active'); }
@@ -558,13 +642,26 @@
     var delta = ((targetLocal-target)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
     target += delta;
     var current=spinState.rotation, totalMove=target-current;
-    var t0=null, DUR=4500;
+    var t0=null, DUR=spinDurationSec*1000;
     function frame(ts){
       if(t0===null) t0=ts;
       var p=Math.min(1,(ts-t0)/DUR), ease=1-Math.pow(1-p,3);
       spinState.rotation=current+totalMove*ease; drawWheel();
       if(p<1){ requestAnimationFrame(frame); }
-      else{ spinState.spinning=false; var w=participants[idxWin]; winnerDisplay.textContent='🎉 '+w.nick+'  ('+(w.points||0)+' б.)'; updateWheelControls(); }
+      else{
+        spinState.spinning=false;
+        var w=participants[idxWin];
+        var modeSuffix = wheelMode === 'elimination' ? ' — выбыл!' : '';
+        winnerDisplay.textContent='🎉 '+w.nick+'  ('+(w.points||0)+' б.)'+modeSuffix;
+        if(wheelMode === 'elimination'){
+          // Убираем победителя из списка (выбывание)
+          participants.splice(idxWin, 1);
+          save();
+          render();
+        }
+        drawWheel();
+        updateWheelControls();
+      }
     }
     requestAnimationFrame(frame);
   }
@@ -1304,6 +1401,8 @@
 
 
   render();
+  setWheelMode('normal');
+  setSpinDuration(5);
 </script>
 
 </body>
