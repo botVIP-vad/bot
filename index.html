@@ -333,6 +333,10 @@
     box-shadow:0 3px 10px rgba(0,0,0,.5);cursor:grab}
   .duration-scale{display:flex;justify-content:space-between;margin-top:6px;font-size:.6rem;color:var(--ink-faint)}
   .side-note{font-size:.68rem;color:var(--ink-faint);text-align:center;line-height:1.5}
+  .reposition-btn{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--ink);
+    font-family:var(--font);font-weight:800;font-size:.78rem;border-radius:10px;padding:11px 10px;cursor:pointer;transition:.2s}
+  .reposition-btn:hover:not(:disabled){background:rgba(121,80,242,.2);border-color:var(--primary);transform:translateY(-1px)}
+  .reposition-btn:disabled{opacity:.4;cursor:not-allowed}
 
   /* Панель результата по центру экрана */
   .result-panel{position:fixed;inset:0;z-index:210;display:none;align-items:center;justify-content:center;
@@ -503,8 +507,7 @@
   @keyframes flipTop{0%{transform:rotateX(0deg)}100%{transform:rotateX(-90deg)}}
   @keyframes flipBottom{0%{transform:rotateX(90deg)}100%{transform:rotateX(0deg)}}
   .flip-clock.warning .card-face{background:linear-gradient(180deg,#3a2020 0%,#2a1515 100%);color:#ffb4b4}
-  .flip-clock.danger .card-face{background:linear-gradient(180deg,#3a1515 0%,#2a0a0a 100%);color:#ff9090;animation:cardPulse .5s infinite}
-  @keyframes cardPulse{0%,100%{box-shadow:0 3px 6px rgba(0,0,0,.4)}50%{box-shadow:0 3px 12px rgba(246,100,108,.4)}}
+  .flip-clock.danger .card-face{background:linear-gradient(180deg,#3a1515 0%,#2a0a0a 100%);color:#ff9090}
   .flip-divider{font-size:40px;font-weight:800;color:var(--ink-dim);align-self:center;margin:0 2px}
 /* test */</style>
 </head>
@@ -825,6 +828,7 @@
         <input type="range" class="duration-slider" id="durationSlider" min="1" max="15" step="0.5" value="5" oninput="setSpinDuration(this.value)" />
         <div class="duration-scale"><span>1с</span><span>8с</span><span>15с</span></div>
       </div>
+      <button class="reposition-btn" id="repositionBtn" onclick="repositionWheel()">↻ Переместить колесо</button>
     </div>
   </div>
 </div>
@@ -918,6 +922,25 @@
   var spinDurationSec = 5;       // время вращения в секундах
   var eliminatedObjs = [];       // выбывшие в режиме «выбывание» (объекты участников, только с колеса)
   var wheelAllNicks = [];        // все участники, которые были на колесе при открытии
+
+  function randomizeWheelPosition(){
+    var randomUnit;
+    if(window.crypto && window.crypto.getRandomValues){
+      var buffer = new Uint32Array(1);
+      window.crypto.getRandomValues(buffer);
+      randomUnit = buffer[0] / 4294967296;
+    } else {
+      randomUnit = Math.random();
+    }
+    spinState.rotation = randomUnit * Math.PI * 2;
+  }
+
+  function repositionWheel(){
+    if(spinState.spinning) return;
+    randomizeWheelPosition();
+    drawWheel();
+    updateArrowNick();
+  }
 
   function activeWheelParticipants(){
     return participants.filter(function(p){ return eliminatedObjs.indexOf(p) === -1; });
@@ -1272,31 +1295,70 @@
     var ok = activeWheelParticipants().length >= 2;
     spinBtn.disabled = !ok || spinState.spinning;
     spinBtn.textContent = spinState.spinning ? 'Крутим…' : 'Крутить рулетку';
+    var repositionBtn = document.getElementById('repositionBtn');
+    if(repositionBtn) repositionBtn.disabled = spinState.spinning;
+  }
+
+  function getRandomValues(count){
+    var max = 1000000000;
+    var fallback = function(){
+      var values = [];
+      if(window.crypto && window.crypto.getRandomValues){
+        var buffer = new Uint32Array(count);
+        window.crypto.getRandomValues(buffer);
+        for(var i=0;i<count;i++) values.push(buffer[i] % max);
+      } else {
+        for(var j=0;j<count;j++) values.push(Math.floor(Math.random()*max));
+      }
+      return values;
+    };
+    var controller = window.AbortController ? new AbortController() : null;
+    var timer = setTimeout(function(){ if(controller) controller.abort(); }, 5000);
+    var url = 'https://www.random.org/integers/?num=' + count
+      + '&min=0&max=' + (max - 1) + '&col=1&base=10&format=plain&rnd=new';
+    return fetch(url, { cache:'no-store', signal: controller ? controller.signal : undefined })
+      .then(function(response){
+        if(!response.ok) throw new Error('random.org HTTP ' + response.status);
+        return response.text();
+      })
+      .then(function(text){
+        var values = text.trim().split(/\s+/).map(function(value){ return parseInt(value, 10); });
+        if(values.length !== count || values.some(function(value){ return isNaN(value); })) throw new Error('Invalid random.org response');
+        return values;
+      })
+      .catch(function(error){
+        console.warn('random.org недоступен, использую локальную случайность:', error);
+        return fallback();
+      })
+      .then(function(values){ clearTimeout(timer); return values; });
   }
 
   function spinWheel(){
     var list = activeWheelParticipants();
     if(spinState.spinning || list.length < 2) return;
     spinState.spinning = true; updateWheelControls();
+    spinBtn.textContent = 'Получаем случайность…';
     elimBannerEl.classList.remove('visible');
     // Веса должны совпадать с нарисованными секторами:
     // обычный режим — пропорционально баллам, выбывание — инвертированные веса
     var pts = wheelWeights(list);
     var total = pts.reduce(function(a,b){ return a+b; }, 0);
-    var roll = Math.random()*total, idxWin=0, acc=0;
-    for(var i=0;i<pts.length;i++){ acc+=pts[i]; if(roll<=acc){ idxWin=i; break; } }
-    var beforeFrac = pts.slice(0,idxWin).reduce(function(a,b){return a+b;},0)/total;
-    var segFrac = pts[idxWin]/total;
-    // Случайная точка остановки внутри сектора (не ровно середина), с отступами от границ
-    var margin = Math.min(segFrac*0.3, 0.01);
-    var stopFrac = beforeFrac + margin + Math.random()*(segFrac - margin*2);
-    var targetLocal = -Math.PI/2 - (-Math.PI/2 + stopFrac*Math.PI*2);
-    var target = spinState.rotation + Math.PI*2*(5+Math.random()*5);
-    var delta = ((targetLocal-target)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
-    target += delta;
-    var current=spinState.rotation, totalMove=target-current;
-    var t0=null, DUR=spinDurationSec*1000;
-    function frame(ts){
+    getRandomValues(3).then(function(randomValues){
+      var randomUnit = function(value){ return value / 1000000000; };
+      var roll = randomUnit(randomValues[0])*total, idxWin=0, acc=0;
+      for(var i=0;i<pts.length;i++){ acc+=pts[i]; if(roll<acc){ idxWin=i; break; } }
+      var beforeFrac = pts.slice(0,idxWin).reduce(function(a,b){return a+b;},0)/total;
+      var segFrac = pts[idxWin]/total;
+      // Случайная точка остановки внутри сектора (не ровно середина), с отступами от границ
+      var margin = Math.min(segFrac*0.3, 0.01);
+      var stopFrac = beforeFrac + margin + randomUnit(randomValues[1])*(segFrac - margin*2);
+      var targetLocal = -Math.PI/2 - (-Math.PI/2 + stopFrac*Math.PI*2);
+      var target = spinState.rotation + Math.PI*2*(5+randomUnit(randomValues[2])*5);
+      var delta = ((targetLocal-target)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+      target += delta;
+      var current=spinState.rotation, totalMove=target-current;
+      var t0=null, DUR=spinDurationSec*1000;
+      function frame(ts){
       if(t0===null) t0=ts;
       var p=Math.min(1,(ts-t0)/DUR), ease=1-Math.pow(1-p,3);
       spinState.rotation=current+totalMove*ease; drawWheel(); updateArrowNick();
@@ -1356,8 +1418,9 @@
         }
         updateWheelControls();
       }
-    }
-    requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    });
   }
 
   spinBtn.addEventListener('click', spinWheel);
@@ -1400,6 +1463,7 @@
     if(typeof closeChat === 'function') closeChat();
     // Сбрасываем выбывание при новом открытии рулетки
     eliminatedObjs = [];
+    randomizeWheelPosition();
     // Запоминаем состав участников на момент открытия (для расчёта шанса)
     wheelAllNicks = participants.map(function(p){ return p.nick; });
     document.getElementById('wheelOverlay').classList.add('active');
@@ -2322,10 +2386,15 @@
       updateCard('s1', s1);
       updateCard('s2', s2);
 
-      // Цвета в зависимости от времени
-      flipClock.classList.remove('warning', 'danger');
-      if(remaining <= 10) flipClock.classList.add('danger');
-      else if(remaining <= 60) flipClock.classList.add('warning');
+      // Цвета в зависимости от времени. Меняем классы только при смене режима.
+      var timerState = remaining <= 10 ? 'danger' : (remaining <= 60 ? 'warning' : '');
+      var hasTimerState = timerState
+        ? flipClock.classList.contains(timerState)
+        : (!flipClock.classList.contains('warning') && !flipClock.classList.contains('danger'));
+      if(!hasTimerState){
+        flipClock.classList.remove('warning', 'danger');
+        if(timerState) flipClock.classList.add(timerState);
+      }
     }
 
     function tick(){
@@ -2359,13 +2428,15 @@
       }
 
       updateFlipClock(remaining);
-      timerFrame = requestAnimationFrame(tick);
+      // Цифры меняются раз в секунду, поэтому кадры браузера здесь не нужны.
+      var untilNextSecond = Math.max(50, (timerEndTime - now) % 1000 + 10);
+      timerFrame = setTimeout(tick, untilNextSecond);
     }
 
     window.timerToggle = function(){
       if(timerRunning){
         // Пауза - сохраняем оставшееся время
-        cancelAnimationFrame(timerFrame);
+        clearTimeout(timerFrame);
         timerFrame = null;
         timerRunning = false;
         timerPlayBtn.textContent = '▶';
@@ -2385,7 +2456,7 @@
     };
 
     window.timerReset = function(){
-      cancelAnimationFrame(timerFrame);
+      clearTimeout(timerFrame);
       timerFrame = null;
       timerRunning = false;
       timerSeconds = 600;
@@ -2399,7 +2470,7 @@
     window.timerAdd = function(sec){
       if(timerRunning){
         timerEndTime += sec * 1000;
-        cancelAnimationFrame(timerFrame);
+        clearTimeout(timerFrame);
         timerFrame = null;
         tick();
       } else {
@@ -2410,7 +2481,7 @@
     };
 
     window.timerSet = function(min){
-      cancelAnimationFrame(timerFrame);
+      clearTimeout(timerFrame);
       timerFrame = null;
       timerRunning = false;
       timerSeconds = min * 60;
@@ -2428,6 +2499,7 @@
 
 
   render();
+  randomizeWheelPosition();
   setWheelMode('normal');
   setSpinDuration(5);
 
