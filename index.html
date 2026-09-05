@@ -241,25 +241,10 @@
   #statsDashboardView{flex:1;min-height:0;display:none;flex-direction:column}
   #statsDashboardView.active{display:flex;animation:fadeIn .25s ease}
   #statsDashboard{flex:1;overflow-y:auto;min-height:0;padding-right:6px;
-    display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;align-content:start}
+    display:grid;grid-template-columns:1fr;gap:12px;align-content:start}
   #statsDashboard::-webkit-scrollbar{width:8px}
   #statsDashboard::-webkit-scrollbar-track{background:rgba(255,255,255,.04);border-radius:99px}
   #statsDashboard::-webkit-scrollbar-thumb{background:var(--primary);border-radius:99px}
-  .dash-kpi{position:relative;overflow:hidden;background:rgba(14,15,18,.8);border:1px solid var(--line);
-    border-radius:16px;padding:16px 16px 14px;text-align:center;transition:.25s}
-  .dash-kpi:hover{transform:translateY(-3px);border-color:rgba(155,124,255,.45)}
-  .dash-kpi::before{content:'';position:absolute;inset:0;border-radius:16px;padding:1px;
-    background:linear-gradient(135deg,rgba(155,124,255,.55),transparent 40%,transparent 60%,rgba(65,192,169,.4));
-    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
-    opacity:0;transition:.25s;pointer-events:none}
-  .dash-kpi:hover::before{opacity:1}
-  .dash-kpi-emoji{font-size:1.4rem;display:inline-block;animation:dashPop 2.2s ease-in-out infinite}
-  .dash-kpi-label{color:var(--ink-faint);font-size:.6rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;margin-top:6px}
-  .dash-kpi-value{margin-top:6px;font-size:1.5rem;font-weight:800;font-variant-numeric:tabular-nums;color:#fff;
-    background:linear-gradient(90deg,#fff,#c4b5fd 60%,var(--points));-webkit-background-clip:text;background-clip:text;color:transparent}
-  .dash-kpi-value.good{background:linear-gradient(90deg,var(--points),#7ef9d8);-webkit-background-clip:text;background-clip:text}
-  .dash-kpi-value.bad{background:linear-gradient(90deg,var(--donation),#ffb3b8);-webkit-background-clip:text;background-clip:text}
-  .dash-kpi-sub{color:var(--ink-faint);font-size:.68rem;margin-top:4px}
   .dash-block{grid-column:1/-1;background:rgba(14,15,18,.8);border:1px solid var(--line);border-radius:16px;padding:16px}
   .dash-block-title{color:var(--primary-2);font-size:.78rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;
     display:flex;align-items:center;gap:8px;margin-bottom:14px}
@@ -832,7 +817,6 @@
     <div class="card" style="margin:0">
       <div class="kicker">📊 Статистика победителей</div>
       <h2>Данные по никам</h2>
-      <p class="sub">Форма как на экране победителя. Изменения сохраняются в локал-облако автоматически.</p>
       <div class="stats-view active" id="statsTableView">
         <div class="stats-table-wrap" id="statsTableWrap"></div>
       </div>
@@ -3065,33 +3049,16 @@
     html += '</div>';
     summary.innerHTML = html;
   }
-function dashCountUp(el){
-    var target = parseFloat(el.getAttribute('data-count') || 0);
-    var dec = parseInt(el.getAttribute('data-dec') || '0', 10);
-    var pre = el.getAttribute('data-prefix') || '';
-    var suf = el.getAttribute('data-suffix') || '';
-    var dur = 900;
-    var t0 = null;
-    function step(ts){
-      if(!t0) t0 = ts;
-      var p = Math.min((ts - t0) / dur, 1);
-      var eased = 1 - Math.pow(1 - p, 3);
-      var val = target * eased;
-      el.textContent = pre + val.toLocaleString('ru-RU', { minimumFractionDigits: dec, maximumFractionDigits: dec }) + suf;
-      if(p < 1) requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-  }
+
   function renderStatsDashboard(history){
     var el = document.getElementById('statsDashboard');
     history = history || loadWinnerHistory();
     if(!history.length){
-      el.innerHTML = '<div class="dash-empty">✨ Пока нет данных — сыграйте первую игру!</div>';
+      el.innerHTML = '<div class="dash-empty">Пока нет данных — сыграйте первую игру!</div>';
       return;
     }
-    var rerolls = history.filter(function(it){ return it.status === 'rerolled'; }).length;
     var done = history.filter(function(it){ return it.status !== 'rerolled'; });
-    var totalDep = 0, totalWithdraw = 0, outN = 0;
+    var totalDep = 0, totalWithdraw = 0;
     var sites = {}, nicks = {};
     done.forEach(function(it){
       var rawDep = String(it.dep || '').replace(',', '.');
@@ -3099,7 +3066,7 @@ function dashCountUp(el){
       var dep = parseFloat(rawDep);
       var out = parseFloat(rawOut);
       if(!isNaN(dep)){ totalDep += dep; }
-      if(!isNaN(out)){ totalWithdraw += out; outN++; }
+      if(!isNaN(out)){ totalWithdraw += out; }
       var site = String(it.site || '').trim() || 'Без сайта';
       if(!sites[site]) sites[site] = { count:0, dep:0, out:0 };
       sites[site].count++;
@@ -3108,29 +3075,14 @@ function dashCountUp(el){
       var nick = String(it.nick || '').trim().toLowerCase();
       if(nick) nicks[nick] = (nicks[nick] || 0) + (isNaN(out) ? 0 : out);
     });
-    var percent = totalDep > 0 ? (totalWithdraw / totalDep * 100) : 0;
-    var net = totalWithdraw - totalDep;
     var fmt = function(n){ return Math.round(n).toLocaleString('ru-RU'); };
-    var kpis = [
-      { e:'🏆', l:'Побед', v: done.length, c:'', s:'' },
-      { e:'💰', l:'Выводы', v: totalWithdraw, c:'', s:' ₽' },
-      { e:'📥', l:'Депы', v: totalDep, c:'', s:' ₽' },
-      { e:'📈', l:'Нет-профит', v: net, c: net >= 0 ? 'good' : 'bad', s:' ₽' },
-      { e:'♻️', l:'Рероллы', v: rerolls, c:'', s:'' },
-      { e:'🎯', l:'Возврат', v: percent, c:'', s:'%', d:1 }
-    ];
     var html = '';
-    kpis.forEach(function(k){
-      html += '<div class="dash-kpi"><span class="dash-kpi-emoji">' + k.e + '</span>'
-        + '<div class="dash-kpi-value ' + k.c + '" data-count="' + k.v + '" data-dec="' + (k.d||0) + '" data-prefix="" data-suffix="' + k.s + '">0</div>'
-        + '<div class="dash-kpi-label">' + k.l + '</div></div>';
-    });
 
     // ── Секция: Выводы vs Депы по сайтам (анимированные бары) ──
     var siteNames = Object.keys(sites);
     var maxBar = 1;
     siteNames.forEach(function(s){ maxBar = Math.max(maxBar, sites[s].out); });
-    html += '<div class="dash-block"><div class="dash-block-title">📊 Выводы & депы по сайтам</div><div class="dash-sites">';
+    html += '<div class="dash-block"><div class="dash-block-title">ВЫВОДЫ & ДЕПЫ ПО САЙТАМ</div><div class="dash-sites">';
     html += '<div class="dash-site"><div class="dash-site-name">Всего <span class="badge">' + siteNames.length + ' сайт(ов)</span></div>'
       + '<div class="dash-bar"><div class="dash-bar-label"><span>Выводы</span><strong>' + fmt(totalWithdraw) + ' ₽</strong></div>'
       + '<div class="dash-bar-track"><div class="dash-bar-fill out" data-w="' + (maxBar ? (totalWithdraw/maxBar*100) : 0) + '"></div></div></div>'
@@ -3162,7 +3114,7 @@ function dashCountUp(el){
     });
     conic += ')';
     var topSite = siteNames.length ? (slices.slice().sort(function(a,b){ return b.share-a.share; })[0]) : null;
-    html += '<div class="dash-block"><div class="dash-block-title">🍩 Доля по сайтам (выводы)</div>'
+    html += '<div class="dash-block"><div class="dash-block-title">ВЫВОДЫ С САЙТОВ</div>'
       + '<div class="dash-two"><div class="dash-donut-wrap">'
       + '<div class="dash-donut" id="dashDonut"><div class="dash-donut-inner"><b>' + (topSite ? escapeHtml(topSite.site) : '—') + '</b><span>лидер</span></div></div>'
       + '<div class="dash-donut-total">Всего выводов: <b>' + fmt(totalWithdraw) + ' ₽</b></div><div class="dash-legend">';
@@ -3175,19 +3127,17 @@ function dashCountUp(el){
     // ── Секция: Пщедестал ТОП-3 по выводам ──
     var top = Object.keys(nicks).map(function(k){ return { nick:k, val:nicks[k] }; })
       .sort(function(a,b){ return b.val - a.val; }).slice(0,3);
-    html += '<div class="dash-block"><div class="dash-block-title">🏅 ТОП-3 по выводам</div><div class="dash-podium">';
+    html += '<div class="dash-block"><div class="dash-block-title">ТОП-3 ПО ВЫВОДАМ</div><div class="dash-podium">';
     var medals = ['🥇','🥈','🥉'];
     var heightCls = ['dash-pod-1','dash-pod-2','dash-pod-3'];
-    var topMax = top.length ? top[0].val : 1;
     if(!top.length){
       html += '<div class="dash-empty" style="padding:10px 0">Пока нет данных</div>';
     } else {
       top.forEach(function(p,i){
-        var h = topMax ? Math.round(p.val/topMax*100) : 0;
         html += '<div class="dash-pod-place ' + heightCls[i] + '"><span class="dash-pod-medal">' + medals[i] + '</span>'
           + '<div class="dash-pod-name">' + escapeHtml(p.nick) + '</div>'
           + '<div class="dash-pod-val">' + fmt(p.val) + ' ₽</div>'
-          + '<div class="dash-pod-bar" style="animation:dashGrow .9s cubic-bezier(.2,.8,.25,1) ' + (i*150) + 'ms both">' + h + '<em>%</em></div></div>';
+          + '<div class="dash-pod-bar" style="animation:dashGrow .9s cubic-bezier(.2,.8,.25,1) ' + (i*150) + 'ms both"></div></div>';
       });
     }
     html += '</div></div>';
@@ -3195,7 +3145,6 @@ function dashCountUp(el){
     el.innerHTML = html;
 
     // Запуск анимаций после вставки
-    el.querySelectorAll('.dash-kpi-value').forEach(function(n){ dashCountUp(n); });
     el.querySelectorAll('.dash-bar-fill').forEach(function(bar){
       var w = bar.getAttribute('data-w');
       bar.style.transition = 'width 1s cubic-bezier(.2,.8,.25,1)';
