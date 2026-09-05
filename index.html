@@ -517,7 +517,10 @@
   .purchases-panel{width:100%;background:rgba(14,15,18,.88);backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:18px;
     padding:14px 16px;box-shadow:0 8px 30px -8px rgba(0,0,0,.6)}
   .purchases-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .purchases-head-actions{display:flex;align-items:center;gap:8px}
   .purchases-title{font-size:.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink-faint)}
+  .purchases-sum-all{background:var(--points);border:0;color:#04211c;cursor:pointer;font-size:.68rem;font-weight:800;padding:5px 8px;border-radius:7px}
+  .purchases-sum-all:hover{background:#35a893}
   .purchases-clear{background:none;border:0;color:var(--ink-faint);cursor:pointer;font-size:.72rem;padding:2px 6px;border-radius:6px}
   .purchases-clear:hover{color:var(--donation);background:rgba(246,100,108,.12)}
   .purchases-list{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow:auto}
@@ -626,7 +629,10 @@
   <div class="purchases-panel" id="purchasesPanel">
     <div class="purchases-head">
       <div class="purchases-title">🛒 Покупки наград</div>
-      <button class="purchases-clear" onclick="clearPurchases()">Очистить</button>
+      <div class="purchases-head-actions">
+        <button class="purchases-sum-all" onclick="sumAllPurchases()">СУММИРОВАТЬ ВСЕХ</button>
+        <button class="purchases-clear" onclick="clearPurchases()">Очистить</button>
+      </div>
     </div>
     <div class="purchases-list" id="purchasesList">
       <div class="empty" style="padding:14px 0;font-size:.78rem">Пока никто не купил награду</div>
@@ -2314,6 +2320,35 @@
       savePurchases();
       renderPurchases();
       fulfillRedemption(p, 'FULFILLED');
+    };
+
+    // СУММИРОВАТЬ ВСЕХ — объединить все покупки с участниками по нику
+    window.sumAllPurchases = function(){
+      if(!purchases.length) return;
+      var batch = purchases.slice();
+      var byNick = {};
+      batch.forEach(function(p){
+        var nick = String(p.nick || '').trim();
+        if(!nick) return;
+        var key = nick.toLowerCase();
+        if(!byNick[key]) byNick[key] = { nick:nick, points:0 };
+        byNick[key].points += Number(p.cost) || 0;
+      });
+      Object.keys(byNick).forEach(function(key){
+        var item = byNick[key];
+        var existing = null;
+        for(var i = 0; i < participants.length; i++){
+          if(String(participants[i].nick).toLowerCase() === key){ existing = participants[i]; break; }
+        }
+        if(existing) existing.points = (existing.points || 0) + item.points;
+        else participants.push({ nick:item.nick, points:item.points });
+      });
+      purchases = [];
+      save();
+      render();
+      savePurchases();
+      renderPurchases();
+      batch.forEach(function(p){ fulfillRedemption(p, 'FULFILLED'); });
     };
 
     // ОТКЛОНИТЬ — вернуть баллы пользователю (статус CANCELED возвращает баллы автоматически)
