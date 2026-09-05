@@ -108,6 +108,12 @@
   .chat-fab:hover{transform:scale(1.1);box-shadow:0 10px 30px -4px rgba(121,80,242,.7)}
   .chat-fab.active{box-shadow:0 0 0 3px var(--points),0 6px 20px -4px rgba(121,80,242,.7)}
   .chat-fab img{width:48px;height:48px;object-fit:contain}
+  .number-fab{position:fixed;left:24px;top:calc(50% - 270px);z-index:150;width:70px;height:70px;border-radius:30px;border:0;
+    background:var(--grad);box-shadow:0 6px 20px -4px rgba(121,80,242,.6);cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:.25s;padding:0;color:#fff;font-family:var(--font);font-size:1.25rem;font-weight:800}
+  .number-fab:hover{transform:scale(1.1);box-shadow:0 10px 30px -4px rgba(121,80,242,.7)}
+  .number-fab.active{box-shadow:0 0 0 3px var(--points),0 6px 20px -4px rgba(121,80,242,.7)}
+  .number-fab img{width:48px;height:48px;object-fit:contain}
   /* Когда открыт чат — поднимаем кнопки рулетки, меню и наград над оверлеем чата */
   body.chat-open .wheel-fab, body.chat-open .settings-fab, body.chat-open .rewards-fab,
   body.chat-open .chat-fab{z-index:210}
@@ -272,7 +278,7 @@
   .wheel-overlay{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;
     background:rgba(14,15,18,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:20px;pointer-events:none}
   .wheel-overlay.active{display:flex;animation:fadeIn .25s ease}
-  .wheel-overlay .close, .wheel-overlay .spin-btn, .wheel-overlay canvas, .wheel-overlay .wheel-canvas-wrap, .wheel-overlay .wheel-side, .wheel-overlay .wheel-side *{pointer-events:auto}
+  .wheel-overlay .close, .wheel-overlay .spin-btn, .wheel-overlay canvas, .wheel-overlay .wheel-canvas-wrap, .wheel-overlay .wheel-side, .wheel-overlay .wheel-side *, .wheel-overlay .number-game, .wheel-overlay .number-game *{pointer-events:auto}
   @keyframes fadeIn{from{opacity:0}to{opacity:1}}
   .wheel-overlay .close{position:absolute;top:20px;right:24px;background:rgba(255,255,255,.08);border:1px solid var(--line);
     color:var(--ink);width:42px;height:42px;border-radius:50%;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
@@ -297,6 +303,47 @@
   .wheel-content{display:flex;gap:36px;align-items:center;justify-content:center;flex-wrap:wrap}
   .wheel-content .recent-panel{width:280px;flex-shrink:0}
   .wheel-left{display:flex;flex-direction:column;align-items:center}
+  .number-game{display:none;grid-template-columns:minmax(280px,360px) minmax(320px,460px);gap:22px;align-items:stretch}
+  .number-game.active{display:grid;animation:fadeIn .25s ease}
+  .number-menu,.number-chat{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:18px;padding:22px}
+  .number-menu{display:flex;flex-direction:column;gap:12px;justify-content:center}
+  .number-menu.hidden{display:none}
+  .number-menu h2{text-align:center;font-size:1.35rem}
+  .number-menu p{color:var(--ink-dim);font-size:.8rem;text-align:center;line-height:1.45}
+  .number-range{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .number-field label{display:block;color:var(--ink-faint);font-size:.65rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
+  .number-field input,.number-input{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:10px;color:var(--ink);
+    font-family:var(--font);font-size:1rem;padding:10px;outline:none;text-align:center}
+  .number-field input:focus,.number-input:focus{border-color:var(--primary)}
+  .number-result{font-size:3.7rem;font-weight:800;line-height:1;text-align:center;color:var(--points);min-height:60px;
+    text-shadow:0 0 24px rgba(65,192,169,.45);font-variant-numeric:tabular-nums}
+  .number-result.blurred{filter:blur(13px);user-select:none}
+  .number-actions{display:flex;gap:8px}
+  .number-actions button{flex:1;border:0;border-radius:10px;padding:11px 8px;cursor:pointer;font-family:var(--font);font-weight:800;transition:.2s}
+  .number-generate{background:var(--grad);color:#fff}
+  .number-save{background:var(--points);color:#04211c}
+  .number-actions button:hover{transform:translateY(-2px);filter:brightness(1.08)}
+  .number-chat{min-height:420px;display:flex;flex-direction:column;gap:10px}
+  .number-menu.hidden + .number-chat{grid-column:1 / -1;min-height:calc(100vh - 150px)}
+  .number-chat-title{color:var(--ink-faint);font-size:.68rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;text-align:center}
+  #numberChatFrame{width:100%;height:100%;min-height:360px;border:1px solid var(--line);border-radius:12px;background:#18181b}
+  .number-return-menu{display:none;grid-column:1 / -1;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:10px;color:var(--ink);
+    padding:11px;cursor:pointer;font-family:var(--font);font-weight:800}
+  .number-menu.hidden ~ .number-return-menu{display:block}
+  .number-return-menu:hover{background:rgba(121,80,242,.2);border-color:var(--primary)}
+  .number-win-overlay{position:fixed;inset:0;z-index:240;display:none;align-items:center;justify-content:center;background:rgba(14,15,18,.78);backdrop-filter:blur(12px)}
+  .number-win-overlay.active{display:flex;animation:fadeIn .25s ease}
+  .number-win-box{width:min(92vw,460px);background:rgba(20,21,26,.98);border:2px solid var(--points);border-radius:20px;padding:24px;box-shadow:0 20px 60px -12px rgba(0,0,0,.9)}
+  .number-win-box h2{text-align:center;margin-bottom:16px}
+  .number-win-table{width:100%;border-collapse:collapse;margin-bottom:20px}
+  .number-win-table th{color:var(--ink-faint);font-size:.65rem;letter-spacing:1.5px;text-align:left;text-transform:uppercase;padding:8px;border-bottom:1px solid var(--line)}
+  .number-win-table td{font-size:1.2rem;font-weight:800;padding:14px 8px;color:#fff;border-bottom:1px solid var(--line)}
+  .number-win-table td:last-child{color:var(--points);text-align:right}
+  .number-win-actions{display:flex;gap:8px}
+  .number-win-actions button{flex:1;border:0;border-radius:10px;padding:12px 8px;cursor:pointer;font-family:var(--font);font-weight:800}
+  .number-win-close{background:rgba(255,255,255,.08);border:1px solid var(--line)!important;color:var(--ink)}
+  .number-win-confirm{background:var(--points);color:#04211c}
+  @media(max-width:820px){.number-game{grid-template-columns:1fr;width:min(92vw,460px)}.number-chat{min-height:360px}}
   .wheel-side{display:flex;flex-direction:column;gap:18px;background:rgba(255,255,255,.03);border:1px solid var(--line);
     border-radius:18px;padding:22px 24px;width:260px}
 
@@ -775,6 +822,11 @@
   <img src="chat.png" alt="Чат" />
 </button>
 
+<!-- Плавающая кнопка игры в числа (над чатом) -->
+<button class="number-fab" id="numberFab" onclick="openNumberGame()" title="Игра в числа">
+  <img src="chisl.png" alt="Игра в числа" />
+</button>
+
 <!-- Chat overlay -->
 <div class="chat-overlay" id="chatOverlay">
   <button class="close" onclick="closeChat()">✕</button>
@@ -813,12 +865,36 @@
       <button class="spin-btn" id="spinBtn" disabled>Крутить рулетку</button>
     </div>
 
+    <div class="number-game" id="numberGame" aria-hidden="true">
+      <div class="number-menu">
+        <div class="kicker">Мини-меню</div>
+        <h2>Игра в числа</h2>
+        <p>Введи число вручную или задай диапазон для случайной генерации.</p>
+        <div class="number-range">
+          <div class="number-field"><label for="numberMin">От</label><input id="numberMin" type="number" value="1" /></div>
+          <div class="number-field"><label for="numberMax">До</label><input id="numberMax" type="number" value="100" /></div>
+        </div>
+        <input class="number-input" id="numberValue" type="number" placeholder="Число" aria-label="Число" />
+        <div class="number-result" id="numberResult">—</div>
+        <div class="number-actions">
+          <button class="number-generate" onclick="generateNumber()">🎲 СЛУЧАЙНО</button>
+          <button class="number-save" onclick="saveNumberResult()">🔒 СОХРАНИТЬ</button>
+        </div>
+      </div>
+      <div class="number-chat">
+        <div class="number-chat-title">Twitch chat · welvol</div>
+        <iframe id="numberChatFrame" title="Чат Twitch welvol" src=""></iframe>
+      </div>
+      <button class="number-return-menu" onclick="returnNumberMenu()">ВЕРНУТЬ МЕНЮ</button>
+    </div>
+
     <div class="wheel-side">
       <div class="elim-banner" id="elimBanner"></div>
       <div class="side-label">Режим рулетки</div>
       <div class="mode-toggle">
         <button class="mode-btn" id="modeNormalBtn" onclick="setWheelMode('normal')">ОБЫЧНЫЙ</button>
         <button class="mode-btn" id="modeElimBtn" onclick="setWheelMode('elimination')">ВЫБЫВАНИЕ</button>
+        <button class="mode-btn" id="modeNumberBtn" onclick="setWheelMode('number')">ЧИСЛО</button>
       </div>
 
       <div class="side-label">Время вращения</div>
@@ -829,6 +905,20 @@
         <div class="duration-scale"><span>1с</span><span>8с</span><span>15с</span></div>
       </div>
       <button class="reposition-btn" id="repositionBtn" onclick="repositionWheel()">↻ Переместить колесо</button>
+    </div>
+  </div>
+</div>
+
+<div class="number-win-overlay" id="numberWinOverlay">
+  <div class="number-win-box">
+    <h2>Число угадано</h2>
+    <table class="number-win-table">
+      <thead><tr><th>Ник</th><th>Число</th></tr></thead>
+      <tbody><tr><td id="numberWinnerNick"></td><td id="numberWinnerValue"></td></tr></tbody>
+    </table>
+    <div class="number-win-actions">
+      <button class="number-win-close" onclick="closeNumberGuess()">ЗАКРЫТЬ</button>
+      <button class="number-win-confirm" onclick="confirmNumberGuess()">ПОДТВЕРДИТЬ</button>
     </div>
   </div>
 </div>
@@ -918,10 +1008,13 @@
   var elimBannerEl = document.getElementById('elimBanner');
   var wheelOverlay = document.getElementById('wheelOverlay');
   var spinState = { spinning:false, rotation:0 };
-  var wheelMode = 'normal';      // 'normal' | 'elimination'
+  var wheelMode = 'normal';      // 'normal' | 'elimination' | 'number'
   var spinDurationSec = 5;       // время вращения в секундах
   var eliminatedObjs = [];       // выбывшие в режиме «выбывание» (объекты участников, только с колеса)
   var wheelAllNicks = [];        // все участники, которые были на колесе при открытии
+  var numberResult = null;
+  var numberLocked = false;
+  var numberGuessSocket = null;
 
   function randomizeWheelPosition(){
     var randomUnit;
@@ -950,9 +1043,123 @@
     wheelMode = mode;
     document.getElementById('modeNormalBtn').classList.toggle('active', mode === 'normal');
     document.getElementById('modeElimBtn').classList.toggle('active', mode === 'elimination');
+    document.getElementById('modeNumberBtn').classList.toggle('active', mode === 'number');
+    document.getElementById('numberFab').classList.toggle('active', mode === 'number');
+    document.getElementById('numberGame').classList.toggle('active', mode === 'number');
+    document.querySelector('.wheel-overlay .recent-panel').style.display = mode === 'number' ? 'none' : '';
+    document.querySelector('.wheel-left').style.display = mode === 'number' ? 'none' : '';
+    document.querySelector('.wheel-side').style.display = mode === 'number' ? 'none' : '';
+    document.getElementById('numberGame').setAttribute('aria-hidden', mode === 'number' ? 'false' : 'true');
+    document.querySelector('.number-menu').classList.remove('hidden');
+    numberLocked = false;
+    updateNumberDisplay();
+    updateNumberChat(mode === 'number');
     // Перерисовываем колесо: веса секторов зависят от режима
     drawWheel();
     updateArrowNick();
+    updateWheelControls();
+  }
+
+  function numberBounds(){
+    var min = parseInt(document.getElementById('numberMin').value, 10);
+    var max = parseInt(document.getElementById('numberMax').value, 10);
+    if(isNaN(min)) min = 1;
+    if(isNaN(max)) max = 100;
+    if(min > max){ var swap = min; min = max; max = swap; }
+    return { min:min, max:max };
+  }
+  function updateNumberDisplay(){
+    var display = document.getElementById('numberResult');
+    if(!display) return;
+    display.textContent = numberResult === null ? '—' : String(numberResult);
+    display.classList.toggle('blurred', numberLocked && numberResult !== null);
+  }
+  function setNumberResult(value){
+    numberResult = value;
+    numberLocked = false;
+    document.getElementById('numberValue').value = value;
+    updateNumberDisplay();
+  }
+  function generateNumber(){
+    var bounds = numberBounds();
+    var buffer = new Uint32Array(1);
+    var raw;
+    if(window.crypto && window.crypto.getRandomValues){ window.crypto.getRandomValues(buffer); raw = buffer[0]; }
+    else raw = Math.floor(Math.random() * 4294967296);
+    setNumberResult(bounds.min + (raw % (bounds.max - bounds.min + 1)));
+  }
+  function saveNumberResult(){
+    var value = parseInt(document.getElementById('numberValue').value, 10);
+    var bounds = numberBounds();
+    if(isNaN(value) || value < bounds.min || value > bounds.max){
+      document.getElementById('numberValue').focus();
+      return;
+    }
+    setNumberResult(value);
+    numberLocked = true;
+    updateNumberDisplay();
+    document.querySelector('.number-menu').classList.add('hidden');
+    startNumberGuessing();
+  }
+  function returnNumberMenu(){
+    stopNumberGuessing();
+    numberResult = null;
+    numberLocked = false;
+    document.getElementById('numberValue').value = '';
+    document.querySelector('.number-menu').classList.remove('hidden');
+    updateNumberDisplay();
+  }
+  function stopNumberGuessing(){
+    if(numberGuessSocket){ numberGuessSocket.close(); numberGuessSocket = null; }
+  }
+  function startNumberGuessing(){
+    stopNumberGuessing();
+    if(numberResult === null) return;
+    try{ numberGuessSocket = new WebSocket('wss://irc-ws.chat.twitch.tv:443'); }
+    catch(e){ return; }
+    numberGuessSocket.onopen = function(){
+      numberGuessSocket.send('CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership');
+      numberGuessSocket.send('PASS SCHMOOPIIE');
+      numberGuessSocket.send('NICK justinfan' + Math.floor(Math.random()*100000));
+      numberGuessSocket.send('JOIN #welvol');
+    };
+    numberGuessSocket.onmessage = function(event){
+      String(event.data || '').split('\r\n').forEach(function(line){
+        if(line.indexOf('PING') === 0){ numberGuessSocket.send('PONG :tmi.twitch.tv'); return; }
+        var messageIndex = line.indexOf('PRIVMSG #welvol :');
+        if(messageIndex === -1) return;
+        var nickMatch = line.match(/(?:display-name|user-login)=([^;\s]+)/) || line.match(/^:([^!]+)!/);
+        var nick = nickMatch ? nickMatch[1] : '';
+        var guessText = line.slice(messageIndex + 'PRIVMSG #welvol :'.length).trim();
+        if(!/^\d+$/.test(guessText) || parseInt(guessText, 10) !== numberResult) return;
+        stopNumberGuessing();
+        document.getElementById('numberWinnerNick').textContent = nick;
+        document.getElementById('numberWinnerValue').textContent = numberResult;
+        document.getElementById('numberWinOverlay').classList.add('active');
+      });
+    };
+    numberGuessSocket.onerror = function(){ stopNumberGuessing(); };
+  }
+  function closeNumberGuess(){
+    document.getElementById('numberWinOverlay').classList.remove('active');
+    closeWheel();
+    document.querySelector('.main-menu').classList.remove('hidden');
+    document.getElementById('settingsFab').classList.add('active');
+  }
+  function confirmNumberGuess(){
+    var winnerNick = document.getElementById('numberWinnerNick').textContent;
+    var winnerNumber = parseInt(document.getElementById('numberWinnerValue').textContent, 10);
+    lastResult = { nick:winnerNick, points:isNaN(winnerNumber) ? 0 : winnerNumber };
+    closeNumberGuess();
+    confirmWinner();
+  }
+  function updateNumberChat(active){
+    var frame = document.getElementById('numberChatFrame');
+    if(!frame) return;
+    if(active){
+      var parent = window.location.hostname || 'localhost';
+      frame.src = 'https://www.twitch.tv/embed/welvol/chat?parent=' + encodeURIComponent(parent);
+    } else frame.src = '';
   }
 
   function setSpinDuration(val){
@@ -1292,9 +1499,9 @@
   }
 
   function updateWheelControls(){
-    var ok = activeWheelParticipants().length >= 2;
+    var ok = wheelMode === 'number' || activeWheelParticipants().length >= 2;
     spinBtn.disabled = !ok || spinState.spinning;
-    spinBtn.textContent = spinState.spinning ? 'Крутим…' : 'Крутить рулетку';
+    spinBtn.textContent = spinState.spinning ? 'Крутим…' : (wheelMode === 'number' ? 'Сгенерировать число' : 'Крутить рулетку');
     var repositionBtn = document.getElementById('repositionBtn');
     if(repositionBtn) repositionBtn.disabled = spinState.spinning;
   }
@@ -1334,6 +1541,17 @@
   }
 
   function spinWheel(){
+    if(wheelMode === 'number'){
+      if(spinState.spinning) return;
+      spinState.spinning = true;
+      updateWheelControls();
+      setTimeout(function(){
+        generateNumber();
+        spinState.spinning = false;
+        updateWheelControls();
+      }, Math.max(250, spinDurationSec * 100));
+      return;
+    }
     var list = activeWheelParticipants();
     if(spinState.spinning || list.length < 2) return;
     spinState.spinning = true; updateWheelControls();
@@ -1476,11 +1694,18 @@
     updateArrowNick();
     updateWheelControls();
   }
+  function openNumberGame(){
+    openWheel();
+    setWheelMode('number');
+  }
   function closeWheel(){
     document.getElementById('wheelOverlay').classList.remove('active');
     document.getElementById('resultPanel').classList.remove('active');
     document.getElementById('winnerScreen').classList.remove('active');
     document.getElementById('wheelFab').classList.remove('active');
+    document.getElementById('numberFab').classList.remove('active');
+    stopNumberGuessing();
+    updateNumberChat(false);
   }
 
   // ===== Чат Twitch (канал welvol) — iframe embed =====
