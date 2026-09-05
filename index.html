@@ -2053,9 +2053,8 @@
       var p = purchases[i];
       if(!p) return;
       var nick = p.nick;
-      // Баллы берём из текста заявки (число), если не указано — стоимость награды
-      var num = parseInt(String(p.text).replace(/[^\d]/g, ''), 10);
-      var pts = (!isNaN(num) && num > 0) ? num : (p.cost || 0);
+      // Баллы равны стоимости купленной награды, а текст заявки остаётся сообщением
+      var pts = p.cost || 0;
       participants.push({ nick: nick, points: pts });
       save();
       render();
@@ -2072,8 +2071,7 @@
       var p = purchases[i];
       if(!p) return;
       var nick = p.nick;
-      var num = parseInt(String(p.text).replace(/[^\d]/g, ''), 10);
-      var pts = (!isNaN(num) && num > 0) ? num : (p.cost || 0);
+      var pts = p.cost || 0;
       var existing = null;
       var nickLow = String(nick).toLowerCase();
       for(var j = 0; j < participants.length; j++){
@@ -2569,7 +2567,15 @@
   window.renderStatsCards = function(history){
     var listEl = document.getElementById('statsList');
     var query = String(document.getElementById('statsSearch').value || '').trim().toLowerCase();
-    var filtered = (history || loadWinnerHistory()).filter(function(item){
+    var store = loadWinnerDataStore();
+    var allHistory = history || loadWinnerHistory();
+    var rerollCounts = {};
+    allHistory.forEach(function(item){
+      if(item.status !== 'rerolled') return;
+      var key = String(item.nick || '').toLowerCase();
+      rerollCounts[key] = (rerollCounts[key] || 0) + 1;
+    });
+    var filtered = allHistory.filter(function(item){
       return item.status !== 'rerolled' && String(item.nick || '').toLowerCase().indexOf(query) !== -1;
     });
     var grouped = {};
@@ -2592,16 +2598,42 @@
     }
     var html = '';
     groups.forEach(function(group){
+      var saved = store[group.nick] || {};
+      var depValue = saved.cardDep !== undefined ? saved.cardDep : (group.depNumeric ? group.dep : '');
+      var withdrawValue = saved.cardWithdraw !== undefined ? saved.cardWithdraw : (group.withdrawNumeric ? group.withdraw : '');
+      var tgValue = saved.cardTg !== undefined ? saved.cardTg : (group.tg || '');
+      var siteValue = saved.cardSite !== undefined ? saved.cardSite : (group.site || '');
       html += '<div class="stat-card">'
         + '<div class="stat-nick">👤 ' + escapeHtml(group.nick) + '</div>'
-        + '<div class="stat-when">ВЫПАДЕНИЙ: ' + group.count + '</div>'
-        + '<div class="ws-field"><label>Деп сумма</label><input type="text" value="' + (group.depNumeric ? group.dep : '—') + '" readonly /></div>'
-        + '<div class="ws-field"><label>Вывод сумма</label><input type="text" value="' + (group.withdrawNumeric ? group.withdraw : '—') + '" readonly /></div>'
-        + '<div class="ws-field"><label>ТГ</label><input type="text" value="' + escapeAttr(group.tg || '') + '" readonly /></div>'
-        + '<div class="ws-field"><label>Сайт</label><input type="text" value="' + escapeAttr(group.site || '') + '" readonly /></div>'
+        + '<div class="stat-when">ВЫПАДЕНИЙ: ' + group.count + ' · РЕРOЛЛОВ: ' + (rerollCounts[group.nick] || 0) + '</div>'
+        + '<div class="ws-field"><label>Деп сумма</label><input type="text" data-field="cardDep" value="' + escapeAttr(depValue) + '" /></div>'
+        + '<div class="ws-field"><label>Вывод сумма</label><input type="text" data-field="cardWithdraw" value="' + escapeAttr(withdrawValue) + '" /></div>'
+        + '<div class="ws-field"><label>ТГ</label><input type="text" data-field="cardTg" value="' + escapeAttr(tgValue) + '" /></div>'
+        + '<div class="ws-field"><label>Сайт</label><input type="text" data-field="cardSite" value="' + escapeAttr(siteValue) + '" /></div>'
+        + '<button class="ws-btn-save stats-save" type="button" onclick="saveStatsCard(this)">СОХРАНИТЬ</button>'
         + '</div>';
     });
     listEl.innerHTML = html;
+  };
+
+  window.saveStatsCard = function(button){
+    var card = button.closest('.stat-card');
+    if(!card) return;
+    var nick = card.querySelector('.stat-nick').textContent.replace(/^👤\s*/, '').trim().toLowerCase();
+    var store = loadWinnerDataStore();
+    var entry = store[nick] || {};
+    card.querySelectorAll('[data-field]').forEach(function(input){
+      entry[input.dataset.field] = input.value.trim();
+    });
+    entry.timestamp = new Date().toISOString();
+    store[nick] = entry;
+    localStorage.setItem(WINNER_DATA_KEY, JSON.stringify(store));
+    button.textContent = 'СОХРАНЕНО';
+    button.classList.add('saved');
+    setTimeout(function(){
+      button.textContent = 'СОХРАНИТЬ';
+      button.classList.remove('saved');
+    }, 1200);
   };
 
   function formatStatsDate(ts){
