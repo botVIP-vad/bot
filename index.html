@@ -116,9 +116,9 @@
   .number-fab img{width:48px;height:48px;object-fit:contain}
   /* Когда открыт чат — поднимаем кнопки рулетки, меню и наград над оверлеем чата */
   body.chat-open .wheel-fab, body.chat-open .settings-fab, body.chat-open .rewards-fab,
-  body.chat-open .chat-fab{z-index:210}
+  body.chat-open .number-fab, body.chat-open .chat-fab{z-index:210}
   body.stats-open .wheel-fab, body.stats-open .settings-fab, body.stats-open .rewards-fab,
-  body.stats-open .chat-fab, body.stats-open .tw-fab{z-index:210}
+  body.stats-open .number-fab, body.stats-open .chat-fab, body.stats-open .tw-fab{z-index:210}
 
   /* ===== Chat overlay ===== */
   .chat-overlay{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;
@@ -980,7 +980,6 @@
       <div class="mode-toggle">
         <button class="mode-btn" id="modeNormalBtn" onclick="setWheelMode('normal')">ОБЫЧНЫЙ</button>
         <button class="mode-btn" id="modeElimBtn" onclick="setWheelMode('elimination')">ВЫБЫВАНИЕ</button>
-        <button class="mode-btn" id="modeNumberBtn" onclick="setWheelMode('number')">ЧИСЛО</button>
       </div>
 
       <div class="side-label">Время вращения</div>
@@ -1129,7 +1128,8 @@
     wheelMode = mode;
     document.getElementById('modeNormalBtn').classList.toggle('active', mode === 'normal');
     document.getElementById('modeElimBtn').classList.toggle('active', mode === 'elimination');
-    document.getElementById('modeNumberBtn').classList.toggle('active', mode === 'number');
+    var numberModeBtn = document.getElementById('modeNumberBtn');
+    if(numberModeBtn) numberModeBtn.classList.toggle('active', mode === 'number');
     document.getElementById('numberFab').classList.toggle('active', mode === 'number');
     document.getElementById('numberGame').classList.toggle('active', mode === 'number');
     document.querySelector('.wheel-overlay .recent-panel').style.display = mode === 'number' ? 'none' : '';
@@ -1781,6 +1781,12 @@
     updateWheelControls();
   }
   function openNumberGame(){
+    var fab = document.getElementById('numberFab');
+    // Повторное нажатие на плавающую кнопку — закрываем меню
+    if(fab.classList.contains('active')){
+      closeWheel();
+      return;
+    }
     openWheel();
     setWheelMode('number');
   }
@@ -2972,6 +2978,24 @@
     entry.timestamp = new Date().toISOString();
     store[nick] = entry;
     localStorage.setItem(WINNER_DATA_KEY, JSON.stringify(store));
+    // Синхронизируем историю: те же изменения применяем к записям ника,
+    // чтобы таблица (стр. 1) и сводка (стр. 3) тоже отражали новые данные.
+    var history = loadWinnerHistory();
+    var changed = false;
+    history.forEach(function(hit){
+      if(String(hit.nick || '').toLowerCase() !== nick) return;
+      if(entry.cardDep !== undefined) hit.dep = entry.cardDep;
+      if(entry.cardWithdraw !== undefined) hit.withdraw = entry.cardWithdraw;
+      if(entry.cardTg !== undefined) hit.tg = entry.cardTg;
+      if(entry.cardSite !== undefined) hit.site = entry.cardSite;
+      changed = true;
+    });
+    if(changed) localStorage.setItem(WINNER_HISTORY_KEY, JSON.stringify(history));
+    if(changed){
+      renderStatsTable(history);
+      renderStatsSummary(history);
+      renderStatsDashboard(history);
+    }
     button.textContent = 'СОХРАНЕНО';
     button.classList.add('saved');
     setTimeout(function(){
