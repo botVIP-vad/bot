@@ -236,10 +236,86 @@
     .stats-table th,.stats-table td{padding:8px 7px}
     .stats-summary{grid-template-columns:1fr}
   }
-  /* Карточка статистики — идентична форме ws-data с экрана победителя */
+
+  /* ===== 4-я страница: ДАШБОРД с анимациями ===== */
+  #statsDashboardView{flex:1;min-height:0;display:none;flex-direction:column}
+  #statsDashboardView.active{display:flex;animation:fadeIn .25s ease}
+  #statsDashboard{flex:1;overflow-y:auto;min-height:0;padding-right:6px;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;align-content:start}
+  #statsDashboard::-webkit-scrollbar{width:8px}
+  #statsDashboard::-webkit-scrollbar-track{background:rgba(255,255,255,.04);border-radius:99px}
+  #statsDashboard::-webkit-scrollbar-thumb{background:var(--primary);border-radius:99px}
+  .dash-kpi{position:relative;overflow:hidden;background:rgba(14,15,18,.8);border:1px solid var(--line);
+    border-radius:16px;padding:16px 16px 14px;text-align:center;transition:.25s}
+  .dash-kpi:hover{transform:translateY(-3px);border-color:rgba(155,124,255,.45)}
+  .dash-kpi::before{content:'';position:absolute;inset:0;border-radius:16px;padding:1px;
+    background:linear-gradient(135deg,rgba(155,124,255,.55),transparent 40%,transparent 60%,rgba(65,192,169,.4));
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
+    opacity:0;transition:.25s;pointer-events:none}
+  .dash-kpi:hover::before{opacity:1}
+  .dash-kpi-emoji{font-size:1.4rem;display:inline-block;animation:dashPop 2.2s ease-in-out infinite}
+  .dash-kpi-label{color:var(--ink-faint);font-size:.6rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;margin-top:6px}
+  .dash-kpi-value{margin-top:6px;font-size:1.5rem;font-weight:800;font-variant-numeric:tabular-nums;color:#fff;
+    background:linear-gradient(90deg,#fff,#c4b5fd 60%,var(--points));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .dash-kpi-value.good{background:linear-gradient(90deg,var(--points),#7ef9d8);-webkit-background-clip:text;background-clip:text}
+  .dash-kpi-value.bad{background:linear-gradient(90deg,var(--donation),#ffb3b8);-webkit-background-clip:text;background-clip:text}
+  .dash-kpi-sub{color:var(--ink-faint);font-size:.68rem;margin-top:4px}
+  .dash-block{grid-column:1/-1;background:rgba(14,15,18,.8);border:1px solid var(--line);border-radius:16px;padding:16px}
+  .dash-block-title{color:var(--primary-2);font-size:.78rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;
+    display:flex;align-items:center;gap:8px;margin-bottom:14px}
+  .dash-block-title::after{content:'';flex:1;height:1px;background:var(--line)}
+  .dash-sites{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+  .dash-site{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;padding:12px 12px 10px}
+  .dash-site-name{font-weight:800;color:var(--primary-2);font-size:.9rem;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+  .dash-site-name .badge{font-size:.62rem;color:var(--ink-dim);font-weight:700;background:rgba(255,255,255,.06);padding:2px 8px;border-radius:99px}
+  .dash-bar{margin-bottom:8px}
+  .dash-bar:last-child{margin-bottom:0}
+  .dash-bar-label{display:flex;justify-content:space-between;font-size:.68rem;color:var(--ink-dim);margin-bottom:4px}
+  .dash-bar-label strong{color:var(--ink);font-variant-numeric:tabular-nums}
+  .dash-bar-track{height:10px;background:rgba(255,255,255,.05);border-radius:99px;overflow:hidden;position:relative}
+  .dash-bar-fill{height:100%;width:0%;border-radius:99px;position:relative}
+  .dash-bar-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,.25),transparent 55%);
+    animation:dashShine 2.4s linear infinite}
+  .dash-bar-fill.dep{background:linear-gradient(90deg,#6d28d9,#8b5cf6)}
+  .dash-bar-fill.out{background:linear-gradient(90deg,#0ea5b7,#41c0a9)}
+  .dash-bar-fill.net{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
   .stat-card{background:rgba(14,15,18,.8);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;
     box-shadow:0 8px 26px -8px rgba(0,0,0,.8)}
-  .stat-card .stat-nick{font-weight:800;font-size:1rem;color:var(--primary-2);margin-bottom:10px;text-align:center;
+.dash-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .dash-donut-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:180px}
+  .dash-donut{--c:conic-gradient(#8b5cf6 0 100%);width:150px;height:150px;border-radius:50%;
+    background:var(--c);position:relative}
+  .dash-donut-inner{position:absolute;inset:18px;background:var(--bg);border-radius:50%;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;box-shadow:0 0 22px rgba(121,80,242,.35)}
+  .dash-donut-inner b{font-size:1.3rem;color:#fff}
+  .dash-donut-inner span{font-size:.6rem;color:var(--ink-faint);letter-spacing:1px;text-transform:uppercase;font-weight:700}
+  .dash-donut-total{font-size:.78rem;color:var(--ink-dim);text-align:center}
+  .dash-donut-total b{color:var(--primary-2);font-variant-numeric:tabular-nums}
+  .dash-legend{display:flex;flex-direction:column;gap:6px;width:100%;max-width:240px}
+  .dash-legend-item{display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--ink-dim)}
+  .dash-legend-swatch{width:11px;height:11px;border-radius:4px;flex-shrink:0}
+  .dash-legend-item b{margin-left:auto;color:var(--ink);font-variant-numeric:tabular-nums}
+  .dash-podium{display:flex;gap:10px;justify-content:center;align-items:flex-end;flex-wrap:wrap;padding-top:8px}
+  .dash-pod-place{flex:1;min-width:120px;max-width:190px;text-align:center}
+  .dash-pod-medal{font-size:1.8rem;margin-bottom:6px;display:block;animation:dashPop 2.4s ease-in-out infinite}
+  .dash-pod-name{font-weight:800;font-size:.8rem;color:var(--ink);word-break:break-word}
+  .dash-pod-val{font-size:.7rem;color:var(--primary-2);font-weight:700;margin-top:2px}
+  .dash-pod-bar{margin-top:8px;border-radius:10px 10px 6px 6px;height:44px;display:flex;align-items:flex-end;justify-content:center;
+    padding-bottom:6px;font-size:.72rem;font-weight:800;color:#fff;transform-origin:bottom;min-height:14px}
+  .dash-pod-1 .dash-pod-bar{background:linear-gradient(180deg,#ffd71d,#ffb02d);box-shadow:0 0 18px rgba(255,176,45,.4);height:84px}
+  .dash-pod-2 .dash-pod-bar{background:linear-gradient(180deg,#d3d6e0,#8f95a8);height:62px}
+  .dash-pod-3 .dash-pod-bar{background:linear-gradient(180deg,#e39b6b,#b0622a);height:44px}
+  .dash-pod-bar em{font-style:normal;padding:0 4px 0 2px}
+  .dash-empty{grid-column:1/-1;text-align:center;color:var(--ink-faint);font-size:.85rem;padding:40px 0}
+  @keyframes dashPop{0%,100%{transform:scale(1)}30%{transform:scale(1.22) rotate(6deg)}}
+  @keyframes dashShine{from{transform:translateX(-100%)}to{transform:translateX(250%)}}
+  @keyframes dashGrow{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}
+  @keyframes dashPodIn{from{opacity:0;transform:translateY(16px)scale(.94)}to{opacity:1;transform:none}}
+  @media(max-width:600px){
+    .dash-two{grid-template-columns:1fr}
+    .dash-pod-place{min-width:96px}
+  }
+    .stat-card .stat-nick{font-weight:800;font-size:1rem;color:var(--primary-2);margin-bottom:10px;text-align:center;
     display:flex;align-items:center;justify-content:center;gap:8px}
   .stat-card .stat-nick .del{background:none;border:0;color:var(--ink-faint);cursor:pointer;font-size:1.1rem;padding:2px 6px;border-radius:6px}
   .stat-card .stat-nick .del:hover{color:var(--donation);background:rgba(246,100,108,.12)}
@@ -767,10 +843,14 @@
       <div class="stats-view" id="statsSummaryView">
         <div id="statsSummary" class="stats-summary"></div>
       </div>
+      <div class="stats-view" id="statsDashboardView">
+        <div id="statsDashboard"></div>
+      </div>
       <div class="stats-pager" id="statsPager" aria-label="Страница статистики">
         <button class="stats-page-btn active" data-page="1" onclick="setStatsPage(1)">1</button>
         <button class="stats-page-btn" data-page="2" onclick="setStatsPage(2)">2</button>
         <button class="stats-page-btn" data-page="3" onclick="setStatsPage(3)">3</button>
+        <button class="stats-page-btn" data-page="4" onclick="setStatsPage(4)">4</button>
       </div>
     </div>
   </div>
@@ -2796,19 +2876,22 @@
     };
 
   window.setStatsPage = function(page){
-    statsPage = page === 3 ? 3 : (page === 2 ? 2 : 1);
+    statsPage = page === 4 ? 4 : (page === 3 ? 3 : (page === 2 ? 2 : 1));
     updateStatsPage();
   };
   function updateStatsPage(){
     var tableView = document.getElementById('statsTableView');
     var cardsView = document.getElementById('statsCardsView');
     var summaryView = document.getElementById('statsSummaryView');
+    var dashboardView = document.getElementById('statsDashboardView');
     var pager = document.getElementById('statsPager');
     var onCards = statsPage === 2;
     var onSummary = statsPage === 3;
-    tableView.classList.toggle('active', !onCards && !onSummary);
+    var onDashboard = statsPage === 4;
+    tableView.classList.toggle('active', !onCards && !onSummary && !onDashboard);
     cardsView.classList.toggle('active', onCards);
     summaryView.classList.toggle('active', onSummary);
+    dashboardView.classList.toggle('active', onDashboard);
     pager.querySelectorAll('.stats-page-btn').forEach(function(button){
       button.classList.toggle('active', Number(button.dataset.page) === statsPage);
     });
@@ -2822,6 +2905,7 @@
     renderStatsCards(history);
     renderStatsTable(history);
     renderStatsSummary(history);
+    renderStatsDashboard(history);
   }
 
   window.renderStatsCards = function(history){
@@ -2956,6 +3040,148 @@
     });
     html += '</div>';
     summary.innerHTML = html;
+  }
+function dashCountUp(el){
+    var target = parseFloat(el.getAttribute('data-count') || 0);
+    var dec = parseInt(el.getAttribute('data-dec') || '0', 10);
+    var pre = el.getAttribute('data-prefix') || '';
+    var suf = el.getAttribute('data-suffix') || '';
+    var dur = 900;
+    var t0 = null;
+    function step(ts){
+      if(!t0) t0 = ts;
+      var p = Math.min((ts - t0) / dur, 1);
+      var eased = 1 - Math.pow(1 - p, 3);
+      var val = target * eased;
+      el.textContent = pre + val.toLocaleString('ru-RU', { minimumFractionDigits: dec, maximumFractionDigits: dec }) + suf;
+      if(p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  function renderStatsDashboard(history){
+    var el = document.getElementById('statsDashboard');
+    history = history || loadWinnerHistory();
+    if(!history.length){
+      el.innerHTML = '<div class="dash-empty">✨ Пока нет данных — сыграйте первую игру!</div>';
+      return;
+    }
+    var rerolls = history.filter(function(it){ return it.status === 'rerolled'; }).length;
+    var done = history.filter(function(it){ return it.status !== 'rerolled'; });
+    var totalDep = 0, totalWithdraw = 0, outN = 0;
+    var sites = {}, nicks = {};
+    done.forEach(function(it){
+      var rawDep = String(it.dep || '').replace(',', '.');
+      var rawOut = String(it.withdraw || '').replace(',', '.');
+      var dep = parseFloat(rawDep);
+      var out = parseFloat(rawOut);
+      if(!isNaN(dep)){ totalDep += dep; }
+      if(!isNaN(out)){ totalWithdraw += out; outN++; }
+      var site = String(it.site || '').trim() || 'Без сайта';
+      if(!sites[site]) sites[site] = { count:0, dep:0, out:0 };
+      sites[site].count++;
+      if(!isNaN(dep)) sites[site].dep += dep;
+      if(!isNaN(out)) sites[site].out += out;
+      var nick = String(it.nick || '').trim().toLowerCase();
+      if(nick) nicks[nick] = (nicks[nick] || 0) + (isNaN(out) ? 0 : out);
+    });
+    var percent = totalDep > 0 ? (totalWithdraw / totalDep * 100) : 0;
+    var net = totalWithdraw - totalDep;
+    var fmt = function(n){ return Math.round(n).toLocaleString('ru-RU'); };
+    var kpis = [
+      { e:'🏆', l:'Побед', v: done.length, c:'', s:'' },
+      { e:'💰', l:'Выводы', v: totalWithdraw, c:'', s:' ₽' },
+      { e:'📥', l:'Депы', v: totalDep, c:'', s:' ₽' },
+      { e:'📈', l:'Нет-профит', v: net, c: net >= 0 ? 'good' : 'bad', s:' ₽' },
+      { e:'♻️', l:'Рероллы', v: rerolls, c:'', s:'' },
+      { e:'🎯', l:'Возврат', v: percent, c:'', s:'%', d:1 }
+    ];
+    var html = '';
+    kpis.forEach(function(k){
+      html += '<div class="dash-kpi"><span class="dash-kpi-emoji">' + k.e + '</span>'
+        + '<div class="dash-kpi-value ' + k.c + '" data-count="' + k.v + '" data-dec="' + (k.d||0) + '" data-prefix="" data-suffix="' + k.s + '">0</div>'
+        + '<div class="dash-kpi-label">' + k.l + '</div></div>';
+    });
+
+    // ── Секция: Выводы vs Депы по сайтам (анимированные бары) ──
+    var siteNames = Object.keys(sites);
+    var maxBar = 1;
+    siteNames.forEach(function(s){ maxBar = Math.max(maxBar, sites[s].out); });
+    html += '<div class="dash-block"><div class="dash-block-title">📊 Выводы & депы по сайтам</div><div class="dash-sites">';
+    html += '<div class="dash-site"><div class="dash-site-name">Всего <span class="badge">' + siteNames.length + ' сайт(ов)</span></div>'
+      + '<div class="dash-bar"><div class="dash-bar-label"><span>Выводы</span><strong>' + fmt(totalWithdraw) + ' ₽</strong></div>'
+      + '<div class="dash-bar-track"><div class="dash-bar-fill out" data-w="' + (maxBar ? (totalWithdraw/maxBar*100) : 0) + '"></div></div></div>'
+      + '<div class="dash-bar"><div class="dash-bar-label"><span>Депы</span><strong>' + fmt(totalDep) + ' ₽</strong></div>'
+      + '<div class="dash-bar-track"><div class="dash-bar-fill dep" data-w="' + (maxBar ? (totalDep/maxBar*100) : 0) + '"></div></div></div></div>';
+    siteNames.sort().forEach(function(s){
+      var d = sites[s];
+      html += '<div class="dash-site"><div class="dash-site-name">' + escapeHtml(s) + ' <span class="badge">' + d.count + '×</span></div>'
+        + '<div class="dash-bar"><div class="dash-bar-label"><span>Выводы</span><strong>' + fmt(d.out) + ' ₽</strong></div>'
+        + '<div class="dash-bar-track"><div class="dash-bar-fill out" data-w="' + (maxBar ? (d.out/maxBar*100) : 0) + '"></div></div></div>'
+        + '<div class="dash-bar"><div class="dash-bar-label"><span>Депы</span><strong>' + fmt(d.dep) + ' ₽</strong></div>'
+        + '<div class="dash-bar-track"><div class="dash-bar-fill dep" data-w="' + (maxBar ? (d.dep/maxBar*100) : 0) + '"></div></div></div></div>';
+    });
+    html += '</div></div>';
+
+    // ── Секция: Донат-диаграмма долей по сайтам ──
+    var palette = ['#8b5cf6','#41c0a9','#fbbf24','#f6646c','#3b82f6','#22d3ee','#f97316','#a78bfa','#34d399','#fb7185'];
+    var slices = [];
+    var acc = 0;
+    siteNames.forEach(function(s,i){ slices.push({ site:s, color:palette[i%palette.length], share: sites[s].out }); });
+    var totalSlice = slices.reduce(function(a,x){ return a + x.share; }, 0);
+    var conic = 'conic-gradient(';
+    slices.forEach(function(x,i){
+      if(totalSlice > 0){
+        var start = acc/totalSlice*100, end = (acc+x.share)/totalSlice*100;
+        conic += x.color + ' ' + start + '% ' + end + '%' + (i<slices.length-1 ? ',' : '');
+        acc += x.share;
+      }
+    });
+    conic += ')';
+    var topSite = siteNames.length ? (slices.slice().sort(function(a,b){ return b.share-a.share; })[0]) : null;
+    html += '<div class="dash-block"><div class="dash-block-title">🍩 Доля по сайтам (выводы)</div>'
+      + '<div class="dash-two"><div class="dash-donut-wrap">'
+      + '<div class="dash-donut" id="dashDonut"><div class="dash-donut-inner"><b>' + (topSite ? escapeHtml(topSite.site) : '—') + '</b><span>лидер</span></div></div>'
+      + '<div class="dash-donut-total">Всего выводов: <b>' + fmt(totalWithdraw) + ' ₽</b></div><div class="dash-legend">';
+    slices.slice().sort(function(a,b){ return b.share-a.share; }).forEach(function(x){
+      html += '<div class="dash-legend-item"><span class="dash-legend-swatch" style="background:' + x.color + '"></span>'
+        + escapeHtml(x.site) + '<b>' + (totalSlice ? Math.round(x.share/totalSlice*100) : 0) + '%</b></div>';
+    });
+    html += '</div></div></div></div>';
+
+    // ── Секция: Пщедестал ТОП-3 по выводам ──
+    var top = Object.keys(nicks).map(function(k){ return { nick:k, val:nicks[k] }; })
+      .sort(function(a,b){ return b.val - a.val; }).slice(0,3);
+    html += '<div class="dash-block"><div class="dash-block-title">🏅 ТОП-3 по выводам</div><div class="dash-podium">';
+    var medals = ['🥇','🥈','🥉'];
+    var heightCls = ['dash-pod-1','dash-pod-2','dash-pod-3'];
+    var topMax = top.length ? top[0].val : 1;
+    if(!top.length){
+      html += '<div class="dash-empty" style="padding:10px 0">Пока нет данных</div>';
+    } else {
+      top.forEach(function(p,i){
+        var h = topMax ? Math.round(p.val/topMax*100) : 0;
+        html += '<div class="dash-pod-place ' + heightCls[i] + '"><span class="dash-pod-medal">' + medals[i] + '</span>'
+          + '<div class="dash-pod-name">' + escapeHtml(p.nick) + '</div>'
+          + '<div class="dash-pod-val">' + fmt(p.val) + ' ₽</div>'
+          + '<div class="dash-pod-bar" style="animation:dashGrow .9s cubic-bezier(.2,.8,.25,1) ' + (i*150) + 'ms both">' + h + '<em>%</em></div></div>';
+      });
+    }
+    html += '</div></div>';
+
+    el.innerHTML = html;
+
+    // Запуск анимаций после вставки
+    el.querySelectorAll('.dash-kpi-value').forEach(function(n){ dashCountUp(n); });
+    el.querySelectorAll('.dash-bar-fill').forEach(function(bar){
+      var w = bar.getAttribute('data-w');
+      bar.style.transition = 'width 1s cubic-bezier(.2,.8,.25,1)';
+      setTimeout(function(){ bar.style.width = w + '%'; }, 60);
+    });
+    var donut = document.getElementById('dashDonut');
+    if(donut) donut.style.setProperty('--c', conic);
+    el.querySelectorAll('.dash-pod-place').forEach(function(pl,i){
+      pl.style.animation = 'dashPodIn .5s ease ' + (i*120) + 'ms both';
+    });
   }
 
     // Табличка: НИК | ТГ | ДЕП | ВЫВОД | САЙТ | ДАТА | ВРЕМЯ
