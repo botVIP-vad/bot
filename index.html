@@ -127,7 +127,7 @@
   .chat-overlay .close{position:absolute;top:20px;right:24px;z-index:5;background:rgba(255,255,255,.08);border:1px solid var(--line);
     color:var(--ink);width:42px;height:42px;border-radius:50%;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
   .chat-overlay .close:hover{background:var(--donation);color:#fff}
-  .chat-box{width:50vw;height:calc(100vh - 40px);max-width:900px;min-width:420px;display:flex;flex-direction:column}
+  .chat-box{width:min(72vw,1200px);height:calc(100vh - 40px);max-width:1200px;min-width:420px;display:flex;flex-direction:column}
   #chatFrame{width:100%;height:100%;max-width:none;border:1px solid var(--line)!important;border-radius:16px!important;background:#18181b}
   @media(max-width:600px){.chat-box{width:90vw;height:calc(100vh - 40px);min-width:0}}
   .chat-messages{height:60vh;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:16px;
@@ -364,17 +364,17 @@
   .wheel-content{display:flex;gap:36px;align-items:center;justify-content:center;flex-wrap:wrap}
   .wheel-content .recent-panel{width:280px;flex-shrink:0}
   .wheel-left{display:flex;flex-direction:column;align-items:center}
-  .number-game{display:none;grid-template-columns:minmax(280px,360px) minmax(320px,460px);gap:22px;align-items:stretch}
+  .number-game{display:none;grid-template-columns:minmax(380px,500px) minmax(520px,760px);gap:28px;align-items:stretch}
   .number-game.active{display:grid;animation:fadeIn .25s ease}
-  .number-menu,.number-chat{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:18px;padding:22px}
+  .number-menu,.number-chat{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:18px;padding:30px;min-height:min(70vh,700px)}
   .number-menu{display:flex;flex-direction:column;gap:12px;justify-content:center}
   .number-menu.hidden{display:none}
-  .number-menu h2{text-align:center;font-size:1.35rem}
-  .number-menu p{color:var(--ink-dim);font-size:.8rem;text-align:center;line-height:1.45}
+  .number-menu h2{text-align:center;font-size:1.6rem}
+  .number-menu p{color:var(--ink-dim);font-size:.95rem;text-align:center;line-height:1.45}
   .number-range{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .number-field label{display:block;color:var(--ink-faint);font-size:.65rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
   .number-field input,.number-input{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:10px;color:var(--ink);
-    font-family:var(--font);font-size:1rem;padding:10px;outline:none;text-align:center}
+    font-family:var(--font);font-size:1.1rem;padding:13px;outline:none;text-align:center}
   .number-field input:focus,.number-input:focus{border-color:var(--primary)}
   .number-result{font-size:3.7rem;font-weight:800;line-height:1;text-align:center;color:var(--points);min-height:60px;
     text-shadow:0 0 24px rgba(65,192,169,.45);font-variant-numeric:tabular-nums}
@@ -384,7 +384,7 @@
   .number-generate{background:var(--grad);color:#fff}
   .number-save{background:var(--points);color:#04211c}
   .number-actions button:hover{transform:translateY(-2px);filter:brightness(1.08)}
-  .number-chat{min-height:420px;display:flex;flex-direction:column;gap:10px}
+  .number-chat{display:flex;flex-direction:column;gap:10px}
   .number-menu.hidden + .number-chat{grid-column:1 / -1;min-height:calc(100vh - 150px)}
   .number-chat-title{color:var(--ink-faint);font-size:.68rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;text-align:center}
   #numberChatFrame{width:100%;height:100%;min-height:360px;border:1px solid var(--line);border-radius:12px;background:#18181b}
