@@ -1780,10 +1780,12 @@
     wheelAllNicks = participants.map(function(p){ return p.nick; });
     document.getElementById('wheelOverlay').classList.add('active');
     document.getElementById('wheelFab').classList.add('active');
+    document.getElementById('numberFab').classList.remove('active');
     // Скрываем меню при открытии рулетки
     document.querySelector('.main-menu').classList.add('hidden');
     document.getElementById('settingsFab').classList.remove('active');
     elimBannerEl.classList.remove('visible');
+    setWheelMode('normal');
     drawWheel();
     updateArrowNick();
     updateWheelControls();
@@ -1795,7 +1797,13 @@
       closeWheel();
       return;
     }
-    openWheel();
+    // Открываем оверлей напрямую, только для чисел (без подсветки кнопки рулетки)
+    closeStatsIfOpen();
+    if(typeof closeChat === 'function') closeChat();
+    document.getElementById('wheelOverlay').classList.add('active');
+    fab.classList.add('active');
+    document.querySelector('.main-menu').classList.add('hidden');
+    document.getElementById('settingsFab').classList.remove('active');
     setWheelMode('number');
   }
   function closeWheel(){
