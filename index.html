@@ -378,6 +378,22 @@
   .rewards-overlay .close{position:absolute;top:20px;right:24px;background:rgba(255,255,255,.08);border:1px solid var(--line);
     color:var(--ink);width:42px;height:42px;border-radius:50%;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
   .rewards-overlay .close:hover{background:var(--donation);color:#fff}
+
+  /* ===== Blur other buttons when rewards panel is open ===== */
+  body.rewards-open .wheel-fab,
+  body.rewards-open .settings-fab,
+  body.rewards-open .chat-fab,
+  body.rewards-open .number-fab,
+  body.rewards-open .stats-fab,
+  body.rewards-open .tw-fab{filter:blur(4px);opacity:0.5;transition:.3s}
+  /* Кнопки остаются кликабельными поверх оверлея наград */
+  body.rewards-open .rewards-fab,
+  body.rewards-open .wheel-fab,
+  body.rewards-open .settings-fab,
+  body.rewards-open .chat-fab,
+  body.rewards-open .number-fab,
+  body.rewards-open .stats-fab,
+  body.rewards-open .tw-fab{z-index:210;pointer-events:auto}
   .rewards-box{width:100%;max-width:480px}
   .reward-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;background:rgba(255,255,255,.03);border:1px solid var(--line);
     border-radius:10px;padding:10px 14px}
@@ -906,7 +922,7 @@
     <h2>Управление наградами</h2>
     <p class="sub"></p>
 
-    <div id="rewardsList" style="margin:16px 0">
+    <div id="rewardsList" style="margin:16px 0;max-height:300px;overflow-y:auto">
       <div class="empty">Нет наград. Добавь первую награду ниже ☝</div>
     </div>
 
@@ -1744,6 +1760,7 @@
   // Twitch overlay
   function openTwitch(){
     closeStatsIfOpen();
+    closeRewards();
     document.getElementById('twOverlay').classList.add('active');
   }
   function closeTwitch(){ document.getElementById('twOverlay').classList.remove('active'); }
@@ -1751,6 +1768,7 @@
   // Toggle main menu (settings button) - like a toggle/X button
   function toggleMainMenu(){
     closeStatsIfOpen();
+    closeRewards();
     // Закрываем чат, если он открыт
     if(typeof closeChat === 'function') closeChat();
     // Сначала закрываем рулетку (как крестик ✕)
@@ -1771,6 +1789,7 @@
   // Wheel overlay - highlight button when open
   function openWheel(){
     closeStatsIfOpen();
+    closeRewards();
     // Закрываем чат, если он открыт
     if(typeof closeChat === 'function') closeChat();
     // Сбрасываем выбывание при новом открытии рулетки
@@ -1799,6 +1818,7 @@
     }
     // Открываем оверлей напрямую, только для чисел (без подсветки кнопки рулетки)
     closeStatsIfOpen();
+    closeRewards();
     if(typeof closeChat === 'function') closeChat();
     document.getElementById('wheelOverlay').classList.add('active');
     fab.classList.add('active');
@@ -2414,6 +2434,7 @@
 
   function openChat(){
     closeStatsIfOpen();
+    closeRewards();
     chatOverlayEl.classList.add('active');
     document.getElementById('chatFab').classList.add('active');
     document.body.classList.add('chat-open');
@@ -2855,15 +2876,22 @@
     };
 
     window.openRewards = function(){
-      closeStatsIfOpen();
-      document.getElementById('rewardsOverlay').classList.add('active');
-      document.getElementById('rewardsFab').classList.add('active');
-      loadTwitchRewards();
+      var overlay = document.getElementById('rewardsOverlay');
+      if(overlay.classList.contains('active')){
+        closeRewards();
+      } else {
+        closeStatsIfOpen();
+        overlay.classList.add('active');
+        document.getElementById('rewardsFab').classList.add('active');
+        document.body.classList.add('rewards-open');
+        loadTwitchRewards();
+      }
     };
 
     window.closeRewards = function(){
       document.getElementById('rewardsOverlay').classList.remove('active');
       document.getElementById('rewardsFab').classList.remove('active');
+      document.body.classList.remove('rewards-open');
     };
 
     function renderRewards(customMessage){
@@ -3461,6 +3489,7 @@
   window.openRecentStats = function(){
     var ov = document.getElementById('statsOverlay');
     if(typeof closeChat === 'function') closeChat();
+    closeRewards();
     ov.classList.add('active');
     document.body.classList.add('stats-open');
     document.getElementById('statsFab').classList.add('active');
@@ -3474,6 +3503,7 @@
     if(ov.classList.contains('active')) closeStats();
     else{
       if(typeof closeChat === 'function') closeChat();
+      closeRewards();
       ov.classList.add('active');
       document.body.classList.add('stats-open');
       document.getElementById('statsFab').classList.add('active');
