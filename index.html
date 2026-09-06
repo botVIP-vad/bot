@@ -16,6 +16,9 @@
     --line:rgba(255,255,255,.07); --card:rgba(255,255,255,.03);
     --grad:linear-gradient(135deg,#8b5cf6,#7950f2 45%,#6d28d9);
     --font:'Inter',system-ui,'Segoe UI',Roboto,sans-serif;
+    /* Собственный Twitch-чат */
+    --tchat-bg:#18181b; --tchat-line:rgba(255,255,255,.09); --tchat-hover:rgba(255,255,255,.045);
+    --tchat-accent:#9146ff; --tchat-accent-2:#772ce8;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--ink);font-family:var(--font);min-height:100vh}
@@ -128,8 +131,61 @@
     color:var(--ink);width:42px;height:42px;border-radius:50%;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
   .chat-overlay .close:hover{background:var(--donation);color:#fff}
   .chat-box{width:min(72vw,1200px);height:calc(100vh - 40px);max-width:1200px;min-width:420px;display:flex;flex-direction:column}
-  #chatFrame{width:100%;height:100%;max-width:none;border:1px solid var(--line)!important;border-radius:16px!important;background:#18181b}
   @media(max-width:600px){.chat-box{width:90vw;height:calc(100vh - 40px);min-width:0}}
+
+  /* ===== Собственный чат Twitch (IRC over WebSocket) ===== */
+  .tchat-mount{flex:1;min-width:0;min-height:0;display:flex}
+  .tchat{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;background:var(--tchat-bg);
+    border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .tchat-head{display:flex;align-items:center;gap:8px;flex-shrink:0;padding:11px 14px;
+    border-bottom:1px solid var(--tchat-line);background:rgba(255,255,255,.03);
+    font-size:.76rem;font-weight:800;letter-spacing:.4px;text-transform:uppercase}
+  .tchat-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;transition:.25s;
+    background:var(--donation);box-shadow:0 0 8px rgba(246,100,108,.7)}
+  .tchat.is-online .tchat-dot{background:var(--points);box-shadow:0 0 8px rgba(65,192,169,.7)}
+  .tchat.is-connecting .tchat-dot{background:#e6b450;box-shadow:0 0 8px rgba(230,180,80,.7)}
+  .tchat-channel{color:var(--primary-2)}
+  .tchat-state{margin-left:auto;color:var(--ink-faint);font-size:.7rem;font-weight:600;letter-spacing:0;text-transform:none}
+  .tchat-list{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:10px 10px;
+    display:flex;flex-direction:column;gap:1px;font-size:.9rem;line-height:1.5;overflow-anchor:none}
+  .tchat-list::-webkit-scrollbar{width:8px}
+  .tchat-list::-webkit-scrollbar-track{background:rgba(255,255,255,.04);border-radius:99px}
+  .tchat-list::-webkit-scrollbar-thumb{background:var(--primary);border-radius:99px}
+  .tchat-line{padding:5px 8px;border-radius:8px;word-break:break-word;animation:fadeIn .18s ease}
+  .tchat-line:hover{background:var(--tchat-hover)}
+  .tchat-line.is-self{background:rgba(121,80,242,.12)}
+  .tchat-line.is-deleted{opacity:.38}
+  .tchat-line.is-deleted .tchat-text{text-decoration:line-through}
+  .tchat-line.is-action .tchat-text{font-style:italic;color:var(--primary-2)}
+  .tchat-line.is-event{background:rgba(145,70,255,.12);border-left:3px solid var(--tchat-accent);
+    color:#e8ddff;font-size:.84rem;font-weight:600}
+  .tchat-line.is-system{color:var(--ink-faint);font-size:.78rem;text-align:center}
+  .tchat-time{color:var(--ink-faint);font-size:.68rem;margin-right:6px;font-variant-numeric:tabular-nums}
+  .tchat-badges{display:inline-flex;align-items:center;gap:3px;margin-right:5px;vertical-align:-4px}
+  .tchat-badge{width:18px;height:18px;border-radius:3px;display:block}
+  .tchat-badge-text{display:inline-block;min-width:18px;height:18px;line-height:18px;padding:0 3px;border-radius:4px;
+    background:rgba(145,70,255,.25);color:#e8ddff;font-size:.62rem;font-weight:800;text-align:center}
+  .tchat-nick{font-weight:800;color:var(--primary-2)}
+  .tchat-sep{color:var(--ink-faint);margin:0 4px 0 1px}
+  .tchat-emote{height:28px;vertical-align:-8px;margin:0 1px}
+  .tchat-bits{display:inline-block;margin-right:5px;padding:1px 7px;border-radius:999px;
+    background:rgba(65,192,169,.18);color:var(--points);font-size:.7rem;font-weight:800}
+  .tchat-text a{color:var(--primary-2);text-decoration:underline}
+  .tchat-form{display:flex;gap:8px;flex-shrink:0;padding:10px 12px;border-top:1px solid var(--tchat-line);background:rgba(255,255,255,.03)}
+  .tchat-input{flex:1;min-width:0;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:10px;
+    color:var(--ink);font-family:var(--font);font-size:.9rem;padding:10px 12px;outline:none;transition:.2s}
+  .tchat-input:focus{border-color:var(--tchat-accent);background:rgba(145,70,255,.1)}
+  .tchat-input:disabled{opacity:.45;cursor:not-allowed}
+  .tchat-send{border:0;border-radius:10px;background:linear-gradient(135deg,var(--tchat-accent),var(--tchat-accent-2));
+    color:#fff;cursor:pointer;font-family:var(--font);font-weight:800;font-size:.85rem;padding:10px 18px;transition:.2s}
+  .tchat-send:hover:not(:disabled){filter:brightness(1.12);transform:translateY(-1px)}
+  .tchat-send:active:not(:disabled){transform:scale(.96)}
+  .tchat-send:disabled{opacity:.4;cursor:not-allowed}
+  .tchat-note{flex-shrink:0;padding:8px 12px;border-top:1px solid var(--tchat-line);
+    color:var(--ink-faint);font-size:.73rem;text-align:center;line-height:1.45}
+  .tchat-note.is-warn{color:var(--donation)}
+  .tchat-note-link{background:none;border:0;padding:0;color:var(--primary-2);cursor:pointer;
+    font-family:var(--font);font-size:.73rem;font-weight:800;text-decoration:underline}
   .chat-messages{height:60vh;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:16px;
     padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
   .chat-messages::-webkit-scrollbar{width:8px}
@@ -387,7 +443,8 @@
   .number-chat{display:flex;flex-direction:column;gap:10px}
   .number-menu.hidden + .number-chat{grid-column:1 / -1;min-height:calc(100vh - 150px)}
   .number-chat-title{color:var(--ink-faint);font-size:.68rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;text-align:center}
-  #numberChatFrame{width:100%;height:100%;min-height:360px;border:1px solid var(--line);border-radius:12px;background:#18181b}
+  .number-chat .tchat-mount{min-height:360px}
+  .number-chat .tchat{border-radius:12px}
   .number-return-menu{display:none;grid-column:1 / -1;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:10px;color:var(--ink);
     padding:11px;cursor:pointer;font-family:var(--font);font-weight:800}
   .number-menu.hidden ~ .number-return-menu{display:block}
@@ -901,8 +958,7 @@
 <div class="chat-overlay" id="chatOverlay">
   <button class="close" onclick="closeChat()">✕</button>
   <div class="chat-box">
-    <iframe id="chatFrame" src="" height="500" width="350"
-      style="width:100%;height:100%;background:#18181b"></iframe>
+    <div class="tchat-mount" id="chatMainMount"></div>
   </div>
 </div>
 
@@ -953,7 +1009,7 @@
       </div>
       <div class="number-chat">
         <div class="number-chat-title">Twitch chat · welvol</div>
-        <iframe id="numberChatFrame" title="Чат Twitch welvol" src=""></iframe>
+        <div class="tchat-mount" id="numberChatMount"></div>
       </div>
       <button class="number-return-menu" onclick="returnNumberMenu()">ВЕРНУТЬ МЕНЮ</button>
     </div>
@@ -1083,7 +1139,8 @@
   var wheelAllNicks = [];        // все участники, которые были на колесе при открытии
   var numberResult = null;
   var numberLocked = false;
-  var numberGuessSocket = null;
+  var numberGuessHandle = null;
+  var numberGuessOff = null;
 
   function randomizeWheelPosition(){
     var randomUnit;
@@ -1180,35 +1237,26 @@
     updateNumberDisplay();
   }
   function stopNumberGuessing(){
-    if(numberGuessSocket){ numberGuessSocket.close(); numberGuessSocket = null; }
+    if(numberGuessOff){ numberGuessOff(); numberGuessOff = null; }
+    numberGuessHandle = null;
+    TwitchChat.release('numberGuess');
   }
   function startNumberGuessing(){
     stopNumberGuessing();
     if(numberResult === null) return;
-    try{ numberGuessSocket = new WebSocket('wss://irc-ws.chat.twitch.tv:443'); }
-    catch(e){ return; }
-    numberGuessSocket.onopen = function(){
-      numberGuessSocket.send('CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership');
-      numberGuessSocket.send('PASS SCHMOOPIIE');
-      numberGuessSocket.send('NICK justinfan' + Math.floor(Math.random()*100000));
-      numberGuessSocket.send('JOIN #welvol');
+    numberGuessHandle = function(ev){
+      if(ev.type !== 'render' || !ev.item) return;
+      var item = ev.item;
+      if(item.kind !== 'message') return;
+      var guessText = String(item.text || '').trim();
+      if(!/^\d+$/.test(guessText) || parseInt(guessText, 10) !== numberResult) return;
+      stopNumberGuessing();
+      document.getElementById('numberWinnerNick').textContent = item.displayName;
+      document.getElementById('numberWinnerValue').textContent = numberResult;
+      document.getElementById('numberWinOverlay').classList.add('active');
     };
-    numberGuessSocket.onmessage = function(event){
-      String(event.data || '').split('\r\n').forEach(function(line){
-        if(line.indexOf('PING') === 0){ numberGuessSocket.send('PONG :tmi.twitch.tv'); return; }
-        var messageIndex = line.indexOf('PRIVMSG #welvol :');
-        if(messageIndex === -1) return;
-        var nickMatch = line.match(/(?:display-name|user-login)=([^;\s]+)/) || line.match(/^:([^!]+)!/);
-        var nick = nickMatch ? nickMatch[1] : '';
-        var guessText = line.slice(messageIndex + 'PRIVMSG #welvol :'.length).trim();
-        if(!/^\d+$/.test(guessText) || parseInt(guessText, 10) !== numberResult) return;
-        stopNumberGuessing();
-        document.getElementById('numberWinnerNick').textContent = nick;
-        document.getElementById('numberWinnerValue').textContent = numberResult;
-        document.getElementById('numberWinOverlay').classList.add('active');
-      });
-    };
-    numberGuessSocket.onerror = function(){ stopNumberGuessing(); };
+    TwitchChat.acquire('numberGuess');
+    numberGuessOff = TwitchChat.on(numberGuessHandle);
   }
   function closeNumberGuess(){
     document.getElementById('numberWinOverlay').classList.remove('active');
@@ -1224,12 +1272,8 @@
     confirmWinner();
   }
   function updateNumberChat(active){
-    var frame = document.getElementById('numberChatFrame');
-    if(!frame) return;
-    if(active){
-      var parent = window.location.hostname || 'localhost';
-      frame.src = 'https://www.twitch.tv/embed/welvol/chat?parent=' + encodeURIComponent(parent);
-    } else frame.src = '';
+    if(active) numberChatView.open();
+    else numberChatView.close();
   }
 
   function setSpinDuration(val){
@@ -1284,7 +1328,9 @@
   }
   var wsTimerInterval = null;
   var wsTimerStart = 0;
-  var wsChatSocket = null;
+  var winnerChatHandle = null;
+  var winnerChatOff = null;
+  var winnerChatTarget = '';
 
   /* ===== Локал-облако: данные победителя по нику ===== */
   var WINNER_DATA_KEY = 'wheelbot_winner_data';
@@ -1371,58 +1417,36 @@
     document.getElementById('wsTimerValue').textContent =
       (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
   }
-  // ===== Twitch чат (анонимное IRC-соединение) =====
+  // ===== Twitch чат для победителя (через общий TwitchChat) =====
   function startWinnerChat(winnerNick){
     stopWinnerChat();
     var target = String(winnerNick || '').toLowerCase();
     if(!target) return;
-    try{
-      wsChatSocket = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-      wsChatSocket.onopen = function(){
-        // Анонимный вход (justinfan) — не требует токена
-        wsChatSocket.send('CAP REQ :twitch.tv/tags');
-        wsChatSocket.send('PASS SCHMOOPIIE');
-        wsChatSocket.send('NICK justinfan' + Math.floor(Math.random()*100000));
-        wsChatSocket.send('JOIN #welvol');
-      };
-      wsChatSocket.onmessage = function(ev){
-        var lines = String(ev.data).split('\r\n');
-        for(var i=0;i<lines.length;i++){
-          var line = lines[i];
-          if(!line) continue;
-          if(line.indexOf('PING') === 0){ wsChatSocket.send('PONG :tmi.twitch.tv'); continue; }
-          // Сообщения чата: PRIVMSG
-          var idx = line.indexOf('PRIVMSG #welvol :');
-          if(idx === -1) continue;
-          // Ник берём из display-name тега, иначе из префикса
-          var nick = '';
-          var tm = line.match(/(?:display-name|user-login)=([^;\s]+)/);
-          if(tm && tm[1]) nick = tm[1].toLowerCase();
-          if(!nick){
-            var pm = line.match(/^:([^!]+)!/);
-            if(pm) nick = pm[1].toLowerCase();
-          }
-          if(nick === target){
-            var message = line.slice(idx + 'PRIVMSG #welvol :'.length).trim();
-            appendWinnerMessage(message);
-            // Победитель написал в чат — останавливаем секундомер, красим в зелёный
-            if(wsTimerInterval){ clearInterval(wsTimerInterval); wsTimerInterval = null; }
-            wsTimerTick();
-            var tv = document.getElementById('wsTimerValue');
-            tv.style.color = '#41c0a9';
-            tv.style.textShadow = '0 0 24px rgba(65,192,169,.8)';
-            var nk = document.getElementById('wsNick');
-            nk.style.color = '#41c0a9';
-            nk.style.textShadow = '0 0 60px rgba(65,192,169,.9),0 4px 20px rgba(0,0,0,.6)';
-          }
-        }
-      };
-      wsChatSocket.onclose = function(){ if(wsChatSocket){ wsChatSocket = null; } };
-    }catch(e){ console.warn('Chat connect error:', e); }
+    winnerChatTarget = target;
+    winnerChatHandle = function(ev){
+      if(ev.type !== 'render' || !ev.item) return;
+      var item = ev.item;
+      if(item.kind !== 'message') return;
+      if(item.login !== winnerChatTarget) return;
+      appendWinnerMessage(item.text);
+      // Победитель написал в чат — останавливаем секундомер, красим в зелёный
+      if(wsTimerInterval){ clearInterval(wsTimerInterval); wsTimerInterval = null; }
+      wsTimerTick();
+      var tv = document.getElementById('wsTimerValue');
+      tv.style.color = '#41c0a9';
+      tv.style.textShadow = '0 0 24px rgba(65,192,169,.8)';
+      var nk = document.getElementById('wsNick');
+      nk.style.color = '#41c0a9';
+      nk.style.textShadow = '0 0 60px rgba(65,192,169,.9),0 4px 20px rgba(0,0,0,.6)';
+    };
+    TwitchChat.acquire('winnerChat');
+    winnerChatOff = TwitchChat.on(winnerChatHandle);
   }
   function stopWinnerChat(){
-    try{ if(wsChatSocket){ wsChatSocket.onclose = null; wsChatSocket.close(); } }catch(e){}
-    wsChatSocket = null;
+    if(winnerChatOff){ winnerChatOff(); winnerChatOff = null; }
+    winnerChatHandle = null;
+    winnerChatTarget = '';
+    TwitchChat.release('winnerChat');
   }
   function appendWinnerMessage(message){
     if(!message) return;
@@ -1784,25 +1808,614 @@
     updateNumberChat(false);
   }
 
-  // ===== Чат Twitch (канал welvol) — iframe embed =====
+  /* =========================================================================
+     ===== Собственный чат Twitch: IRC over WebSocket + бейджи и эмоуты =====
+     Документация: dev.twitch.tv/docs/chat/irc, dev.twitch.tv/docs/api/reference
+     Одно соединение на всё приложение (счётчик потребителей):
+       - оверлей чата, панель чата в игре в числа,
+       - логика угадывания числа, ожидание сообщения победителя.
+     ========================================================================= */
+  var TwitchChat = (function(){
+    var CHANNEL = 'welvol';
+    var IRC_URL = 'wss://irc-ws.chat.twitch.tv:443';
+    var HELIX_URL = 'https://api.twitch.tv/helix';
+    var VALIDATE_URL = 'https://id.twitch.tv/oauth2/validate';
+    var EMOTE_CDN = 'https://static-cdn.jtvnw.net/emoticons/v2/';
+    var BUFFER_MAX = 250;
+    var MSG_MAX_LEN = 480;
+    var NICK_COLORS = ['#ff7f7f','#7fd1ff','#9b7cff','#41c0a9','#f6c46c','#ff9ad5','#8ce99a','#ffa66c','#6ec8ff','#d9a3ff'];
+    var BADGE_FALLBACK = {
+      broadcaster:'★', moderator:'⚔', vip:'💎', subscriber:'✦', founder:'🏆',
+      premium:'👑', turbo:'⚡', partner:'✔', staff:'🛠', admin:'🛠', global_mod:'🛠',
+      bits:'🔶', 'bits-leader':'🔶', 'sub-gifter':'🎁', 'hype-train':'🚂', 'predictions':'📈'
+    };
+
+    var socket = null;
+    var holders = {};
+    var holderCount = 0;
+    var listeners = [];
+    var buffer = [];
+    var localSeq = 0;
+    var reconnectTimer = null;
+    var attempt = 0;
+    var connState = 'offline';   // offline | connecting | online
+    var authMode = 'anon';       // anon | user
+    var authFailed = false;      // токен отвергнут — работаем анонимно
+    var canPost = false;         // есть scope chat:edit
+    var selfTags = null;         // GLOBALUSERSTATE / USERSTATE текущего юзера
+    var badgeSets = {};          // "set/version" -> url картинки
+    var emoteNames = {};         // "Kappa" -> id (для локального эха своих сообщений)
+    var assetsToken = '';        // для какого токена уже загружены бейджи/эмоуты
+
+    /* ---------- утилиты ---------- */
+    function escAttr(v){
+      return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+    function unescapeTagValue(v){
+      return String(v).replace(/\\s/g,' ').replace(/\\:/g,';')
+        .replace(/\\r/g,'').replace(/\\n/g,'').replace(/\\\\/g,'\\');
+    }
+    function nickColor(login){
+      var h = 0;
+      for(var i=0;i<login.length;i++) h = (h*31 + login.charCodeAt(i)) % 100000;
+      return NICK_COLORS[h % NICK_COLORS.length];
+    }
+    function timeLabel(){
+      var d = new Date();
+      return (d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();
+    }
+    function isAuthReady(){
+      return !!(twitchData.accessToken && twitchData.clientId && twitchData.user && twitchData.user.login);
+    }
+
+    /* ---------- парсер IRC-строки (теги + префикс + команда) ---------- */
+    function parseLine(line){
+      var rest = line, tags = {}, prefix = '', sp;
+      if(rest.charAt(0) === '@'){
+        sp = rest.indexOf(' ');
+        rest.slice(1, sp).split(';').forEach(function(pair){
+          var eq = pair.indexOf('=');
+          if(eq === -1) tags[pair] = '';
+          else tags[pair.slice(0, eq)] = unescapeTagValue(pair.slice(eq+1));
+        });
+        rest = rest.slice(sp+1);
+      }
+      if(rest.charAt(0) === ':'){
+        sp = rest.indexOf(' ');
+        prefix = rest.slice(1, sp);
+        rest = rest.slice(sp+1);
+      }
+      var trailing = null;
+      if(rest.charAt(0) === ':'){ trailing = rest.slice(1); rest = ''; }
+      else {
+        var ti = rest.indexOf(' :');
+        if(ti !== -1){ trailing = rest.slice(ti+2); rest = rest.slice(0, ti); }
+      }
+      var parts = rest.split(' ').filter(function(x){ return x; });
+      var command = parts.shift() || '';
+      if(trailing !== null) parts.push(trailing);
+      return { tags:tags, prefix:prefix, command:command, params:parts, trailing:trailing };
+    }
+    function loginFromPrefix(prefix){
+      var m = String(prefix).match(/^([^!]+)!/);
+      return m ? m[1].toLowerCase() : '';
+    }
+
+    /* ---------- рендер текста: эмоуты + ссылки ---------- */
+    function emoteImg(id, name){
+      return '<img class="tchat-emote" src="' + EMOTE_CDN + encodeURIComponent(id) + '/default/dark/2.0" ' +
+        'alt="' + escAttr(name) + '" title="' + escAttr(name) + '" loading="lazy" />';
+    }
+    function plainToHtml(text, useNameMap){
+      var html = escapeHtml(text).replace(/&/g, '&amp;').replace(/&amp;lt;/g, '&lt;').replace(/&amp;gt;/g, '&gt;');
+      html = html.replace(/(https?:\/\/[^\s<]+)/g, function(url){
+        return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>';
+      });
+      if(useNameMap){
+        html = html.replace(/(^|\s)([A-Za-z0-9_:()\\|\-]{2,32})(?=\s|$)/g, function(all, pre, word){
+          var id = emoteNames[word];
+          return id ? pre + emoteImg(id, word) : all;
+        });
+      }
+      return html;
+    }
+    // Позиции в теге emotes считаются в code points, поэтому режем через Array.from
+    function renderMessageHtml(text, emotesTag, isSelf){
+      if(!emotesTag) return plainToHtml(text, !!isSelf);
+      var chars = Array.from(text);
+      var slots = [];
+      emotesTag.split('/').forEach(function(group){
+        var c = group.indexOf(':');
+        if(c === -1) return;
+        var id = group.slice(0, c);
+        group.slice(c+1).split(',').forEach(function(range){
+          var pair = range.split('-');
+          var start = parseInt(pair[0], 10), end = parseInt(pair[1], 10);
+          if(isNaN(start) || isNaN(end)) return;
+          slots.push({ start:start, end:end, id:id });
+        });
+      });
+      slots.sort(function(a,b){ return a.start - b.start; });
+      var html = '', cursor = 0;
+      slots.forEach(function(slot){
+        if(slot.start < cursor || slot.end >= chars.length) return;
+        if(slot.start > cursor) html += plainToHtml(chars.slice(cursor, slot.start).join(''), false);
+        html += emoteImg(slot.id, chars.slice(slot.start, slot.end+1).join(''));
+        cursor = slot.end + 1;
+      });
+      if(cursor < chars.length) html += plainToHtml(chars.slice(cursor).join(''), false);
+      return html;
+    }
+
+    /* ---------- бейджи ---------- */
+    function badgesHtml(tags){
+      var raw = tags['badges'];
+      if(!raw) return '';
+      var info = {};
+      String(tags['badge-info'] || '').split(',').forEach(function(b){
+        var i = b.lastIndexOf('/');
+        if(i > 0) info[b.slice(0, i)] = b.slice(i+1);
+      });
+      var out = '';
+      raw.split(',').forEach(function(entry){
+        if(!entry) return;
+        var i = entry.lastIndexOf('/');
+        var set = i === -1 ? entry : entry.slice(0, i);
+        var ver = i === -1 ? '1' : entry.slice(i+1);
+        var title = set.replace(/[-_]/g, ' ');
+        if(info[set]) title += ' · ' + info[set] + ' мес.';
+        var url = badgeSets[set + '/' + ver] || badgeSets[set + '/1'];
+        if(url) out += '<img class="tchat-badge" src="' + escAttr(url) + '" alt="' + escAttr(set) + '" title="' + escAttr(title) + '" />';
+        else out += '<span class="tchat-badge-text" title="' + escAttr(title) + '">' +
+          escapeHtml(BADGE_FALLBACK[set] || set.charAt(0).toUpperCase()) + '</span>';
+      });
+      return out ? '<span class="tchat-badges">' + out + '</span>' : '';
+    }
+
+    /* ---------- загрузка бейджей и эмоутов через Helix ---------- */
+    function helix(path){
+      return fetch(HELIX_URL + path, {
+        headers: { 'Client-ID': twitchData.clientId, 'Authorization': 'Bearer ' + twitchData.accessToken }
+      }).then(function(r){ if(!r.ok) throw new Error('Helix ' + r.status); return r.json(); });
+    }
+    function collectBadges(payload){
+      (payload && payload.data ? payload.data : []).forEach(function(set){
+        (set.versions || []).forEach(function(v){
+          badgeSets[set.set_id + '/' + v.id] = v.image_url_2x || v.image_url_1x;
+        });
+      });
+    }
+    function collectEmotes(payload){
+      (payload && payload.data ? payload.data : []).forEach(function(e){
+        if(e && e.name && e.id) emoteNames[e.name] = e.id;
+      });
+    }
+    function loadChatAssets(){
+      if(!isAuthReady() || assetsToken === twitchData.accessToken) return;
+      assetsToken = twitchData.accessToken;
+      helix('/users?login=' + encodeURIComponent(CHANNEL))
+        .then(function(d){
+          var id = d.data && d.data[0] ? d.data[0].id : '';
+          var jobs = [
+            helix('/chat/badges/global').then(collectBadges),
+            helix('/chat/emotes/global').then(collectEmotes)
+          ];
+          if(id){
+            jobs.push(helix('/chat/badges?broadcaster_id=' + id).then(collectBadges));
+            jobs.push(helix('/chat/emotes?broadcaster_id=' + id).then(collectEmotes));
+          }
+          return Promise.all(jobs.map(function(p){ return p.catch(function(){}); }));
+        })
+        .then(function(){ emit({ type:'assets' }); })
+        .catch(function(err){ console.warn('Twitch chat assets:', err); assetsToken = ''; });
+    }
+    // Проверяем, есть ли у токена права на отправку сообщений (chat:edit)
+    function checkScopes(){
+      canPost = false;
+      if(!isAuthReady()){ emit({ type:'state' }); return; }
+      fetch(VALIDATE_URL, { headers: { 'Authorization': 'OAuth ' + twitchData.accessToken } })
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(d){
+          var scopes = (d && d.scopes) || [];
+          canPost = scopes.indexOf('chat:edit') !== -1 && scopes.indexOf('chat:read') !== -1;
+          emit({ type:'state' });
+        })
+        .catch(function(){ emit({ type:'state' }); });
+    }
+
+    /* ---------- события ---------- */
+    function emit(ev){
+      listeners.slice().forEach(function(fn){
+        try{ fn(ev); }catch(e){ console.warn('chat listener:', e); }
+      });
+    }
+    function push(item){
+      item.localId = 'm' + (++localSeq);
+      buffer.push(item);
+      if(buffer.length > BUFFER_MAX) buffer.splice(0, buffer.length - BUFFER_MAX);
+      emit({ type:'render', item:item });
+      return item;
+    }
+    function system(text){
+      return push({ kind:'system', text:text, time:timeLabel() });
+    }
+    function setState(next){
+      if(connState === next) return;
+      connState = next;
+      emit({ type:'state' });
+    }
+
+    /* ---------- соединение ---------- */
+    function scheduleReconnect(){
+      if(reconnectTimer || holderCount === 0) return;
+      attempt = Math.min(attempt + 1, 6);
+      var delay = Math.min(1000 * Math.pow(2, attempt - 1), 30000);
+      reconnectTimer = setTimeout(function(){ reconnectTimer = null; connect(); }, delay);
+    }
+    function connect(){
+      if(holderCount === 0) return;
+      if(socket && (socket.readyState === 0 || socket.readyState === 1)) return;
+      loadChatAssets();
+      setState('connecting');
+      try{ socket = new WebSocket(IRC_URL); }
+      catch(e){ socket = null; setState('offline'); scheduleReconnect(); return; }
+      var sock = socket;
+      sock.onopen = function(){
+        if(isAuthReady() && !authFailed){
+          authMode = 'user';
+          sock.send('CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership');
+          sock.send('PASS oauth:' + twitchData.accessToken);
+          sock.send('NICK ' + twitchData.user.login);
+        } else {
+          authMode = 'anon';
+          sock.send('CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership');
+          sock.send('PASS SCHMOOPIIE');
+          sock.send('NICK justinfan' + Math.floor(Math.random()*100000));
+        }
+        sock.send('JOIN #' + CHANNEL);
+      };
+      sock.onmessage = function(ev){
+        String(ev.data || '').split('\r\n').forEach(function(line){
+          if(line) handleLine(line, sock);
+        });
+      };
+      sock.onerror = function(){};
+      sock.onclose = function(){
+        if(socket === sock) socket = null;
+        setState('offline');
+        if(holderCount > 0) scheduleReconnect();
+      };
+    }
+    function disconnect(){
+      if(reconnectTimer){ clearTimeout(reconnectTimer); reconnectTimer = null; }
+      attempt = 0;
+      if(socket){
+        var sock = socket;
+        socket = null;
+        try{ sock.onclose = null; sock.close(); }catch(e){}
+      }
+      setState('offline');
+    }
+    function handleLine(line, sock){
+      if(line.indexOf('PING') === 0){ sock.send('PONG :tmi.twitch.tv'); return; }
+      var msg = parseLine(line);
+      var tags = msg.tags;
+      switch(msg.command){
+        case '001':
+          attempt = 0;
+          setState('online');
+          break;
+        case 'RECONNECT':
+          disconnect();
+          scheduleReconnect();
+          break;
+        case 'GLOBALUSERSTATE':
+        case 'USERSTATE':
+          selfTags = tags;
+          emit({ type:'state' });
+          break;
+        case 'PRIVMSG': {
+          var text = msg.params[msg.params.length-1] || '';
+          var isAction = false;
+          var actionMatch = text.match(/^\u0001ACTION (.*)\u0001$/);
+          if(actionMatch){ isAction = true; text = actionMatch[1]; }
+          var login = (tags['login'] || loginFromPrefix(msg.prefix) || '').toLowerCase();
+          push({
+            kind:'message',
+            id: tags['id'] || '',
+            login: login,
+            displayName: tags['display-name'] || login,
+            color: tags['color'] || nickColor(login),
+            badgesHtml: badgesHtml(tags),
+            bits: parseInt(tags['bits'] || '0', 10) || 0,
+            html: renderMessageHtml(text, tags['emotes'], false),
+            text: text,
+            action: isAction,
+            self: false,
+            time: timeLabel()
+          });
+          break;
+        }
+        case 'USERNOTICE': {
+          var sysMsg = tags['system-msg'] || '';
+          var userText = msg.params[msg.params.length-1] || '';
+          if(!sysMsg && !userText) break;
+          push({
+            kind:'event',
+            html: (sysMsg ? plainToHtml(sysMsg, false) : '') +
+                  (userText ? '<br/><span class="tchat-text">' + renderMessageHtml(userText, tags['emotes'], false) + '</span>' : ''),
+            time: timeLabel()
+          });
+          break;
+        }
+        case 'CLEARMSG':
+          markDeleted({ id: tags['target-msg-id'] || '' });
+          break;
+        case 'CLEARCHAT': {
+          var target = (msg.params[msg.params.length-1] || '').toLowerCase();
+          if(msg.params.length > 1 && target){
+            markDeleted({ login: target });
+            var secs = tags['ban-duration'];
+            system(target + (secs ? ' — таймаут на ' + secs + ' с' : ' — забанен'));
+          } else {
+            buffer.length = 0;
+            emit({ type:'clear' });
+            system('Чат очищен модератором');
+          }
+          break;
+        }
+        case 'NOTICE': {
+          var noticeText = msg.params[msg.params.length-1] || '';
+          if(/login authentication failed|improperly formatted auth/i.test(noticeText)){
+            authFailed = true;
+            canPost = false;
+            system('Токен Twitch отклонён — читаем чат анонимно');
+            disconnect();
+            scheduleReconnect();
+            break;
+          }
+          system(noticeText);
+          break;
+        }
+      }
+    }
+    function markDeleted(match){
+      var changed = [];
+      buffer.forEach(function(item){
+        if(item.kind !== 'message' || item.deleted) return;
+        if((match.id && item.id === match.id) || (match.login && item.login === match.login)){
+          item.deleted = true;
+          changed.push(item);
+        }
+      });
+      if(changed.length) emit({ type:'deleted', items:changed });
+    }
+
+    /* ---------- публичный API ---------- */
+    function acquire(key){
+      if(holders[key]) return;
+      holders[key] = true;
+      holderCount++;
+      if(holderCount === 1){ authFailed = false; checkScopes(); }
+      connect();
+    }
+    function release(key){
+      if(!holders[key]) return;
+      delete holders[key];
+      holderCount = Math.max(0, holderCount - 1);
+      if(holderCount === 0) disconnect();
+    }
+    function on(fn){
+      listeners.push(fn);
+      return function(){
+        var i = listeners.indexOf(fn);
+        if(i !== -1) listeners.splice(i, 1);
+      };
+    }
+    function sendMessage(text){
+      text = String(text || '').trim().slice(0, MSG_MAX_LEN);
+      if(!text) return { ok:false, reason:'empty' };
+      if(!isAuthReady() || authFailed) return { ok:false, reason:'auth' };
+      if(!canPost) return { ok:false, reason:'scope' };
+      if(!socket || socket.readyState !== 1) return { ok:false, reason:'offline' };
+      socket.send('PRIVMSG #' + CHANNEL + ' :' + text);
+      // Twitch не присылает эхо своих сообщений — рисуем локально
+      var login = twitchData.user.login;
+      var tags = selfTags || {};
+      push({
+        kind:'message',
+        id:'',
+        login: login,
+        displayName: tags['display-name'] || twitchData.user.display_name || login,
+        color: tags['color'] || nickColor(login),
+        badgesHtml: badgesHtml(tags),
+        bits: 0,
+        html: renderMessageHtml(text, '', true),
+        text: text,
+        action: false,
+        self: true,
+        time: timeLabel()
+      });
+      return { ok:true };
+    }
+    function authChanged(){
+      authFailed = false;
+      assetsToken = '';
+      selfTags = null;
+      checkScopes();
+      if(holderCount > 0){ disconnect(); connect(); }
+    }
+
+    return {
+      channel: CHANNEL,
+      acquire: acquire,
+      release: release,
+      on: on,
+      send: sendMessage,
+      authChanged: authChanged,
+      getBuffer: function(){ return buffer.slice(); },
+      getState: function(){
+        return {
+          conn: connState,
+          authMode: authMode,
+          canPost: canPost && !authFailed,
+          hasAuth: isAuthReady() && !authFailed
+        };
+      }
+    };
+  })();
+  window.TwitchChat = TwitchChat;
+
+  /* ===== Представление чата (можно смонтировать в любой контейнер) ===== */
+  function createChatView(mountId, holderKey, options){
+    var opts = options || {};
+    var mount = document.getElementById(mountId);
+    if(!mount) return { open:function(){}, close:function(){} };
+    var root, listEl, stateEl, inputEl, sendEl, noteEl, off = null, active = false;
+
+    function build(){
+      root = document.createElement('div');
+      root.className = 'tchat';
+      root.innerHTML =
+        '<div class="tchat-head">' +
+          '<span class="tchat-dot"></span>' +
+          '<span>Чат · <span class="tchat-channel">' + escapeHtml(TwitchChat.channel) + '</span></span>' +
+          '<span class="tchat-state"></span>' +
+        '</div>' +
+        '<div class="tchat-list" role="log" aria-live="polite"></div>' +
+        '<form class="tchat-form">' +
+          '<input class="tchat-input" type="text" maxlength="480" autocomplete="off" placeholder="Написать в чат…" aria-label="Сообщение в чат" />' +
+          '<button class="tchat-send" type="submit">Отправить</button>' +
+        '</form>' +
+        '<div class="tchat-note"></div>';
+      listEl = root.querySelector('.tchat-list');
+      stateEl = root.querySelector('.tchat-state');
+      inputEl = root.querySelector('.tchat-input');
+      sendEl = root.querySelector('.tchat-send');
+      noteEl = root.querySelector('.tchat-note');
+      root.querySelector('.tchat-form').addEventListener('submit', function(e){
+        e.preventDefault();
+        submit();
+      });
+      mount.appendChild(root);
+    }
+    function submit(){
+      var res = TwitchChat.send(inputEl.value);
+      if(res.ok){ inputEl.value = ''; return; }
+      if(res.reason === 'empty') return;
+      noteEl.classList.add('is-warn');
+      if(res.reason === 'auth') noteEl.textContent = 'Войди через Twitch, чтобы писать в чат';
+      else if(res.reason === 'scope') noteEl.textContent = 'Нет прав chat:edit — перезайди через Twitch';
+      else noteEl.textContent = 'Нет соединения с чатом';
+    }
+    function atBottom(){
+      return listEl.scrollHeight - listEl.scrollTop - listEl.clientHeight < 60;
+    }
+    function itemHtml(item){
+      if(item.kind === 'system') return '<span class="tchat-time">' + item.time + '</span>' + escapeHtml(item.text);
+      if(item.kind === 'event') return '<span class="tchat-time">' + item.time + '</span>' + item.html;
+      return '<span class="tchat-time">' + item.time + '</span>' +
+        item.badgesHtml +
+        (item.bits ? '<span class="tchat-bits">✦ ' + item.bits + '</span>' : '') +
+        '<span class="tchat-nick" style="color:' + escAttrSafe(item.color) + '">' + escapeHtml(item.displayName) + '</span>' +
+        (item.action ? ' ' : '<span class="tchat-sep">:</span>') +
+        '<span class="tchat-text">' + item.html + '</span>';
+    }
+    function escAttrSafe(v){
+      return /^#[0-9a-fA-F]{3,8}$/.test(String(v || '')) ? v : 'var(--primary-2)';
+    }
+    function appendItem(item){
+      var stick = atBottom();
+      var el = document.createElement('div');
+      el.className = 'tchat-line' +
+        (item.kind === 'system' ? ' is-system' : '') +
+        (item.kind === 'event' ? ' is-event' : '') +
+        (item.action ? ' is-action' : '') +
+        (item.self ? ' is-self' : '') +
+        (item.deleted ? ' is-deleted' : '');
+      el.dataset.localId = item.localId;
+      if(item.login) el.dataset.login = item.login;
+      if(item.id) el.dataset.msgId = item.id;
+      el.innerHTML = itemHtml(item);
+      listEl.appendChild(el);
+      while(listEl.childElementCount > 250) listEl.removeChild(listEl.firstChild);
+      if(stick) listEl.scrollTop = listEl.scrollHeight;
+    }
+    function renderAll(){
+      listEl.innerHTML = '';
+      TwitchChat.getBuffer().forEach(appendItem);
+      listEl.scrollTop = listEl.scrollHeight;
+    }
+    function syncState(){
+      var st = TwitchChat.getState();
+      root.classList.toggle('is-online', st.conn === 'online');
+      root.classList.toggle('is-connecting', st.conn === 'connecting');
+      stateEl.textContent = st.conn === 'online'
+        ? (st.hasAuth ? 'подключено' : 'только чтение')
+        : (st.conn === 'connecting' ? 'подключение…' : 'нет связи');
+      var enabled = st.conn === 'online' && st.canPost;
+      inputEl.disabled = !enabled;
+      sendEl.disabled = !enabled;
+      inputEl.placeholder = enabled ? 'Написать в чат…' : 'Отправка недоступна';
+      noteEl.classList.remove('is-warn');
+      if(enabled) noteEl.textContent = '';
+      else if(!st.hasAuth) noteEl.innerHTML = 'Режим чтения. <button type="button" class="tchat-note-link">Войти через Twitch</button>';
+      else if(!st.canPost) noteEl.innerHTML = 'Нужны права chat:read и chat:edit. <button type="button" class="tchat-note-link">Перезайти</button>';
+      else noteEl.textContent = 'Подключаемся к чату…';
+      var link = noteEl.querySelector('.tchat-note-link');
+      if(link) link.addEventListener('click', function(){ openTwitch(); });
+    }
+    function handle(ev){
+      if(ev.type === 'render') appendItem(ev.item);
+      else if(ev.type === 'clear') listEl.innerHTML = '';
+      else if(ev.type === 'deleted'){
+        ev.items.forEach(function(item){
+          var el = listEl.querySelector('[data-local-id="' + item.localId + '"]');
+          if(el) el.classList.add('is-deleted');
+        });
+      }
+      else if(ev.type === 'state') syncState();
+      else if(ev.type === 'assets') renderAll();
+    }
+    return {
+      open: function(){
+        if(active) return;
+        active = true;
+        if(!root) build();
+        TwitchChat.acquire(holderKey);
+        off = TwitchChat.on(handle);
+        renderAll();
+        syncState();
+        if(opts.autofocus) setTimeout(function(){ if(!inputEl.disabled) inputEl.focus(); }, 60);
+      },
+      close: function(){
+        if(!active) return;
+        active = false;
+        if(off){ off(); off = null; }
+        TwitchChat.release(holderKey);
+      },
+      refresh: function(){ if(active) syncState(); }
+    };
+  }
+
+  // ===== Оверлей чата (канал welvol) — собственный чат вместо iframe =====
   var chatOverlayEl = document.getElementById('chatOverlay');
+  var mainChatView = createChatView('chatMainMount', 'chatOverlay', { autofocus:true });
+  var numberChatView = createChatView('numberChatMount', 'numberChat', {});
+  window.twitchChatViews = [mainChatView, numberChatView];
+
   function openChat(){
     closeStatsIfOpen();
     chatOverlayEl.classList.add('active');
     document.getElementById('chatFab').classList.add('active');
     document.body.classList.add('chat-open');
-    // Официальный embed чата: Twitch блокирует прямой iframe обычной страницы,
-    // поэтому используем /embed/.../chat с параметром parent (домен текущей страницы)
-    var parent = window.location.hostname || 'localhost';
-    document.getElementById('chatFrame').src =
-      'https://www.twitch.tv/embed/welvol/chat?parent=' + encodeURIComponent(parent);
+    mainChatView.open();
   }
   function closeChat(){
     chatOverlayEl.classList.remove('active');
     document.getElementById('chatFab').classList.remove('active');
     document.body.classList.remove('chat-open');
-    // Выгружаем iframe, чтобы остановить соединение чата
-    document.getElementById('chatFrame').src = '';
+    mainChatView.close();
   }
   function toggleChat(){
     if(chatOverlayEl.classList.contains('active')) closeChat();
@@ -1832,7 +2445,7 @@
 
   (function(){
     var TWITCH_AUTH_URL = 'https://id.twitch.tv/oauth2/authorize';
-    var TWITCH_SCOPE = 'user:read:email channel:read:redemptions channel:manage:redemptions';
+    var TWITCH_SCOPE = 'user:read:email channel:read:redemptions channel:manage:redemptions chat:read chat:edit';
     var TW_KEY = 'twitch_auth_data';
 
     function saveTwitchData(){
@@ -1993,6 +2606,8 @@
       // После входа/выхода — запустить/остановить загрузку наград для опроса выкупов
       if(window.loadTwitchRewards){ loadTwitchRewards(); }
       if(window.updatePurchasesStatus){ updatePurchasesStatus(); }
+      // Уведомить чат об изменении авторизации (переключить user/anon, перечитать бейджи)
+      if(window.TwitchChat){ TwitchChat.authChanged(); }
     }
 
     // Функция входа
